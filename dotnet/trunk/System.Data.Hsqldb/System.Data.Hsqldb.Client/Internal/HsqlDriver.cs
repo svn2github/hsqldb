@@ -38,7 +38,7 @@ using System.Diagnostics;
 using System.Reflection;
 
 using System.Data.Hsqldb.Common.Enumeration;
-using System.Data.Hsqldb.Common.Sql.Type;
+using System.Data.Hsqldb.Common.Sql.Types;
 using System.Data.Hsqldb.Common;
 #endregion
 

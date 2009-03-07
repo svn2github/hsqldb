@@ -88,7 +88,7 @@ using Library = org.hsqldb.Library;
 using HsqlDateTime = org.hsqldb.HsqlDateTime;
 
 using System.Text;
-using System.Data.Hsqldb.Common.Sql.Type;
+using System.Data.Hsqldb.Common.Sql.Types;
 using System.Data.SqlTypes;
 
 #endregion

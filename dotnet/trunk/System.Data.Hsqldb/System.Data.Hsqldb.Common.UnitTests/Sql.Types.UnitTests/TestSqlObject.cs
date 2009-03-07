@@ -4,7 +4,7 @@ using System.Data.Hsqldb.TestCoverage;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 
-namespace System.Data.Hsqldb.Common.Sql.Type.UnitTests
+namespace System.Data.Hsqldb.Common.Sql.Types.UnitTests
 {
     [TestFixture, ForSubject(typeof(SqlObject))]
     public class TestSqlObject

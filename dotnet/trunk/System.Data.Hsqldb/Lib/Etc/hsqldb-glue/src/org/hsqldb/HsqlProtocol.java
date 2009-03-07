@@ -8,17 +8,17 @@ import org.hsqldb.store.ValuePool;
  * @author boucherb@users
  */
 public class HsqlProtocol implements IHsqlProtocol {
-    
+
     private static final HsqlProtocol m_instance;
     
-    static
-    {
+
+    static {
         m_instance = new HsqlProtocol();
     }
-    
+
     private HsqlProtocol() {
     }
-    
+
     /**
      * An HsqlProtocolInstance
      * @return
@@ -26,7 +26,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public static IHsqlProtocol GetInstance() {
         return m_instance;
     }
-    
+
     /**
      * Adds the given sql statement to the given direct batch request.
      *
@@ -34,9 +34,9 @@ public class HsqlProtocol implements IHsqlProtocol {
      * @param sql to add.
      */
     public void AddBatchDirect(Result result, String sql) {
-        result.add(new Object[]{ sql });
+        result.add(new Object[]{sql});
     }
-    
+
     /**
      * Adds the given parameters to the given prepared batch request.
      *
@@ -46,7 +46,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void AddBatchPrepared(Result result, Object[] parameters) {
         result.add(parameters);
     }
-    
+
     /**
      * Clears the session attribute values.
      *
@@ -55,7 +55,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void ClearAttributes(Result result) {
         ArrayUtil.fillArray(result.rRoot.data, null);
     }
-    
+
     /**
      * Clears the batch values of a direct or prepared batch request.
      *
@@ -64,7 +64,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void ClearBatch(Result result) {
         result.clear();
     }
-    
+
     /**
      * Clears the parameter data.
      *
@@ -73,7 +73,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void ClearParameterData(Result result) {
         ArrayUtil.fillArray(result.rRoot.data, null);
     }
-    
+
     /**
      *  Creates a new request for use in retrieving session attributes.
      *
@@ -81,23 +81,23 @@ public class HsqlProtocol implements IHsqlProtocol {
      */
     public Result CreateAttributeRequest() {
         Result request = new Result(ResultConstants.DATA, 7);
-        
+
         request.metaData.colNames =
                 request.metaData.colLabels =
                 request.metaData.tableNames =
-                new String[] {
-            "", "", "", "", "", "", ""
-        };
-        request.metaData.colTypes = new int[] {
-            Types.VARCHAR, Types.VARCHAR, Types.INTEGER, Types.INTEGER,
-            Types.BOOLEAN, Types.BOOLEAN, Types.BOOLEAN
-        };
-        
+                new String[]{
+                    "", "", "", "", "", "", ""
+                };
+        request.metaData.colTypes = new int[]{
+                    Types.VARCHAR, Types.VARCHAR, Types.INTEGER, Types.INTEGER,
+                    Types.BOOLEAN, Types.BOOLEAN, Types.BOOLEAN
+                };
+
         request.add(new Object[7]);
-        
+
         return request;
     }
-    
+
     /**
      * Creates a new response suitable for holding result set data.
      *
@@ -107,7 +107,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public Result CreateDataResponse(int columnCount) {
         return new Result(ResultConstants.DATA, columnCount);
     }
-    
+
     /**
      * Creates a new response describing the given exception raised
      * while executing the given sql statement.
@@ -118,7 +118,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public Result CreateErrorResponse(Exception ex, String sql) {
         return new Result(ex, sql);
     }
-    
+
     /**
      * Creates a new error response with the given message, sql state and
      * error code.
@@ -131,7 +131,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public Result CreateErrorResponse(String message, String sqlState, int errorCode) {
         return new Result(message, sqlState, errorCode);
     }
-    
+
     /**
      * Creates a new request suitable for executing direct sql batches.
      *
@@ -140,10 +140,10 @@ public class HsqlProtocol implements IHsqlProtocol {
     public Result CreateExecuteBatchDirectRequest() {
         return new Result(
                 ResultConstants.BATCHEXECDIRECT,
-                new int[]{ org.hsqldb.Types.VARCHAR },
+                new int[]{org.hsqldb.Types.VARCHAR},
                 0);
     }
-    
+
     /**
      * Creates a new request suitable for batched execution of the prepared
      * statement with the given statement identifier.
@@ -158,7 +158,7 @@ public class HsqlProtocol implements IHsqlProtocol {
                 parameterTypes,
                 statementId);
     }
-    
+
     /**
      * Creates a new request to directly execute the given sql statement.
      *
@@ -168,7 +168,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public Result CreateExecuteDirectRequest(String sql) {
         return Result.newExecuteDirectRequest(sql);
     }
-    
+
     /**
      * Creates a new request to free the prepared statement
      * with the given statement identifier.
@@ -179,7 +179,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public Result CreateFreeStatementRequest(int statementId) {
         return Result.newFreeStmtRequest(statementId);
     }
-    
+
     /**
      * Creates a new requsest to prepare to commit the current transaction.
      *
@@ -187,14 +187,14 @@ public class HsqlProtocol implements IHsqlProtocol {
      */
     public Result CreatePrepareCommitRequest() {
         Result request = new Result(ResultConstants.SQLENDTRAN);
-        
+
         SetEndTranType(request, ResultConstants.HSQLPREPARECOMMIT);
-        
+
         request.mainString = "";
-        
+
         return request;
     }
-    
+
     /**
      * Creates a new request to prepare the given sql statement.
      *
@@ -203,12 +203,12 @@ public class HsqlProtocol implements IHsqlProtocol {
      */
     public Result CreatePrepareStatementRequest(String sql) {
         Result result = new Result(ResultConstants.SQLPREPARE);
-        
+
         result.mainString = sql;
-        
+
         return result;
     }
-    
+
     /**
      * Creates a new request to release the named savepoint.
      *
@@ -218,7 +218,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public Result CreateReleaseSavepointRequest(String savepointName) {
         return Result.newReleaseSavepointRequest(savepointName);
     }
-    
+
     /**
      * Creates a new request to rollback to the named savepoint.
      *
@@ -228,7 +228,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public Result CreateRollbackToSavepointRequest(String savepointName) {
         return Result.newRollbackToSavepointRequest(savepointName);
     }
-    
+
     /**
      * Creates a new request to set the named savepoint.
      *
@@ -238,7 +238,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public Result CreateSetSavepointRequest(String savepointName) {
         return Result.newSetSavepointRequest(savepointName);
     }
-    
+
     /**
      * Creates a new request to log in the given user using a tcp connection.
      *
@@ -252,14 +252,14 @@ public class HsqlProtocol implements IHsqlProtocol {
             String password,
             String database) {
         Result result = new Result(ResultConstants.SQLCONNECT);
-        
+
         SetUser(result, user);
         SetPassword(result, password);
         SetDatabaseAlias(result, database);
-        
+
         return result;
     }
-    
+
     /**
      * Creates a new response indicating that a tcp connection log in
      * was successul.
@@ -269,13 +269,13 @@ public class HsqlProtocol implements IHsqlProtocol {
      */
     public Result CreateTcpClientLoginResponse(Session session) {
         Result result = new Result(ResultConstants.UPDATECOUNT);
-        
+
         result.databaseID = session.getDatabase().databaseID;
         result.sessionID = session.getId();
-        
+
         return result;
     }
-    
+
     /**
      * Retrieves the autoCommit session attribute.
      *
@@ -283,10 +283,9 @@ public class HsqlProtocol implements IHsqlProtocol {
      * @return true if autoCommit, else false.
      */
     public boolean GetAttributeAutoCommit(Result result) {
-        return ((Boolean)result.rRoot.data[
-                SessionInterface.INFO_AUTOCOMMIT]).booleanValue();
+        return ((Boolean) result.rRoot.data[SessionInterface.INFO_AUTOCOMMIT]).booleanValue();
     }
-    
+
     /**
      * Sets the autoCommit session attribute.
      *
@@ -298,7 +297,7 @@ public class HsqlProtocol implements IHsqlProtocol {
                 ? Boolean.TRUE
                 : Boolean.FALSE;
     }
-    
+
     /**
      * Retrieves the connectionReadOnly session attribute.
      *
@@ -306,10 +305,9 @@ public class HsqlProtocol implements IHsqlProtocol {
      * @return truu if the connection is read-only, else false.
      */
     public boolean GetAttributeConnectionReadOnly(Result result) {
-        return ((Boolean)result.rRoot.data[
-                SessionInterface.INFO_CONNECTION_READONLY]).booleanValue();
+        return ((Boolean) result.rRoot.data[SessionInterface.INFO_CONNECTION_READONLY]).booleanValue();
     }
-    
+
     /**
      * Sets the connectionReadOnly session attribute.
      *
@@ -321,7 +319,7 @@ public class HsqlProtocol implements IHsqlProtocol {
                 ? Boolean.TRUE
                 : Boolean.FALSE;
     }
-    
+
     /**
      * Retrieves the database session attribute.
      *
@@ -331,7 +329,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public String GetAttributeDatabase(Result result) {
         return (String) result.rRoot.data[SessionInterface.INFO_DATABASE];
     }
-    
+
     /**
      * Retrieves the databaseReadonly session attribute.
      *
@@ -340,10 +338,9 @@ public class HsqlProtocol implements IHsqlProtocol {
      * else false.
      */
     public boolean GetAttributeDatabaseReadOnly(Result result) {
-        return ((Boolean)result.rRoot.data[
-                SessionInterface.INFO_DATABASE_READONLY]).booleanValue();
+        return ((Boolean) result.rRoot.data[SessionInterface.INFO_DATABASE_READONLY]).booleanValue();
     }
-    
+
     /**
      * Retrieves the isolation session attribute.
      *
@@ -351,10 +348,9 @@ public class HsqlProtocol implements IHsqlProtocol {
      * @return the current transaction isolation value
      */
     public int GetAttributeIsolation(Result result) {
-        return ((Integer)result.rRoot.data[
-                SessionInterface.INFO_ISOLATION]).intValue();
+        return ((Integer) result.rRoot.data[SessionInterface.INFO_ISOLATION]).intValue();
     }
-    
+
     /**
      * Sets the isolation session attribute.
      *
@@ -362,10 +358,9 @@ public class HsqlProtocol implements IHsqlProtocol {
      * @param isolation the new value.
      */
     public void SetAttributeIsolation(Result result, int isolation) {
-        result.rRoot.data[
-                SessionInterface.INFO_ISOLATION] = ValuePool.getInt(isolation);
+        result.rRoot.data[SessionInterface.INFO_ISOLATION] = ValuePool.getInt(isolation);
     }
-    
+
     /**
      * Retrieves the type of session attribute to request or respond.
      *
@@ -375,7 +370,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public int GetAttributeType(Result result) {
         return result.updateCount;
     }
-    
+
     /**
      * Sets the type of session attribute to request or respond.
      *
@@ -385,7 +380,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void SetAttributeType(Result result, int attributeType) {
         result.updateCount = attributeType;
     }
-    
+
     /**
      * Retrieves the user session attribute.
      *
@@ -393,9 +388,9 @@ public class HsqlProtocol implements IHsqlProtocol {
      * @return the name of the current session user.
      */
     public String GetAttributeUser(Result result) {
-        return (String)result.rRoot.data[SessionInterface.INFO_USER];
+        return (String) result.rRoot.data[SessionInterface.INFO_USER];
     }
-    
+
     /**
      * Retrieves the sql command text
      *
@@ -405,7 +400,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public String GetCommandText(Result result) {
         return result.mainString;
     }
-    
+
     /**
      * Sets the sql command text.
      *
@@ -415,7 +410,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void SetCommandText(Result result, String commandText) {
         result.mainString = commandText;
     }
-    
+
     /**
      * Retrieves the database alias.
      *
@@ -425,7 +420,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public String GetDatabaseAlias(Result result) {
         return result.subSubString;
     }
-    
+
     /**
      * Sets the database alias.
      *
@@ -435,7 +430,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void SetDatabaseAlias(Result result, String databaseAlias) {
         result.subSubString = databaseAlias;
     }
-    
+
     /**
      * Retrieves the database identifier.
      *
@@ -445,7 +440,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public int GetDatabaseId(Result result) {
         return result.databaseID;
     }
-    
+
     /**
      * Sets the database identifier.
      *
@@ -455,7 +450,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void SetDatabaseId(Result result, int databaseId) {
         result.databaseID = databaseId;
     }
-    
+
     /**
      * Retrieves the type of transaction termination.
      *
@@ -465,7 +460,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public int GetEndTranType(Result result) {
         return result.updateCount;
     }
-    
+
     /**
      * Sets the type of transaction termination.
      *
@@ -475,7 +470,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void SetEndTranType(Result result, int endTranType) {
         result.updateCount = endTranType;
     }
-    
+
     /**
      * Retreives the error message.
      *
@@ -485,7 +480,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public String GetErrorMessage(Result result) {
         return result.mainString;
     }
-    
+
     /**
      * Sets the error message.
      *
@@ -495,7 +490,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void SetErrorMessage(Result result, String errorMessage) {
         result.mainString = errorMessage;
     }
-    
+
     /**
      * Retrieves the maximum row count.
      *
@@ -505,7 +500,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public int GetMaxRows(Result result) {
         return result.updateCount;
     }
-    
+
     /**
      * Sets the maximum row count.
      *
@@ -515,7 +510,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void SetMaxRows(Result result, int maxRows) {
         result.updateCount = maxRows;
     }
-    
+
     /**
      * Retrieves the password.
      *
@@ -525,7 +520,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public String GetPassword(Result result) {
         return result.subString;
     }
-    
+
     /**
      * Sets the password.
      *
@@ -535,7 +530,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void SetPassword(Result result, String password) {
         result.subString = password;
     }
-    
+
     /**
      * Retrieves the parameter data.
      *
@@ -545,7 +540,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public Object[] GetParameterData(Result result) {
         return result.getParameterData();
     }
-    
+
     /**
      * Sets the parameter data.
      *
@@ -555,7 +550,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void SetParameterData(Result result, Object[] data) {
         result.setParameterData(data);
     }
-    
+
     /**
      * Retrieves the type of the request or reponse.
      *
@@ -565,7 +560,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public int GetType(Result result) {
         return result.mode;
     }
-    
+
     /**
      * Sets the type of the request or response.
      *
@@ -575,7 +570,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void SetType(Result result, int type) {
         result.mode = type;
     }
-    
+
     /**
      * Retreives the savepoint name.
      *
@@ -585,7 +580,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public String GetSavepointName(Result result) {
         return result.mainString;
     }
-    
+
     /**
      * Sets the savepoint name.
      *
@@ -595,7 +590,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void SetSavepointName(Result result, String savepointName) {
         result.mainString = savepointName;
     }
-    
+
     /**
      * Retrieves the session identifier.
      *
@@ -605,7 +600,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public int GetSessionId(Result result) {
         return result.sessionID;
     }
-    
+
     /**
      * Sets the session identifier.
      *
@@ -615,7 +610,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void SetSessionId(Result result, int sessionId) {
         result.sessionID = sessionId;
     }
-    
+
     /**
      * Retrieves the sql state.
      *
@@ -625,7 +620,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public String GetSqlState(Result result) {
         return result.subString;
     }
-    
+
     /**
      * Sets the sql state.
      *
@@ -635,7 +630,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void SetSqlState(Result result, String sqlState) {
         result.subString = sqlState;
     }
-    
+
     /**
      * Retrieves the statement identifier.
      *
@@ -645,7 +640,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public int GetStatementId(Result result) {
         return result.statementID;
     }
-    
+
     /**
      * Sets the statement identifier.
      *
@@ -655,7 +650,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void SetStatementId(Result result, int statementId) {
         result.statementID = statementId;
     }
-    
+
     /**
      * Retrieves the statement type.
      *
@@ -665,7 +660,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public int GetStatementType(Result result) {
         return result.updateCount;
     }
-    
+
     /**
      * Sets the statement type.
      *
@@ -675,7 +670,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void SetStatementType(Result result, int statementType) {
         result.updateCount = statementType;
     }
-    
+
     /**
      * Retrieves the update count.
      *
@@ -685,7 +680,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public int GetUpdateCount(Result result) {
         return result.updateCount;
     }
-    
+
     /**
      * Sets the update count.
      *
@@ -695,7 +690,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void SetUpdateCount(Result result, int updateCount) {
         result.updateCount = updateCount;
     }
-    
+
     /**
      * Retrieves the update count array.
      *
@@ -705,7 +700,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public int[] GetUpdateCounts(Result result) {
         return result.metaData.colTypes;
     }
-    
+
     /**
      * Sets the update count array.
      *
@@ -715,7 +710,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public void SetUpdateCounts(Result result, int[] updateCounts) {
         result.metaData.colTypes = updateCounts;
     }
-    
+
     /**
      * Retrieves the user name string.
      *
@@ -725,6 +720,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     public String GetUser(Result result) {
         return result.mainString;
     }
+
     /**
      * Sets the user name string.
      *

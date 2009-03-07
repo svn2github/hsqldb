@@ -42,7 +42,7 @@ using JavaObject = org.hsqldb.types.JavaObject;
 using Serializable = java.io.Serializable;
 #endregion
 
-namespace System.Data.Hsqldb.Common.Sql.DataType
+namespace System.Data.Hsqldb.Common.Sql.Types
 {
     #region SqlObject
     /// <summary>

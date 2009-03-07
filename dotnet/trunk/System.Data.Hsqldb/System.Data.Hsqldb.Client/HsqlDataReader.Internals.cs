@@ -41,7 +41,7 @@ using System.Data.Hsqldb.Common;
 using System.Data.Hsqldb.Common.Enumeration;
 using System.Data.Hsqldb.Common.IO;
 using System.Data.Hsqldb.Client.MetaData;
-using System.Data.Hsqldb.Common.Sql.Type;
+using System.Data.Hsqldb.Common.Sql.Types;
 using System.Data.SqlTypes;
 using System.IO;
 using System.Runtime.Serialization;

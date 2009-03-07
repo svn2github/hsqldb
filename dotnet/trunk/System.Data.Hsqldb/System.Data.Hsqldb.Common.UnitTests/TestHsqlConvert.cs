@@ -217,7 +217,7 @@ namespace System.Data.Hsqldb.Common.UnitTests
             Assert.AreEqual(typeof(string), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.LongVarChar));
             Assert.AreEqual(typeof(void), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Null));
             Assert.AreEqual(typeof(java.math.BigDecimal), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Numeric));
-            Assert.AreEqual(typeof(System.Data.Hsqldb.Common.Sql.Type.SqlObject), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Object));
+            Assert.AreEqual(typeof(System.Data.Hsqldb.Common.Sql.Types.SqlObject), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Object));
             Assert.AreEqual(typeof(java.lang.Double), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Real));
             Assert.AreEqual(typeof(java.sql.Ref), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Ref));
             Assert.AreEqual(typeof(java.lang.Integer), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.SmallInt));

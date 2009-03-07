@@ -34,7 +34,7 @@
 
 #region Using
 
-using System.Data.Hsqldb.Common.Sql.Type;
+using System.Data.Hsqldb.Common.Sql.Types;
 using System.Data.SqlTypes;
 using System.Text;
 

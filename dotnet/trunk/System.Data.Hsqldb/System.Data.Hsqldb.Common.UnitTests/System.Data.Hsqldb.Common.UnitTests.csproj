@@ -58,7 +58,7 @@
     <Compile Include="Lob.UnitTests\TestJdbcClob.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sql.Predicate.UnitTests\TestLike.cs" />
-    <Compile Include="Sql.Type.UnitTests\TestSqlObject.cs" />
+    <Compile Include="Sql.Types.UnitTests\TestSqlObject.cs" />
     <Compile Include="Sql.UnitTests\TestToken.cs" />
     <Compile Include="Sql.UnitTests\TestTokenizer.cs" />
     <Compile Include="TestHsqlBatchUpdateException.cs" />
