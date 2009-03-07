@@ -533,7 +533,7 @@ BEGIN
     PUSHBUTTON      "Page 1",IDPREVPAGE,5,5,40,15
     CONTROL         "&Read Only",DS_READONLY,"Button",BS_AUTOCHECKBOX | 
                     WS_GROUP | WS_TABSTOP,15,26,102,10
-    CONTROL         "Row &Versioning (depr.)",DS_ROWVERSIONING,"Button",
+    CONTROL         "Row &Versioning (deprec.)",DS_ROWVERSIONING,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,163,26,85,10
     CONTROL         "Show System &Tables",DS_SHOWSYSTEMTABLES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,41,100,10
@@ -547,7 +547,7 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,71,87,10
     //CONTROL         "Server side prepare",DS_SERVERSIDEPREPARE,"Button",
                     //BS_AUTOCHECKBOX | WS_TABSTOP,163,71,90,10
-    CONTROL         "client VarBinary to BLOB",DS_MAPVBTOBLOB,"Button",
+    CONTROL         "Client VarBinary to BLOB",DS_MAPVBTOBLOB,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,163,41,87,10
     GROUPBOX        "Int8 As",IDC_STATIC,5,82,256,25
     CONTROL         "default",DS_INT8_AS_DEFAULT,"Button",BS_AUTORADIOBUTTON | 

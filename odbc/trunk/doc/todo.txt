@@ -19,12 +19,15 @@ drivers, it may not make sense to default (or possibly support at all)
 
 Run the Microsoft ODBC test.
 
-Find out why hsqlodbc and psqlodbc both invoke the non-Unicode version of
-SQLSetConnectAttr instead of SQLSetConnectAttrW, thereby setting the
+Find out why hsqlodbc and psqlodbc ON UNIX both invoke the non-Unicode version
+of SQLSetConnectAttr instead of SQLSetConnectAttrW, thereby setting the
 conn->unicode to false and making CC_is_in_unicode_driver return false even
-though it is a unicode driver.  [Diagnostics so far:  the ODBC version stored
-in conn->driver_version is correct.  Problem occurs even when connecting to
-a Postgresql UTF database with psqlodbc].
+though it is a unicode driver.  [Diagnostics so far:
+    the ODBC version stored in conn->driver_version is correct.
+    Problem occurs even when connecting to a Postgresql UTF database with
+    psqlodbc
+    Problem does not occur with win32 which invokes SQLSetConnectAttrW.
+].
 
 --------------
 
