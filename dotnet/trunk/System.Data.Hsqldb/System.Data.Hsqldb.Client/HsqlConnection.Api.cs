@@ -128,7 +128,7 @@ namespace System.Data.Hsqldb.Client
                 if (m_connectionState == ConnectionState.Closed)
                 {
                     // CHECKME: 
-                    // is this legal?
+                    // is this legal behaviour?
                     m_settings.Path = databaseName;
                 }
                 else
