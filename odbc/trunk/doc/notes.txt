@@ -1,5 +1,30 @@
 $Id$
 
+LO Work.  Most in convert.c.  Turn Debug up to 2 and check the inolog() entries
+from the following functions.
+
+Wipe out lobj.[ch].  This only handles lob transfers with the server using
+connection:CC_send_function(), which is extremely server-specific.
+Does not make sense to implement the server-side from scratch to accommodate
+the client.  Better to do implement lobj tranfers from scratch, designing as
+suits our own server and client.  If these transfers should allowed for
+interspersed byte transfers, may need to allocate dedicated socket connections
+for each lob xfer.
+The methods below need to be re-designed to access our new methods instead of
+CC_send_function().
+
+BuildBindRequest()
+    ResolveOneParam():
+        Seems to contain the BLOB write code.
+
+convert_lo():
+    Looks like this is for handling client BLOB Reads: converting data on
+     input stream to SQL_C_CHAR or SQL_C_BINARY.
+    Should be called for server-side type of BLOB and conditionally VARBINARY.
+    Creates file descriptor build on the connection stream: odbc_lo_open().
+
+------------------------------------------------------------------------------
+
     FakeOidIndex: Yes|No
     ShowOidColumn: Yes|No
     I don't know much about OID/Rowid usage in ODBC.
