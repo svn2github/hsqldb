@@ -211,7 +211,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         /// <summary>
         /// 
         /// </summary>
-        public const string PathSuffix = @"\.hsqldb\1.8.0.7" + m_File; 
+        public const string PathSuffix = @"\.hsqldb\1.8.0" + m_File; 
         #endregion
 
         #region TableName
