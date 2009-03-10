@@ -46,7 +46,7 @@ namespace System.Data.Hsqldb.Client
     /// <para>
     /// The HSQLDB <see cref="DBDataPermission">DBDataPermission</see> implementation.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.HsqlDataPermission.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.HsqlDataPermission.png"
     ///      alt="HsqlDataPermission Class Diagram"/>
     /// </summary>
     [Serializable]

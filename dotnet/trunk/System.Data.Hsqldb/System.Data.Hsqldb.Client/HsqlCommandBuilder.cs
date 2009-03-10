@@ -54,6 +54,10 @@ namespace System.Data.Hsqldb.Client
     /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.HsqlCommandBuilder.png"
     ///      alt="HsqlCommandBuilder Class Diagram"/>
     /// </summary>
+    /// <remarks>
+    /// Automatically generates single-table commands used to reconcile 
+    /// changes made to a <see cref="DataSet"/> with the associated database.
+    /// </remarks>
     /// <author name="boucherb@users"/>
 #if W32DESIGN    
     [ToolboxBitmap(typeof(resfinder), "System.Data.Hsqldb.Client.Image.Bmp.HsqlCommandBuilder.bmp")]

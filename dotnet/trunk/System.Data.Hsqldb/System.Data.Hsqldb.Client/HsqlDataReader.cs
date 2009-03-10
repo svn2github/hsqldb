@@ -61,7 +61,7 @@ namespace System.Data.Hsqldb.Client
     /// <para>
     /// The HSQLDB <see cref="DbDataReader">DbDataReader</see> implementation.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.HsqlDataReader.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.HsqlDataReader.png"
     ///      alt="HsqlDataReader Class Diagram"/>
     /// </summary>
     /// <remarks>

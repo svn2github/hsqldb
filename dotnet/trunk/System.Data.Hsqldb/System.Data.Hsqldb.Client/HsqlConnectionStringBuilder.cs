@@ -61,6 +61,16 @@ namespace System.Data.Hsqldb.Client
     /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.HsqlConnectionStringBuilder.png"
     ///      alt="HsqlConnectionStringBuilder Class Diagram"/>
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Provides a facility to allow developers to programmatically create syntactically 
+    /// correct connection strings, and parse and rebuild existing connection strings.
+    /// </para> 
+    /// <para>
+    /// Because this class implements <see cref="ICustomTypeDescriptor"/>, 
+    /// it supports design time mechanisms such as the <see cref="PropertyGrid"/>.
+    /// </para>
+    /// </remarks>
     /// <author name="boucherb@users"/>
     [DefaultProperty("DataSource")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]

@@ -51,7 +51,7 @@ namespace System.Data.Hsqldb.Client
     /// Registers the HSQLDB ADO.NET Data Provider in
     /// the <c>machine.config</c> file.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.HsqlInstaller.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.HsqlInstaller.png"
     ///      alt="HsqlInstaller Class Diagram"/>
     /// </summary>
     [RunInstaller(true)]

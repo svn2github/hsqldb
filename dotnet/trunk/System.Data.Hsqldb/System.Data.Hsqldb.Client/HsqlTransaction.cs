@@ -48,6 +48,9 @@ namespace System.Data.Hsqldb.Client
     /// <para>
     /// Implements <see cref="DbTransaction">DbTransaction</see>.
     /// </para>
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.HsqlTransaction.png"
+    ///      alt="HsqlTransaction Class Diagram"/>
+    /// </summary>
     /// <remarks>
     /// <para>
     /// <b>Warning</b>: because the HSQLDB 1.8 database engine does not
@@ -60,9 +63,6 @@ namespace System.Data.Hsqldb.Client
     /// control.
     /// </para>
     /// </remarks>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.HsqlTransaction.png"
-    ///      alt="HsqlTransaction Class Diagram"/>
-    /// </summary>
     /// <author name="boucherb@users"/>
     public sealed partial class HsqlTransaction : DbTransaction {}
 }

@@ -57,6 +57,7 @@ using ResultConstants = org.hsqldb.ResultConstants.__Fields;
 using HsqlTypes = org.hsqldb.Types;
 using System.Data.Hsqldb.Client.Sql;
 using System.Data.Hsqldb.Common;
+using System.Collections.Generic;
 
 #endregion
 
@@ -101,6 +102,7 @@ namespace System.Data.Hsqldb.Client
         private TokenList m_tokenList;
         // Backs the SyncRoot property.
         private readonly object m_syncRoot = new object();
+        List<string> m_commandTextBatch;
 
         #endregion
 
@@ -149,6 +151,19 @@ namespace System.Data.Hsqldb.Client
 
         #region ApplyParameters()
         /// <summary>
+        /// See <see cref="ApplyParameters(bool)"/>
+        /// </summary>
+        /// <remarks>
+        /// Equivalent to invoking <c>ApplyParameters(false)</c>
+        /// </remarks>
+        internal void ApplyParameters()
+        {
+            this.ApplyParameters(false);
+        }
+        #endregion
+
+        #region ApplyParameters(bool)
+        /// <summary>
         /// Applies the current values in this object's parameter collection
         /// to the internal statement object, if any, that represents the 
         /// prepared form of this command.
@@ -163,6 +178,7 @@ namespace System.Data.Hsqldb.Client
         /// <c>HsqlCommand</c> instance.
         /// </para>
         /// </remarks>
+        /// <param name="batch"><c>true</c> to apply the parameters toward batch execution</param>
         /// <exception cref="HsqlDataSourceException">
         /// When unbound parameters exist.  An unbound parameter condition
         /// occurs when a parameter's existence is declared in the command
@@ -176,7 +192,7 @@ namespace System.Data.Hsqldb.Client
         /// non-nullable binding site and its present value is either
         /// implicitly null or has explicily been set null.
         /// </exception>
-        internal void ApplyParameters()
+        internal void ApplyParameters(bool batch)
         {
             HsqlStatement l_statement = m_statement;
 
@@ -247,9 +263,60 @@ namespace System.Data.Hsqldb.Client
                     "{0} unbound Parameters Exist.", unboundCount)); // NOI18N
             }
 
-            l_statement.SetParameterValues(values);
+            if (batch)
+            {
+                l_statement.AddBatch(values);
+            }
+            else
+            {
+                l_statement.SetParameterValues(values);
+            }
         }
         #endregion
+
+        internal void AddBatchInternal()
+        {
+            if (IsPrepared)
+            {
+                ApplyParameters(true);
+            }
+            else
+            {
+                List<string> commandTextBatch = m_commandTextBatch;
+
+                if (commandTextBatch == null)
+                {
+                    commandTextBatch = new List<string>();
+                }
+                
+                commandTextBatch.Add(StaticallyBoundCommandText);
+
+                m_commandTextBatch = commandTextBatch;
+            }
+        }
+
+        internal int[] ExecuteBatchInternal()
+        {
+            if (IsPrepared)
+            {
+                return m_statement.ExecuteBatch(Session);
+            }
+            else
+            {
+                List<string> commandTextBatch = m_commandTextBatch;
+
+                if (commandTextBatch == null)
+                {
+                    throw new HsqlBatchUpdateException(
+                        "No commands have been added to the batch", 
+                        new InvalidOperationException());
+                }
+
+                m_commandTextBatch = null;
+                
+                return Session.ExecuteNonQueryBatchDirect(commandTextBatch.ToArray());
+            }
+        }
 
         #region ExecuteScalarInternal()
         /// <summary>
@@ -484,6 +551,7 @@ namespace System.Data.Hsqldb.Client
                 }
 
                 m_statement = session.PrepareStatement(sql);
+                m_commandTextBatch = null;
             }
         }
         #endregion

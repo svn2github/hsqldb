@@ -51,20 +51,19 @@ namespace System.Data.Hsqldb.Client
     /// <summary>
     /// Represents the method that will handle the 
     /// <see cref="E:HsqlDataAdapter.RowUpdating"/> event of
-    /// a <see cref="HsqlDataAdapter"></see>.
+    /// a <see cref="HsqlDataAdapter"/see>.
     /// </summary>
-    public delegate void HsqlRowUpdatingEventHandler(
-        object sender,
+    public delegate void HsqlRowUpdatingEventHandler(object sender,
         HsqlRowUpdatingEventArgs e); 
     #endregion
 
     #region HsqlRowUpdatedEventHandler
-    /// <summary>Represents the method that will handle the 
+    /// <summary>
+    /// Represents the method that will handle the 
     /// <see cref="E:HsqlDataAdapter.RowUpdated"/> event of
     /// a <see cref="HsqlDataAdapter"/>.
     /// </summary>
-    public delegate void HsqlRowUpdatedEventHandler(
-        object sender,
+    public delegate void HsqlRowUpdatedEventHandler(object sender,
         HsqlRowUpdatedEventArgs e); 
     #endregion
 
@@ -77,9 +76,14 @@ namespace System.Data.Hsqldb.Client
     ///      alt="HsqlDataAdapter Class Diagram"/>
     /// </summary>
     /// <remarks>
-    /// Implements a set of functions to provide strong typing,
-    /// but inherits most of the functionality needed to fully
-    /// implement a <c>DataAdapter</c>.
+    /// <para>
+    /// Represents a set of command-related properties that are used to fill 
+    /// the <see cref="DataSet"/> and update a data source.
+    /// </para>
+    /// <para>
+    /// Implements a set of functions to provide strong typing, but inherits most
+    /// of the functionality needed to fully implement a <c>DataAdapter</c>.
+    /// </para>
     /// </remarks>
     [DefaultEvent("RowUpdated")]
 #if W32DESIGN
@@ -134,10 +138,14 @@ namespace System.Data.Hsqldb.Client
 
         #region HsqlDataAdapter(HsqlCommand)
         /// <summary>
-        /// Initializes a new instance of the
-        /// <see cref="HsqlDataAdapter"/> class.
+        /// Initializes a new instance of the <see cref="HsqlDataAdapter"/> 
+        /// class with a command object representing an SQL SELECT statement.
         /// </summary>
-        /// <param name="selectCommand">The select command.</param>
+        /// <param name="selectCommand">
+        /// An <see cref="HsqlCommand"/> representing the SQL SELECT statement or
+        /// stored procedure executed by the <see cref="SelectCommand"/> property
+        /// of this object.
+        /// </param>
         public HsqlDataAdapter(HsqlCommand selectCommand) : this()
         {
             this.SelectCommand = selectCommand;
@@ -146,10 +154,13 @@ namespace System.Data.Hsqldb.Client
 
         #region HsqlDataAdapter(string,HsqlConnection)
         /// <summary>
-        /// Initializes a new instance of the
-        /// <see cref="HsqlDataAdapter"/> class.
+        /// Initializes a new instance of the <see cref="HsqlDataAdapter"/> class
+        /// with an SQL SELECT statement and an <see cref="HsqlConnection"/>.
         /// </summary>
-        /// <param name="selectCommandText">The select command text.</param>
+        /// <param name="selectCommandText">
+        /// The string representation of the SQL SELECT statement or stored procedure
+        /// to be executed by the <see cref="SelectCommand"/> property of this object.
+        /// </param>
         /// <param name="selectConnection">The select connection.</param>
         public HsqlDataAdapter(string selectCommandText, HsqlConnection selectConnection)
             : this()
@@ -160,15 +171,21 @@ namespace System.Data.Hsqldb.Client
 
         #region HsqlDataAdapter(string,string)
         /// <summary>
-        /// Initializes a new instance of the
-        /// <see cref="HsqlDataAdapter"/> class.
+        /// Initializes a new instance of the <see cref="HsqlDataAdapter"/> class
+        /// with an SQL SELECT statement and a connection string.
         /// </summary>
-        /// <param name="selectCommandText">The select command text.</param>
-        /// <param name="selectConnectionString">The select connection string.</param>
+        /// <param name="selectCommandText">
+        /// The string representation of the SQL SELECT statement or stored procedure
+        /// to be executed by the <see cref="SelectCommand"/> property of this object.
+        /// </param>
+        /// <param name="selectConnectionString">
+        /// The connection string used to obtain the connection object on which the
+        /// <see cref="SelectCommand"/> property of this object executes.
+        /// </param>
         public HsqlDataAdapter(string selectCommandText, string selectConnectionString)        
         {
             HsqlConnection connection = new HsqlConnection(selectConnectionString);
-            this.SelectCommand = new HsqlCommand(connection, selectCommandText);
+            SelectCommand = new HsqlCommand(connection, selectCommandText);
 
         }
         #endregion 
@@ -181,8 +198,7 @@ namespace System.Data.Hsqldb.Client
         /// <param name="toClone">
         /// The adapter from which to construct this adapter.
         ///</param>
-        private HsqlDataAdapter(HsqlDataAdapter toClone)
-            : base(toClone)
+        private HsqlDataAdapter(HsqlDataAdapter toClone) : base(toClone)
         {
             m_updateBatchSize = 1;
             GC.SuppressFinalize(this);
@@ -236,8 +252,8 @@ namespace System.Data.Hsqldb.Client
 
         #region SelectCommand
         /// <summary>
-        /// Gets or sets the command used to select records
-        /// in the data source.
+        /// Gets or sets the command used to select records in the data
+        /// source.
         /// </summary>
         /// <value>
         /// The <see cref="IDbCommand"/> that is used during
@@ -246,8 +262,8 @@ namespace System.Data.Hsqldb.Client
         /// </value>
         [Category("Fill")]
         [DefaultValue(null)]
-        [Description("DbDataAdapter_SelectCommand")]
-        [Editor(CommandEditorTypeName, CommandEditorBaseTypeName)]
+        [ResDescription("DbDataAdapter_SelectCommand")]
+        [Editor(HsqlDataAdapter.CommandEditorTypeName, HsqlDataAdapter.CommandEditorBaseTypeName)]
         public new HsqlCommand SelectCommand
         {
             get { return m_selectCommand; }
@@ -268,8 +284,8 @@ namespace System.Data.Hsqldb.Client
         /// </value>     
         [Category("Update")]
         [DefaultValue(null)]
-        [Description("DbDataAdapter_UpdateCommand")]
-        [Editor(CommandEditorTypeName, CommandEditorBaseTypeName)]
+        [ResDescription("DbDataAdapter_UpdateCommand")]
+        [Editor(HsqlDataAdapter.CommandEditorTypeName, HsqlDataAdapter.CommandEditorBaseTypeName)]
         public new HsqlCommand UpdateCommand
         {
             get { return m_updateCommand; }
@@ -336,8 +352,8 @@ namespace System.Data.Hsqldb.Client
         /// <summary>
         /// Row updating event handler
         /// </summary>
-        [Description("DbDataAdapter_RowUpdated")]
         [Category("Update")]
+        [ResDescription("DbDataAdapter_RowUpdated")]
         public event HsqlRowUpdatingEventHandler RowUpdating
         {
             add
@@ -368,17 +384,18 @@ namespace System.Data.Hsqldb.Client
                         base.Events.RemoveHandler(EventRowUpdating, handler);
                     }
                 }
+
                 base.Events.AddHandler(EventRowUpdating, value);
             }
             remove { base.Events.RemoveHandler(EventRowUpdating, value); }
         }
-                #endregion
+        #endregion
 
         #region RowUpdated
         /// <summary>
         /// Row updated event handler
         /// </summary>
-        public event EventHandler<HsqlRowUpdatedEventArgs> RowUpdated
+        public event HsqlRowUpdatedEventHandler RowUpdated
         {
             add { base.Events.AddHandler(EventRowUpdated, value); }
             remove { base.Events.RemoveHandler(EventRowUpdated, value); }

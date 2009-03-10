@@ -52,7 +52,7 @@ namespace System.Data.Hsqldb.Client
         /// Initializes a new <c>HsqlRowUpdatingEventArgs</c> instance.
         /// </summary>
         /// <param name="statementType">
-        /// Specifies the type of query executed.
+        /// Denotes the type of query executed.
         /// </param>
         /// <param name="row">
         /// The <see cref="DataRow"/> to 
@@ -94,8 +94,8 @@ namespace System.Data.Hsqldb.Client
 
         #region Command
         /// <summary>
-        /// Gets or sets the <see cref="HsqlCommand"/> to execute 
-        /// when performing the <see cref="DbDataAdapter.Update(DataSet)"/>.
+        /// Gets or sets the <see cref="HsqlCommand"/> to execute when performing
+        /// the <see cref="DbDataAdapter.Update(DataSet)"/>.
         /// </summary>
         /// <returns>
         /// The <c>HsqlCommand"</c> to execute when performing the update.

@@ -54,226 +54,228 @@ namespace System.Data.Hsqldb.Client
             #region Public Constants
 
             #region AutoShutdown
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.AutoShutdown"/>.</summary>
             /// <value>false</value>
             public const bool AutoShutdown = false;
 
             #endregion
             #region CacheFileScale
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.CacheFileScale"/>.</summary>
             /// <value>1</value>
             public const byte CacheFileScale = 1;
 
             #endregion
             #region CacheScale
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.CacheScale"/>.</summary>
             /// <value>14</value>
             public const byte CacheScale = 14;
 
             #endregion
             #region CacheSizeScale
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.CachesizeScale"/>.</summary>
             /// <value>8</value>
             public const byte CacheSizeScale = 8;
 
             #endregion
             #region ConnectionProtocol
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.Protocol"/>.</summary>
             /// <value><see cref="System.Data.Hsqldb.Common.Enumeration.ConnectionProtocol.File"/></value>
             public const ConnectionProtocol Protocol
                 = ConnectionProtocol.File;
 
             #endregion
             #region DatabaseAppLogLevel
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.DatabaseAppLogLevel"/>.</summary>
             /// <value><see cref="System.Data.Hsqldb.Common.Enumeration.DatabaseAppLogLevel.Normal"/></value>
             public const DatabaseAppLogLevel DatabaseAppLogLevel
                 = System.Data.Hsqldb.Common.Enumeration.DatabaseAppLogLevel.Normal;
 
             #endregion
             #region DatabaseScriptFormat
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.DatabaseScriptFormat"/>.</summary>
             /// <value><see cref="System.Data.Hsqldb.Common.Enumeration.DatabaseScriptFormat.Text"/></value>
             public const DatabaseScriptFormat DatabaseScriptFormat
                 = System.Data.Hsqldb.Common.Enumeration.DatabaseScriptFormat.Text;
 
             #endregion
             #region DefaultSchemaQualification
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.DefaultSchemaQualification"/>.</summary>
             /// <value>false</value>
             public const bool DefaultSchemaQualification = false;
 
             #endregion
             #region DefaultTableType
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.DefaultTableType"/>.</summary>
             /// <value><see cref="System.Data.Hsqldb.Common.Enumeration.DefaultTableType.Memory"/></value>
             public const DefaultTableType DefaultTableType
                 = System.Data.Hsqldb.Common.Enumeration.DefaultTableType.Memory;
 
             #endregion
             #region DefragLimit
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.DefragLimit"/>.</summary>
             /// <value>200</value>
             [CLSCompliant(false)]            
             public const ushort DefragLimit = 200;
 
             #endregion
             #region EnforceColumnSize
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.EnforceColumnSize"/>.</summary>
             /// <value>true</value>
             public const bool EnforceColumnSize = true;
 
             #endregion
 #if SYSTRAN
             #region Enlist
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.Enlist"/>.</summary>
             /// <value>false</value>
             public const bool Enlist = false;
             #endregion
 #endif
             #region Host
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.Host"/>.</summary>
             /// <value>"localhost"</value>
             public const string Host = "localhost";
 
             #endregion
             #region IfExists
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.IfExists"/>.</summary>
             /// <value>false</value>
             public const bool IfExists = false;
 
             #endregion
             #region InitialSchema
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.InitialSchema"/>.</summary>
             /// <value>"PUBLIC"</value>
             public const string InitialSchema = "PUBLIC";
 
             #endregion
             #region MemoryMappedDataFile
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.MemoryMappedDataFile"/>.</summary>
             /// <value>true</value>
             public const bool MemoryMappedDataFile = true;
 
             #endregion
             #region Password
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.Password"/>.</summary>
             /// <value>"" (the empty string)</value>
             public const string Password = "";
 
             #endregion
             #region Path
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.Path"/>.</summary>
             /// <value>"" (the empty string)</value>
             public const string Path = "";
 
             #endregion
             #region ReadOnlySession
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.ReadOnlySession"/>.</summary>
             /// <value>false</value>
             public const bool ReadOnlySession = false;
             #endregion
             #region ReportBaseColumnName
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.ReportBaseColumnName"/>.</summary>
             /// <value>true</value>
             public const bool ReportBaseColumnName = true;
 
             #endregion
             #region ReportCatalogs
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.ReportCatalogs"/>.</summary>
             /// <value>false</value>
             public const bool ReportCatalogs = false;
 
             #endregion
             #region TextDbAllowFullPath
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.TextDbAllowFullPath"/>.</summary>
             /// <value>false</value>
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1706:ShortAcronymsShouldBeUppercase", MessageId = "Member")]
             public const bool TextDbAllowFullPath = false;
 
             #endregion
             #region TextDbAllQuoted
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.TextDbAllQuoted"/>.</summary>
             /// <value>false</value>
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1706:ShortAcronymsShouldBeUppercase", MessageId = "Member")]
             public const bool TextDbAllQuoted = false;
 
             #endregion
             #region TextDbCacheScale
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.TextDbCacheScale"/>.</summary>
             /// <value>10</value>
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1706:ShortAcronymsShouldBeUppercase", MessageId = "Member")]
             public const byte TextDbCacheScale = 10;
 
             #endregion
             #region TextDbCacheSizeScale
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.TextDbCacheSizeScale"/>.</summary>
             /// <value>10</value>
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1706:ShortAcronymsShouldBeUppercase", MessageId = "Member")]
             public const byte TextDbCacheSizeScale = 10;
 
             #endregion
             #region TextDbEncoding
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.TextDbEncoding"/>.</summary>
             /// <value>"US-ASCII"</value>
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1706:ShortAcronymsShouldBeUppercase", MessageId = "Member")]
             public const string TextDbEncoding = "US-ASCII";
 
             #endregion
             #region TextDbFieldSeparator
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.TextDbFieldSeparator"/>.</summary>
             /// <value>","</value>
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1706:ShortAcronymsShouldBeUppercase", MessageId = "Member")]
             public const string TextDbFieldSeparator = ",";
 
             #endregion
             #region TextDbIgnoreFirst
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.TextDbIgnoreFirst"/>.</summary>
             /// <value>false</value>
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1706:ShortAcronymsShouldBeUppercase", MessageId = "Member")]
             public const bool TextDbIgnoreFirst = false;
 
             #endregion
             #region TextDbLongVarcharFieldSeparator
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.TextDbLongVarcharFieldSeparator"/>.</summary>
             /// <value>","</value>
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1706:ShortAcronymsShouldBeUppercase", MessageId = "Member")]
             public const string TextDbLongVarcharFieldSeparator = ",";
 
             #endregion
             #region TextDbQuoted
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.TextDbQuoted"/>.</summary>
             /// <value>true</value>
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1706:ShortAcronymsShouldBeUppercase", MessageId = "Member")]
             public const bool TextDbQuoted = true;
 
             #endregion
             #region TextDbVarcharFieldSeparator
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.TextDbVarcharFieldSeparator"/>.</summary>
             /// <value>","</value>
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1706:ShortAcronymsShouldBeUppercase", MessageId = "Member")]
             public const string TextDbVarcharFieldSeparator = ",";
 
             #endregion
             #region TransactionLogMaxSize
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.TransactionLogMaxSize"/>.</summary>
             /// <value>200</value>
             [CLSCompliant(false)]
             public const uint TransactionLogMaxSize = 200;
 
             #endregion
             #region TransactionLogMaxSyncDelay
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.TransactionLogMaxSyncDelay"/>.</summary>
             /// <value>25</value>
             [CLSCompliant(false)]
             public const ushort TransactionLogMaxSyncDelay = 25;
 
             #endregion
             #region TransactionNoMultiRewrite
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.TransactionLogMaxSyncDelay"/>.</summary>
             /// <value>false</value>
             public const bool TransactionNoMultiRewrite = false;
 
             #endregion
             #region UserId
-
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.UserId"/>.</summary>
             /// <value>"SA"</value>
             public const string UserId = "SA";
 
@@ -313,23 +315,23 @@ namespace System.Data.Hsqldb.Client
                         }
                     case ConnectionProtocol.Hsql:
                         {
-                            return ServerConstants
-                                .SC_DEFAULT_HSQL_SERVER_PORT;
+                            return 
+                                ServerConstants.SC_DEFAULT_HSQL_SERVER_PORT;
                         }
                     case ConnectionProtocol.Hsqls:
                         {
-                            return ServerConstants
-                                .SC_DEFAULT_HSQLS_SERVER_PORT;
+                            return 
+                                ServerConstants.SC_DEFAULT_HSQLS_SERVER_PORT;
                         }
                     case ConnectionProtocol.Http:
                         {
-                            return ServerConstants
-                                .SC_DEFAULT_HTTP_SERVER_PORT;
+                            return
+                                ServerConstants.SC_DEFAULT_HTTP_SERVER_PORT;
                         }
                     case ConnectionProtocol.Https:
                         {
-                            return ServerConstants
-                                .SC_DEFAULT_HTTPS_SERVER_PORT;
+                            return
+                                ServerConstants.SC_DEFAULT_HTTPS_SERVER_PORT;
                         }
                 }
             }

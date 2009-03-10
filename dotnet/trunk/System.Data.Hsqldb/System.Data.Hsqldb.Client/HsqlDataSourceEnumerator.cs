@@ -50,7 +50,7 @@ namespace System.Data.Hsqldb.Client
     /// <para>
     /// The HSQLDB <see cref="DbDataSourceEnumerator"/> implementation.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.HsqlDataSourceEnumerator.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.HsqlDataSourceEnumerator.png"
     ///      alt="HsqlDataSourceEnumerator Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

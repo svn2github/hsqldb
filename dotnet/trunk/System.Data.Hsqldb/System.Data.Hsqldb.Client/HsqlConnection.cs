@@ -64,6 +64,9 @@ namespace System.Data.Hsqldb.Client
     /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.HsqlConnection.png"
     ///      alt="HsqlConnection Class Diagram"/>
     /// </summary>
+    /// <remarks>
+    /// Represents a connection to a database.
+    /// </remarks>
     /// <author name="boucherb@users"/>
 #if W32DESIGN
     [ToolboxBitmap(typeof(resfinder), "System.Data.Hsqldb.Client.Image.Bmp.HsqlConnection.bmp")]

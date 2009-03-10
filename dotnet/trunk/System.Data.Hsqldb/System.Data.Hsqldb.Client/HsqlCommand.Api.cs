@@ -1280,11 +1280,37 @@ namespace System.Data.Hsqldb.Client
         }
         #endregion
 
-        #endregion
-
+        #endregion         
         #region Other Members
 
         #region Public Instance Methods
+
+        /// <summary>
+        /// Adds an element to be executed as part of a batch update in
+        /// response
+        /// to invoking <see cref="ExecuteBatch()"/>
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// When this command <see cref="IsPrepared"/>, invoking this method has
+        /// the effect of first checking the present <see cref="Parameters"/>
+        /// against the parameter metdata of the prepared form of the command
+        /// to assure there are no unbound parameters and, if successful, 
+        /// converting the present <see cref="Parameters"/> into an array of
+        /// object values, which are then added to an internal list for batch
+        /// execution against the prepared form of the command.
+        /// </para>
+        /// <para>
+        /// Otherwise, invoking this method has the effect
+        /// </para>
+        /// </remarks>
+        public void AddBatch()
+        {
+            lock (SyncRoot)
+            {
+                AddBatchInternal();
+            }
+        }
 
         #region DeriveParameters()
         /// <summary>
@@ -1403,6 +1429,85 @@ namespace System.Data.Hsqldb.Client
         }
         #endregion
 
+        /// <summary>
+        /// submits a batch update to the underlying data source for execution.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Batch elements are executed serially (at least logically) in the
+        /// order in which they were added to the batch. When all of the
+        /// elements in a batch execute successfully, the returned integer
+        /// array contains one entry for each element in the batch.
+        /// </para>
+        /// <para>
+        /// The entries in the array are ordered according to the order in
+        /// which the elements were processed (which, again, is the same as
+        /// the order in which the elements were originally added to the
+        /// batch).
+        /// </para>
+        /// <para>
+        /// An entry in the array may have the following values: 
+        /// </para>
+        /// <para>
+        /// 1.) If the value of an array entry is greater than or equal to
+        /// zero, then the batch element was processed successfully and the
+        /// value is an update count indicating the number of rows in the
+        /// database that were affected by the element's execution.
+        /// </para>
+        /// <para>
+        /// 2.) A value of <see cref="HsqlBatchUpdateException.SuccessNoInfo"/>
+        /// indicates that a batch element was processed without raising an
+        /// exception, but that the number of affected rows is unknown or is
+        /// simply not a concept applicable to processing that specific batch
+        /// element.
+        /// </para>
+        /// <para>
+        /// The internal list of batch elements is reset to empty once this
+        /// method reuturns.
+        /// </para>
+        /// <para><strong>Handling failures during execution</strong></para>
+        /// <para>
+        /// An invocation of this method may or may not continue processing
+        /// the remaining elements in a batch once execution of an element in
+        /// a batch fails, but the policy is consistent across all calls to a
+        /// specfic back end. The HSQLDB 1.8.0 back-end policy, for instance,
+        /// is to discontinue processing upon encountering the first error, 
+        /// but the policy used by a later release may be different.
+        /// </para>
+        ///<para>
+        /// When the policy is to stop processing after the first failure, the 
+        /// <see cref="HsqlBatchUpdateException.UpdateCounts"/> array may 
+        /// contain fewer entries than there were elements in the batch. Since
+        /// elements are executed in the order that they are added to the
+        /// batch, if the array contains N elements, this means that the first
+        /// N-1 elements in the batch were processed successfully and the last
+        /// element contains a value of 
+        /// <see cref="HsqlBatchUpdateException.ExecuteFailed"/>, which is 
+        /// used to indicate that a batch element failed to execute
+        /// successfully.
+        /// </para>
+        /// <para>
+        /// When the policy is to continue processing in the presence of
+        /// failures, the number of elements, N, in the 
+        /// <see cref="HsqlBatchUpdateException.UpdateCounts"/> array is
+        /// always equal to the number of elements in the batch, and each
+        /// element that failed is marked by a value of 
+        /// <see cref="HsqlBatchUpdateException.ExecuteFailed"/>
+        /// </para>
+        /// </remarks>
+        /// <returns>
+        /// An array whose elements indicate the number of rows in
+        /// the database that were affected by the execution of the
+        /// corresponding batch element.
+        /// </returns>
+        public int[] ExecuteBatch()
+        {
+            lock (SyncRoot)
+            {
+                return ExecuteBatchInternal();
+            }
+        }
+
         #region UnPrepare()
         /// <summary>
         /// Releases any resources associated with maintaining this command
@@ -1413,7 +1518,13 @@ namespace System.Data.Hsqldb.Client
         ///</remarks>
         public void UnPrepare()
         {
-            InvalidateStatement();
+            lock (SyncRoot)
+            {
+                if (IsPrepared)
+                {
+                    InvalidateStatement();
+                }
+            }
         }
         #endregion
 

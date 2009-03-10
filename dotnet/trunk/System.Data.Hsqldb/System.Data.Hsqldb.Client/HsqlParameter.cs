@@ -52,7 +52,7 @@ namespace System.Data.Hsqldb.Client
     /// <para>
     /// The HSQLDB <see cref="DbParameter">DbParameter</see> implementation.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.HsqlParameter.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.HsqlParameter.png"
     ///      alt="HsqlParameter Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

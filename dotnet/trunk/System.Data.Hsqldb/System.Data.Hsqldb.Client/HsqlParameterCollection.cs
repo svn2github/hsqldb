@@ -51,7 +51,7 @@ namespace System.Data.Hsqldb.Client
     /// The HSQLDB <see cref="DbParameterCollection">DbParameterCollection</see>
     /// implementation.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.HsqlParameterCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.HsqlParameterCollection.png"
     ///      alt="HsqlParameterCollection Class Diagram"/>
     /// </summary>
     /// <seealso cref="HsqlParameter"/>
@@ -389,7 +389,7 @@ namespace System.Data.Hsqldb.Client
 
         #endregion
 
-        #region Clear
+        #region Clear()
 
         // avoid the 
         private static void ResetParent(HsqlParameter p)
@@ -418,7 +418,7 @@ namespace System.Data.Hsqldb.Client
 
         #endregion
 
-        #region CopyTo
+        #region CopyTo(Array,int)
 
         /// <summary>
         /// Copies the elements of this <see cref="DbParameterCollection"/>
@@ -574,8 +574,6 @@ namespace System.Data.Hsqldb.Client
         #endregion
 
         #region Add(object)
-
-        #region Add(object)
         /// <summary>
         /// Adds the specified object to this collection.
         /// </summary>
@@ -606,8 +604,6 @@ namespace System.Data.Hsqldb.Client
 
             return (m_parameters.Count - 1);
         } 
-        #endregion
-
         #endregion
 
         #region Add(HsqlParameter)
@@ -856,7 +852,7 @@ namespace System.Data.Hsqldb.Client
                 }
             }
 
-            if (parameter.ParameterName.Length == 0)
+            if (string.IsNullOrEmpty(parameter.ParameterName))
             {
                 string candidateName;
                 index = 1;
@@ -976,14 +972,8 @@ namespace System.Data.Hsqldb.Client
 
         HsqlParameter IList<HsqlParameter>.this[int index]
         {
-            get
-            {
-                return this[index] as HsqlParameter;
-            }
-            set
-            {
-                this[index] = value;
-            }
+            get { return this[index] as HsqlParameter; }
+            set { this[index] = value; }
         }
 
         #endregion

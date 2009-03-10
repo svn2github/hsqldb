@@ -46,7 +46,7 @@ namespace System.Data.Hsqldb.Client
     /// <para>
     /// The HSQLDB <see cref="DbProviderFactory">DbProviderFactory</see> implementation.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.HsqlProviderFactory.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.HsqlProviderFactory.png"
     ///      alt="HsqlProviderFactory Class Diagram"/>
     /// </summary>
     public sealed class HsqlProviderFactory : DbProviderFactory

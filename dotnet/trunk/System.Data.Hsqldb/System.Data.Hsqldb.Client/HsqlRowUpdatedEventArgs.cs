@@ -51,7 +51,7 @@ namespace System.Data.Hsqldb.Client
         /// Initializes a new <c>HsqlRowUpdatedEventArgs</c> instance.
         /// </summary>
         /// <param name="statementType">
-        /// Specifies the type of query executed.
+        /// Denotes the type of query executed.
         /// </param>
         /// <param name="row">
         /// The <see cref="DataRow"/> sent through a 
@@ -76,12 +76,14 @@ namespace System.Data.Hsqldb.Client
 
         #region Command
         /// <summary>
-        /// Gets or sets the <see cref="HsqlCommand"/> executed 
-        /// when <see cref="DbDataAdapter.Update(DataSet)"></see>
+        /// Gets the <see cref="HsqlCommand"/> executed when 
+        /// <see cref="DbDataAdapter.Update(DataSet)"></see>
         /// is called.
         /// </summary>
-        /// <returns>The <see cref="HsqlCommand"/> executed when 
-        /// <see cref="DbDataAdapter.Update(DataSet)"></see> is called.
+        /// <returns>
+        /// The <see cref="HsqlCommand"/> executed when 
+        /// <see cref="DbDataAdapter.Update(DataSet)"</see>
+        /// is called.
         /// </returns>
         public new HsqlCommand Command
         {

@@ -70,6 +70,9 @@ namespace System.Data.Hsqldb.Client
     /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.HsqlCommand.png"
     ///      alt="HsqlCommand Class Diagram"/>
     /// </summary>
+    /// <remarks>
+    /// Represents an SQL statement or stored procedure to execute against a data source.
+    /// </remarks>
     /// <author name="boucherb@users"/>
     [DefaultEvent("RecordsAffected")]
     [Designer("Microsoft.VSDesigner.Data.VS.SqlCommandDesigner, Microsoft.VSDesigner, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")]
@@ -180,7 +183,8 @@ namespace System.Data.Hsqldb.Client
         
         #region Behavior
         /// <summary>
-        /// 
+        /// Exposes a set of convenience methods used to test
+        /// the various flags of the <see cref="CommandBehavior"/> enumeration. 
         /// </summary>
         public static class Behavior
         {
