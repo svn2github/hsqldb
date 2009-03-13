@@ -1,20 +1,22 @@
 The current HSQLDB Web Server implements only HTTP 1.0 and does not implement
-HTTP KEEPALIVE.  As such, a new socket is created, opened and closed for each SQL
-statement issued  to the server.
+HTTP KEEPALIVE.  As such, a new socket is created, opened and closed for each
+request/response round-trip to the server and back.
 
 Thus, high traffic is very likely to leave a large number of sockets
 continuously in TIME_WAIT, exhausting the number of non TIME_WAIT TCBs
 available for reuse.
 
 The included WebServer.Tcpip.Parameters.reg.txt file provides some
-registry settings that can be used avoid suprious server failure under the
-current Web Server HTTP protocol implementation.
+registry settings that can be used lower the probability of suprious
+server failure under the current Web Server HTTP protocol,
+implementation, possibly at the expense of other network services.
 
 Please note that none of the indicated settings are RFC-compliant.
 
 However, they do allow running the default HSQLDB Database Manager test
-script a number of times in short succession against the HSQLDB Web Server
-without experiencing failure due to socket (re)allocation errors.
+script (executes 1,000 round-trips) a number of times in short succession
+against the HSQLDB Web Server without experiencing failure due to socket
+(re)allocation errors.
 
 A better approach would be to provide an HTTP 1.1 implementation with
 HTTP KEEPALIVE enabled by default.  Work may proceed on this at some
