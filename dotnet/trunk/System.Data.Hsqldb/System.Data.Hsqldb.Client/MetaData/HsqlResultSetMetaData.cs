@@ -58,7 +58,7 @@ namespace System.Data.Hsqldb.Client.MetaData
     /// <para>
     /// Provides metadata regarding a result set.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.HsqlResultSetMetaData.png" 
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.HsqlResultSetMetaData.png" 
     ///      alt="HsqlResultSetMetaData Class Diagram"/>
     /// </summary>
     /// <seealso cref="DbDataReader.GetSchemaTable()"/>

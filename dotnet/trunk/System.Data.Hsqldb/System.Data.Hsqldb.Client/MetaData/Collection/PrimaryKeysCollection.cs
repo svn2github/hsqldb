@@ -47,7 +47,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// <para>
     /// Provides the <see cref="HCN.PrimaryKeys"/> collection.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.PrimaryKeysCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.PrimaryKeysCollection.png"
     ///      alt="PrimaryKeysCollection Class Diagram"/>
     /// </summary>
     public class PrimaryKeysCollection : Base.MetaDataCollection

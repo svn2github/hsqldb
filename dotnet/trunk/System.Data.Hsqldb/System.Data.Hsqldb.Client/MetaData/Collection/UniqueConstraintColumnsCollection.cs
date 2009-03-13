@@ -50,7 +50,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// <para>
     /// Provides the <see cref="HCN.UniqueConstraintColumns"/> collection.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.UniqueConstraintColumnsCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.UniqueConstraintColumnsCollection.png"
     ///      alt="IndexColumnsCollection Class Diagram"/>
     /// </summary>
     public class UniqueConstraintColumnsCollection : Base.MetaDataCollection

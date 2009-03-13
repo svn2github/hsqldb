@@ -48,7 +48,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// Provides the core logic for the HSQLDB 
     /// <see cref="System.Data.Common.DbDataSourceEnumerator"/> implementation.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.DataSourceEnumerationCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.DataSourceEnumerationCollection.png"
     ///      alt="DataSourceEnumerationCollection Class Diagram"/>
     /// </summary>
     public static class DataSourceEnumerationCollection

@@ -49,7 +49,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// <para>
     /// Provides the <see cref="CN.Restrictions"/> collection.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.RestrictionsCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.RestrictionsCollection.png"
     ///      alt="RestrictionsCollection Class Diagram"/>
     /// </summary>
     public class RestrictionsCollection : Base.CachedMetadataCollection

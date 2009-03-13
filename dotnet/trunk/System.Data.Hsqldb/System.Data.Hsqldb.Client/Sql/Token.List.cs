@@ -54,7 +54,7 @@ namespace System.Data.Hsqldb.Client.Sql
     /// <para>
     /// Represents an ordered sequence of strongly-typed [SQL]tokens.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.TokenList.png" 
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.TokenList.png" 
     ///      alt="TokenList Class Diagram"/>
     /// </summary>
     public class TokenList : IEnumerable<Token>, ICloneable

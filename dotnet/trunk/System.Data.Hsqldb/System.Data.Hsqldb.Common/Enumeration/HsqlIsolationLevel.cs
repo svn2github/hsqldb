@@ -42,7 +42,7 @@ namespace System.Data.Hsqldb.Common.Enumeration
     /// <para>
     /// Transaction isolation levels recognized by the HSQLDB API.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.HsqlIsolationLevel.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.HsqlIsolationLevel.png"
     ///      alt="HsqlIsolationLevel Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

@@ -40,7 +40,7 @@ namespace System.Data.Hsqldb.Common.Enumeration
     /// <para>
     /// The supported HSQLDB database script formats.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.DatabaseScriptFormat.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.DatabaseScriptFormat.png"
     ///      alt="DatabaseScriptFormat Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

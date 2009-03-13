@@ -50,7 +50,7 @@ namespace System.Data.Hsqldb.Common
     /// <para>
     /// The HSQLDB implementation of <see cref="DbException">DbException</see>.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.HsqlDataSourceException.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.HsqlDataSourceException.png"
     ///      alt="HsqlDataSourceException Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

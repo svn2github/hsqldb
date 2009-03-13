@@ -44,7 +44,7 @@ namespace System.Data.Hsqldb.Client.MetaData
     /// <para>
     /// Provides metadata collection name constants.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.HsqlMetaDataCollectionNames.png" 
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.HsqlMetaDataCollectionNames.png" 
     ///      alt="HsqlMetaDataCollectionNames Class Diagram"/>
     /// </summary>    
     /// <author name="boucherb@users"/>

@@ -46,7 +46,7 @@ namespace System.Data.Hsqldb.Common.Lob
     /// <para>
     /// The representation (mapping) of an SQL <c>BLOB</c> value.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Lob.IBlob.png" 
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Lob.IBlob.png" 
     ///      alt="IBlob Class Diagram"/>
     /// </summary>
     /// <remarks>

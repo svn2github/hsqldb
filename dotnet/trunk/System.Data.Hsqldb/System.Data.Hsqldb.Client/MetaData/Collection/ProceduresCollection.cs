@@ -51,7 +51,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// <para>
     /// Provides the <see cref="HCN.Procedures"/> collection.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.ProceduresCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.ProceduresCollection.png"
     ///      alt="ProceduresCollection Class Diagram"/>
     /// </summary>
     public class ProceduresCollection : Base.MetaDataCollection

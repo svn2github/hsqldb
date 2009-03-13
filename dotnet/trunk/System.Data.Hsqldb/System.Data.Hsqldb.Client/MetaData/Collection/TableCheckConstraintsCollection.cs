@@ -47,7 +47,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// <para>
     /// Provides the <see cref="HCN.TableCheckConstraints"/> collection.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.TableCheckConstraintsCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.TableCheckConstraintsCollection.png"
     ///      alt="TableCheckConstraintsCollection Class Diagram"/>
     /// </summary>
     public class TableCheckConstraintsCollection

@@ -53,7 +53,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// <para>
     /// Provides the <see cref="HCN.Users"/> collection.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.UsersCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.UsersCollection.png"
     ///      alt="UsersCollection Class Diagram"/>
     /// </summary>
     public class UsersCollection : Base.MetaDataCollection

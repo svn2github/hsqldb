@@ -40,7 +40,7 @@ namespace System.Data.Hsqldb.Common.Enumeration
     /// <para>
     /// The supported HSQLDB connection protocols.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.ConnectionProtocol.png" 
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.ConnectionProtocol.png" 
     ///      alt="ConnectionProtocol Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

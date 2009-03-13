@@ -45,7 +45,7 @@ namespace System.Data.Hsqldb.Common.IO
     /// Wraps a <c>java.io.Writer</c>,
     /// exposing it as a <c>System.IO.TextWriter</c>.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Wrapper.JavaWriterWrapper.png" 
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Wrapper.JavaWriterWrapper.png" 
     ///      alt="JavaWriterWrapper Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

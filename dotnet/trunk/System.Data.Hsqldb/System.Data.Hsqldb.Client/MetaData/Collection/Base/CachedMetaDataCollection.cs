@@ -45,7 +45,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection.Base
     /// caches the metadata collection it produces, returning
     /// the cached collection.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.BaseCachedCollection.png" 
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.BaseCachedCollection.png" 
     ///      alt="BaseCachedCollection Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

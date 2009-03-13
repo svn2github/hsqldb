@@ -55,7 +55,7 @@ namespace System.Data.Hsqldb.Client.MetaData
     /// <para>
     /// Implements the ADO.NET metadata collections contract.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.HsqlDatabaseMetaData.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.HsqlDatabaseMetaData.png"
     ///      alt="HsqlDatabaseMetaData Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

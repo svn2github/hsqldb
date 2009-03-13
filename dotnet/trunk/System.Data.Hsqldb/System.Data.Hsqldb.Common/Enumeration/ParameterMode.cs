@@ -44,7 +44,7 @@ namespace System.Data.Hsqldb.Common.Enumeration
     /// <para>
     /// Specifies a parameter directionality mode.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.ParameterMode.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.ParameterMode.png"
     ///      alt="ParameterMode Class Diagram"/>
     /// </summary>
     public enum ParameterMode

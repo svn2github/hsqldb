@@ -53,7 +53,7 @@ namespace System.Data.Hsqldb.Common.IO
     /// Wraps a <c>java.io.Reader</c>,
     /// exposing it as a <c>System.IO.TextReader</c>.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.IO.JavaReaderWrapper.png" 
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.IO.JavaReaderWrapper.png" 
     ///      alt="JavaReaderWrapper Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

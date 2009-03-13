@@ -44,7 +44,7 @@ namespace System.Data.Hsqldb.Common.Enumeration
     /// <para>
     /// Specifies the holdability of an HSQLDB cursor.
     /// </para>
-    /// <src img="/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.CursorHoldability.png"
+    /// <src img="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.CursorHoldability.png"
     ///      alt="CursorHoldability Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

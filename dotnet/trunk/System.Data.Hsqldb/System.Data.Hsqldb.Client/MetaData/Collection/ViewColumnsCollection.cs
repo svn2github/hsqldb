@@ -52,7 +52,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// <para>
     /// Provides the <see cref="HCN.ViewColumns"/> collection.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.ViewColumnsCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.ViewColumnsCollection.png"
     ///      alt="ViewColumnsCollection Class Diagram"/>
     /// </summary>
     public class ViewColumnsCollection : Base.MetaDataCollection

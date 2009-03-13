@@ -51,7 +51,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// <para>
     /// Provides the <see cref="HCN.UserDefinedTypes"/> collection.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.UserDefinedTypesCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.UserDefinedTypesCollection.png"
     ///      alt="UserDefinedTypesCollection Class Diagram"/>
     /// </summary>
     public class UserDefinedTypesCollection : Base.MetaDataCollection

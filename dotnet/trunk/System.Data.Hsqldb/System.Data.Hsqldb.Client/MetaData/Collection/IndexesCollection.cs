@@ -52,7 +52,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// <para>
     /// Provides the <see cref="HCN.Indexes"/> collection.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.IndexesCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.IndexesCollection.png"
     ///      alt="IndexesCollection Class Diagram"/>
     /// </summary>
     public class IndexesCollection : Base.MetaDataCollection

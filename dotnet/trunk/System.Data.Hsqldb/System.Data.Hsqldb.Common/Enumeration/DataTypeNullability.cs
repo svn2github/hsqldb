@@ -44,7 +44,7 @@ namespace System.Data.Hsqldb.Common.Enumeration
     /// <para>
     /// The HSQLDB data type nullability indicators.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.DataTypeNullability.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.DataTypeNullability.png"
     ///      alt="DataTypeNullability Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

@@ -49,7 +49,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// <para>
     /// Provides the <see cref="CN.MetaDataCollections"/> collection.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.MetaDataCollectionsCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.MetaDataCollectionsCollection.png"
     ///      alt="MetaDataCollectionsCollection Class Diagram"/>
     /// </summary>
     public class MetaDataCollectionsCollection : Base.CachedMetadataCollection

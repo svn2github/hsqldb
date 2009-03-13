@@ -40,7 +40,7 @@ namespace System.Data.Hsqldb.Common.Enumeration
     /// <para>
     /// Type of table resulting from unqualifed table creation DDL.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.DefaultTableType.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.DefaultTableType.png"
     ///      alt="DefaultTableType Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

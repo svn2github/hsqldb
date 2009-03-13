@@ -40,7 +40,7 @@ namespace System.Data.Hsqldb.Common.Enumeration
     /// <para>
     /// Specifies the allowable connection keywords.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.ConnectionStringKeyword.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.ConnectionStringKeyword.png"
     ///      alt="ConnectionStringKeyword Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

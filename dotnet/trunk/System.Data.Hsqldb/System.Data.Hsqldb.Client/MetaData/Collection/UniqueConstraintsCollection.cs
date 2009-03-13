@@ -52,7 +52,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// <para>
     /// Provides the <see cref="HCN.UniqueConstraints"/> collection.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.UniqueConstraintsCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.UniqueConstraintsCollection.png"
     ///      alt="IndexColumnsCollection Class Diagram"/>
     /// </summary>
     public class UniqueConstraintsCollection : Base.MetaDataCollection

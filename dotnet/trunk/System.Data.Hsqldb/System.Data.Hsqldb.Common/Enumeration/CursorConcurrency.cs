@@ -44,7 +44,7 @@ namespace System.Data.Hsqldb.Common.Enumeration
     /// <para>
     /// Specifies the concurrency of an HSQLDB cursor.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.CursorConcurrency.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.CursorConcurrency.png"
     ///      alt="CursorConcurrency Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

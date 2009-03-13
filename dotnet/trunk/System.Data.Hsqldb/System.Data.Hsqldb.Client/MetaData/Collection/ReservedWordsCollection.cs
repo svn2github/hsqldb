@@ -52,7 +52,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// <para>
     /// Provides the <see cref="CN.ReservedWords"/> collection.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.ReservedWordsCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.ReservedWordsCollection.png"
     ///      alt="ReservedWordsCollection Class Diagram"/>
     /// </summary>
     public class ReservedWordsCollection : Base.CachedMetadataCollection

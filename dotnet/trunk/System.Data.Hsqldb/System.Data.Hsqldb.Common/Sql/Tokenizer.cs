@@ -70,7 +70,7 @@ namespace System.Data.Hsqldb.Common.Sql
     /// Supports the lexographic analysis and subsequent parsing of syntactic
     /// productions in the HSQLDB dialect of SQL.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Sql.Tokenizer.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Sql.Tokenizer.png"
     ///      alt="Tokenizer Class Diagram"/>
     /// </summary>
     public sealed class Tokenizer

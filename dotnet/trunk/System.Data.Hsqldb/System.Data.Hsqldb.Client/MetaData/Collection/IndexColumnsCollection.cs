@@ -50,7 +50,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// <para>
     /// Provides the <see cref="HCN.IndexColumns"/> collection.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.IndexColumnsCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.IndexColumnsCollection.png"
     ///      alt="IndexColumnsCollection Class Diagram"/>
     /// </summary>
     public class IndexColumnsCollection : Base.MetaDataCollection

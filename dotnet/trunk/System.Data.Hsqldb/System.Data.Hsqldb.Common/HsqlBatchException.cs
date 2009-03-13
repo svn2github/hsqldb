@@ -48,7 +48,7 @@ namespace System.Data.Hsqldb.Common
     /// <para>
     /// Thrown when an error occurs during a batch update operation.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.HsqlBatchUpdateException.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.HsqlBatchUpdateException.png"
     ///      alt="HsqlBatchUpdateException Class Diagram"/>
     /// </summary>
     [Serializable]

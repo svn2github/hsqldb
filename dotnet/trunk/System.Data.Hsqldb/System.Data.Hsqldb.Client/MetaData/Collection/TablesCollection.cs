@@ -50,7 +50,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// <para>
     /// Provides the <see cref="HCN.Tables"/> collection.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.TablesCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.TablesCollection.png"
     ///      alt="TablesCollection Class Diagram"/>
     /// </summary>
     public class TablesCollection : Base.MetaDataCollection

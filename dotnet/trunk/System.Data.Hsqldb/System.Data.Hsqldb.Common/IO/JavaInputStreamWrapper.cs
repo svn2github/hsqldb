@@ -48,7 +48,7 @@ namespace System.Data.Hsqldb.Common.IO
     /// Wraps a <c>java.io.InputStream</c>,
     /// exposing it as a <c>System.IO.Stream</c>.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Wrapper.JavaInputStreamWrapper.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Wrapper.JavaInputStreamWrapper.png"
     ///      alt="JavaInputStreamWrapper Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

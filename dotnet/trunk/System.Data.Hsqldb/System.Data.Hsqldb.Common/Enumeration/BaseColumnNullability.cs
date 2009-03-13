@@ -44,7 +44,7 @@ namespace System.Data.Hsqldb.Common.Enumeration
     /// <para>
     /// Specifies the nullability characteristic of a base column.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.BaseColumnNullability.png" 
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.BaseColumnNullability.png" 
     ///      alt="BaseColumnNullability Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

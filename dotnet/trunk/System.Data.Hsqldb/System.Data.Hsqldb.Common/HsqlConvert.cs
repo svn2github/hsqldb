@@ -101,7 +101,7 @@ namespace System.Data.Hsqldb.Common
     /// <para>
     /// Bridges the CLR and HSQLDB type systems.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.HsqlConvert.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.HsqlConvert.png"
     ///      alt="HsqlConvert Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>    

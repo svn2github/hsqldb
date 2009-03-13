@@ -45,7 +45,7 @@ namespace System.Data.Hsqldb.Common.Sql
     /// <para>
     /// Represents an SQL lexographic element.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.HsqlToken.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.HsqlToken.png"
     ///      alt="HsqlToken Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

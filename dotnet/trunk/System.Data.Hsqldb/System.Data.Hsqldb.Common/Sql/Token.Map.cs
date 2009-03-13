@@ -45,7 +45,7 @@ namespace System.Data.Hsqldb.Common.Sql
     /// Defines the statically known SQL:200n lexographic elements, together
     /// with their numeric identifiers.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.HsqlTokens.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.HsqlTokens.png"
     ///      alt="HsqlTokens Class Diagram"/>
     /// </summary>
     /// <remarks>

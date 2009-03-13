@@ -48,7 +48,7 @@ namespace System.Data.Hsqldb.Common.Lob
     /// <para>
     /// An <c>IBlob</c> implementation that wraps a <c>java.sql.Blob</c>.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Lob.JdbcBlob.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Lob.JdbcBlob.png"
     ///      alt="JdbcBlob Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

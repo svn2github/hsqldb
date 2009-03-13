@@ -51,7 +51,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// <para>
     /// Provides the <see cref="HCN.Columns"/> metadata collection.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.ColumnsCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.ColumnsCollection.png"
     ///      alt="ColumnsCollection Class Diagram"/>
     /// </summary>
     /// <remarks>

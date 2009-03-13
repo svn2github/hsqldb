@@ -49,7 +49,7 @@ namespace System.Data.Hsqldb.Common.Sql.Types
     /// <para>
     /// The representation (mapping) of an <c>SQL OBJECT</c> value.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Sql.Type.SqlObject.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Sql.Type.SqlObject.png"
     ///      alt="DotNetObject Class Diagram"/>
     /// </summary>
     /// <remarks>

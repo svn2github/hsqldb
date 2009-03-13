@@ -44,7 +44,7 @@ namespace System.Data.Hsqldb.Common.Enumeration
     /// <para>
     /// The HSQLDB data type searchability codes.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.DataTypeSearchability.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.DataTypeSearchability.png"
     ///      alt="DataTypeSearchability Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

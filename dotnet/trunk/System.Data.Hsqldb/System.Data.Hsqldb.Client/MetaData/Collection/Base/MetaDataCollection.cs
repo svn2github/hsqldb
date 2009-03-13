@@ -48,7 +48,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection.Base
     /// <para>
     /// The ancestor of all HSQLDB MetaData collections.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.BaseCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.BaseCollection.png"
     /// alt="BaseCollection Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

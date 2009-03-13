@@ -50,7 +50,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// <para>
     /// Provides the <see cref="HCN.ForeignKeys"/> collection.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.ForeignKeysCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.ForeignKeysCollection.png"
     ///      alt="System.Data.Hsqldb.MetaData.Collections Class Diagram"/>
     /// </summary>
     public class ForeignKeysCollection : Base.MetaDataCollection

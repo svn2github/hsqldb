@@ -40,7 +40,7 @@ namespace System.Data.Hsqldb.Common.Enumeration
     /// <para>
     /// The supported HSQLDB Application Log Levels.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.DatabaseAppLogLevel.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.DatabaseAppLogLevel.png"
     ///      alt="DatabaseAppLogLevel Class Diagram"/>
     /// </summary>
     /// <remarks>

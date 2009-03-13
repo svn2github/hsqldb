@@ -44,7 +44,7 @@ namespace System.Data.Hsqldb.Common.Enumeration
     /// <para>
     /// Specifies the fetch direction of an HSQLDB cursor.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.CursorFetchDirection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.CursorFetchDirection.png"
     ///      alt="CursorFetchDirection Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

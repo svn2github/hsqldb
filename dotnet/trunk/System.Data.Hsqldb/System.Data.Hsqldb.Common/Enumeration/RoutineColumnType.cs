@@ -43,7 +43,7 @@ namespace System.Data.Hsqldb.Common.Enumeration
     /// <para>
     /// Specifies an SQL-invoked Routine Column's role.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.RoutineColumnType.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.RoutineColumnType.png"
     ///      alt="RoutineColumnType Class Diagram"/>
     /// </summary>
     public enum RoutineColumnType

@@ -49,7 +49,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// <para>
     /// Provides the <see cref="HCN.TableTriggers"/> collection.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.TableTriggersCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.TableTriggersCollection.png"
     ///      alt="TableTriggersCollection Class Diagram"/>
     /// </summary>
     public class TableTriggersCollection : Base.MetaDataCollection

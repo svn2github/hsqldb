@@ -52,7 +52,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// <para>
     /// Provides the <see cref="HCN.ProcedureParameters"/> collection.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.ProcedureParametersCollection.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.ProcedureParametersCollection.png"
     ///      alt="ProcedureParametersCollection Class Diagram"/>
     /// </summary>
     public class ProcedureParametersCollection : Base.MetaDataCollection

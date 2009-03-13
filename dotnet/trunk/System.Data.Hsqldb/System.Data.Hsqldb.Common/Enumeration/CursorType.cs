@@ -42,7 +42,7 @@ namespace System.Data.Hsqldb.Common.Enumeration
     /// <para>
     /// Specifies the type of an HSQLDB cursor.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.CursorType.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.CursorType.png"
     ///      alt="CursorType Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>
