@@ -166,9 +166,9 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
 
                     string createFormat = ToCreateFormat(typeName, createParameters);
                     string dataType = Convert.ToString(HsqlConvert.ToDataType(jdbcType));
-                    bool isBestMatch = IsBestMatch(typeName);
+                    bool isBestMatch = IsBestMatchProviderTypeName(typeName);
                     bool isFixedLength = IsFixedLength(jdbcType);
-                    bool isLong = IsLong(jdbcType);
+                    bool isLong = IsLongProviderType(jdbcType);
                     bool isNullable = IsNullable(nullability);
                     bool isSearchable = IsSearchable(searchability);
                     bool isSearchableWithLike = IsSearchableWithLike(searchability);

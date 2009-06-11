@@ -38,7 +38,7 @@ using System.Data;
 using System.Text;
 using System.Data.Hsqldb.Common.Enumeration;
 using StringUtil = org.hsqldb.lib.StringUtil;
-using Types = org.hsqldb.Types;
+using HsqlTypes = org.hsqldb.Types;
 #endregion
 
 namespace System.Data.Hsqldb.Client.MetaData.Collection.Base
@@ -54,14 +54,25 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection.Base
     /// <author name="boucherb@users"/>
     public abstract class MetaDataCollection
     {
+        #region Constants
+        static readonly string DefaultSchemaQuery = string.Format(
+@"-- {0}.DefaultSchemaQuery 
+SELECT SCHEMA_NAME
+  FROM INFORMATION_SCHEMA.SYSTEM_SCHEMAS 
+ WHERE (IS_DEFAULT=TRUE)",
+            typeof(MetaDataCollection).FullName);
+        #endregion
+
         #region Fields
 
         #region Comma
         /// <summary>
         /// Small optimization.
+        /// </summary>
+        /// <remarks>
         /// Avoids creating a new char[] object every time
         /// <c>string.Split(comma)</c> is invoked.
-        /// </summary>
+        /// </remarks>
         protected static readonly char[] Comma = new char[] { ',' }; 
         #endregion
 
@@ -82,8 +93,17 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection.Base
 
         #region GetSchema(HsqlConnection,string[])
         /// <summary>
-        /// Gets the schema.
+        /// Produces a schema table filled with data rows
+        /// satisfying the given <c>restrictions</c>.
         /// </summary>
+        /// <remarks>
+        /// By default, invokes <see cref="CreateTable()"/> to create
+        /// a table with the expected column collection, invokes
+        /// <see cref="FillTable(HsqlConnection,DataTable,string[])"/>
+        /// to populate the table's row collection, and then sets
+        /// every data column in the table's column collection to 
+        /// <see cref="DataColumn.ReadOnly"/>.
+        /// </remarks>
         /// <param name="connection">The connection.</param>
         /// <param name="restrictions">The restrictions.</param>
         /// <returns></returns>
@@ -105,8 +125,15 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection.Base
 
         #region CreateTable()
         /// <summary>
-        /// Creates the table.
+        /// Produces a metadata collection table .
         /// </summary>
+        /// <remarks>
+        /// The returned object should be an empty 
+        /// data table whose columns collection has
+        /// been populated with the data columns required
+        /// to represent the specifically intended
+        /// collection of metadata.
+        /// </remarks>
         /// <returns>
         /// The table.
         /// </returns>
@@ -115,8 +142,15 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection.Base
 
         #region FillTable(HsqlConnection,DataTable,string[])
         /// <summary>
-        /// Fills the table.
+        /// Fills the metadata collection table.
         /// </summary>
+        /// <remarks>
+        /// It is expected that the <c>table</c> was obtained by
+        /// invoking <see cref="CreateTable"/>.  Otherwise, it is
+        /// the responsibility of the caller to correctly populate
+        /// the table's column collection before passing the table
+        /// to this method.
+        /// </remarks>
         /// <param name="connection">The connection.</param>
         /// <param name="table">The table.</param>
         /// <param name="restrictions">The restrictions.</param>
@@ -163,7 +197,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection.Base
 
             select.Append(table);
 
-            if (where != null && where.Trim().Length > 0)
+            if (!string.IsNullOrEmpty(where))
             {
                 select.Append(" WHERE ").Append(where);
             }
@@ -174,24 +208,25 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection.Base
 
         #region TranslateSchema(HsqlConnection,string)
         /// <summary>
-        /// Translates the schema.
+        /// Translates the given schema name value.
         /// </summary>
+        /// <remarks>
+        /// 
+        /// </remarks>
         /// <param name="connection">The connection.</param>
         /// <param name="schemaName">Name of the schema.</param>
         /// <returns></returns>
-        protected string TranslateSchema(HsqlConnection connection, string schemaName)
+        protected string TranslateSchema(HsqlConnection connection, 
+            string schemaName)
         {
             if (connection.Settings.DefaultSchemaQualification
-                && (schemaName == string.Empty))
+                && (WantsIsNull(schemaName)))
             {
-                string defaultSchema = (string)connection.Session
-                    .ExecuteScalarDirect(
-"SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SYSTEM_SCHEMAS WHERE IS_DEFAULT=TRUE"
-                     );
+                string defaultSchema = connection.Session.ExecuteScalarDirect(
+                    DefaultSchemaQuery) as string;
 
-                return (defaultSchema == null)
-                    ? schemaName
-                    : defaultSchema;
+                return (string.IsNullOrEmpty(defaultSchema)) 
+                    ? schemaName : defaultSchema;
             }
             else
             {
@@ -492,15 +527,15 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection.Base
         }
         #endregion
 
-        #region IsBestMatch(string)
+        #region IsBestMatchProviderTypeName(string)
         /// <summary>
-        /// Determines whether the specified SQL data type name
-        /// is the best match relative to its corresponding
-        /// JDBC data type code.
+        /// Determines whether the characteristics of the provider-specific
+        /// SQL data type with the given type name most closely match the
+        /// characteristics expected provider-specific data type code.
         /// </summary>
         /// <remarks>
         /// The test is simple: <c>return ("VARCHAR_IGNORECASE" != typeName);</c>
-        /// No check for valid typeName is performed.
+        /// No check for valid <c>typeName</c> is performed.
         /// </remarks>
         /// <param name="typeName">
         /// Name of the data type.
@@ -509,13 +544,14 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection.Base
         /// <c>true</c> if the specified data type name is the best match;
         /// otherwise, <c>false</c>.
         /// </returns>
-        public static bool IsBestMatch(string typeName)
+        public static bool IsBestMatchProviderTypeName(string typeName)
         {
             return ("VARCHAR_IGNORECASE" != typeName);
         }
         #endregion
 
-        #region IsLong(int)
+
+        #region MyRegion
         /// <summary>
         /// Determines whether the indicated SQL data type is long.
         /// </summary>
@@ -525,20 +561,20 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection.Base
         /// long variant of an intrinsic type;
         /// otherwise, <c>false</c>.
         /// </returns>
-        public static bool IsLong(int jdbcType)
+        public static bool IsLongProviderType(int type)
         {
-            return (jdbcType == (int)HsqlProviderType.LongVarChar)
-                   || (jdbcType == (int)HsqlProviderType.LongVarBinary)
-                   || (jdbcType == (int)HsqlProviderType.Clob)
-                   || (jdbcType == (int)HsqlProviderType.Blob);
-        }
+            return (type == (int)HsqlProviderType.LongVarChar)
+                   || (type == (int)HsqlProviderType.LongVarBinary)
+                   || (type == (int)HsqlProviderType.Clob)
+                   || (type == (int)HsqlProviderType.Blob);
+        } 
         #endregion
+
 
         #region IsNullable(int)
         /// <summary>
-        /// Determines whether the specified JDBC
-        /// nullability code indicates that the corresponding
-        /// data element is nullable.
+        /// Determines whether the specified <see cref="DataTypeNullability"/>
+        /// code denotes that the corresponding data element is nullable.
         /// </summary>
         /// <param name="nullability">The JDBC nullability code.</param>
         /// <returns>
@@ -554,16 +590,16 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection.Base
 
         #region IsSearchable(int)
         /// <summary>
-        /// Determines whether the specified JDBC searchability code
-        /// indicates that the corresponding data element is
-        /// searchable in any way.
+        /// Determines whether the specified <see cref="DataTypeSearchability"/>
+        /// code denotes that the corresponding data element is searchable in
+        /// any way.
         /// </summary>
         /// <param name="searchability">
-        /// The JDBC searchability code.
+        /// An <c>Int32</c> representation of the data type searchability code.
         /// </param>
         /// <returns>
-        /// <c>true</c> if the specified JDBC searchability code indicates that
-        /// the corresponding data element is searchable in any way;
+        /// <c>true</c> if the specified data type searchability code denotes
+        /// that the corresponding data element is searchable in any way;
         /// otherwise, <c>false</c>.
         /// </returns>
         public static bool IsSearchable(int searchability)
@@ -593,60 +629,63 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection.Base
         }
         #endregion
 
-        #region IsJdbcNumberType(int)
+        #region IsNumberProviderType(int)
         /// <summary>
-        /// Determines whether the specified JDBC type code indicates
-        /// that the corresponding data element is some kind of number.
+        /// Determines whether the given provider-specific data
+        /// type code indicates that a corresponding data element
+        /// represents some kind of number value.
         /// </summary>
         /// <param name="jdbcType">
         /// The JDBC data type code.
         /// </param>
         /// <returns>
-        /// <c>true</c> if the given code represents an SQL number type;
+        /// <c>true</c> if the given code denotes an SQL number data type;
         /// otherwise, <c>false</c>.
         /// </returns>
-        public static bool IsJdbcNumberType(int jdbcType)
+        public static bool IsNumberProviderType(int type)
         {
-            return Types.isNumberType(jdbcType);
+            return HsqlTypes.isNumberType(type);
         }
         #endregion
 
-        #region IsJdbcTemporalType(int)
+        #region IsTemporalProviderType(int)
         /// <summary>
-        /// Determines whether the specified JDBC type code indicates
-        /// that the corresponding data element is temporal (i.e. has an
-        /// SQL DATE, TIME, TIMESTAMP or INTERVAL value).
+        /// Determines whether the given provider-specific type code
+        /// indicates that the corresponding data element represents
+        /// a temporal value(i.e. has an SQL DATE, TIME, TIMESTAMP or
+        /// INTERVAL value).
         /// </summary>
-        /// <param name="jdbcType">
-        /// A JDBC data type code.
+        /// <param name="type">
+        /// A provider-specific data type code.
         /// </param>
         /// <returns>
-        /// <c>true</c> if the given code represents an SQL temporal data type;
+        /// <c>true</c> if the given code denotes an SQL temporal data type;
         /// otherwise, <c>false</c>.
         /// </returns>
-        public static bool IsJdbcTemporalType(int jdbcType)
+        public static bool IsTemporalProviderType(int type)
         {
-            return (jdbcType == Types.DATE)
-                   || (jdbcType == Types.TIME)
-                   || (jdbcType == Types.TIMESTAMP);
+            return (type == (int)HsqlProviderType.Date)
+                   || (type == HsqlTypes.TIME)
+                   || (type == HsqlTypes.TIMESTAMP);
         }
         #endregion
 
-        #region IsJdbcCharacterType(int)
+        #region IsProviderCharacterType(int)
         /// <summary>
-        /// Determines whether the specified jdbc type code indicates
-        /// that the corresponding data element is an SQL character type.
+        /// Determines whether the given provider-specific data type code
+        /// indicates that the corresponding data element represents an
+        /// SQL character value.
         /// </summary>
-        /// <param name="jdbcType">
-        /// A JDBC type code.
+        /// <param name="type">
+        /// A provider-specific data type code.
         /// </param>
         /// <returns>
-        /// <c>true</c> if the given code represents an SQL character type;
+        /// <c>true</c> if the given code denotes an SQL character data type;
         /// otherwise, <c>false</c>.
         /// </returns>
-        public static bool IsJdbcCharacterType(int jdbcType)
+        public static bool IsProviderCharacterType(int type)
         {
-            return Types.isCharacterType(jdbcType);
+            return HsqlTypes.isCharacterType(type);
         }
         #endregion
 
