@@ -53,7 +53,9 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// </summary>
     public static class DataSourceEnumerationCollection
     {
-        private const string m_File = @"\datasource-enumeration.xml";
+        #region Private Constants
+        private const string FileName = @"datasources.xml"; 
+        #endregion
 
         #region Public Constants
 
@@ -65,9 +67,9 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
 @"<?xml version='1.0' encoding='utf-8'?>
 <xs:schema
     id='DataSourceEnumerationDataSet'
-    targetNamespace='http://org.hsqldb/schemas/1.8.0.7/DataSourceEnumeration.xsd'
-    xmlns:mstns='http://org.hsqldb/schemas/1.8.0.7/DataSourceEnumeration.xsd'
-    xmlns='http://org.hsqldb/schemas/1.8.0.7/DataSourceEnumeration.xsd'
+    targetNamespace='http://org.hsqldb/schemas/1.8.0/DataSourceEnumeration.xsd'
+    xmlns:mstns='http://org.hsqldb/schemas/1.8.0/DataSourceEnumeration.xsd'
+    xmlns='http://org.hsqldb/schemas/1.8.0/DataSourceEnumeration.xsd'
     xmlns:xs='http://www.w3.org/2001/XMLSchema'
     xmlns:msdata='urn:schemas-microsoft-com:xml-msdata'
     xmlns:msprop='urn:schemas-microsoft-com:xml-msprop'
@@ -177,13 +179,13 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         /// 
         /// </summary>
         public const int InstanceNameColumnOrdinal = 1;
+        #endregion
 
         #region IsClusteredColumnName
-        #endregion
         /// <summary>
         /// 
         /// </summary>
-        public const string IsClusteredColumnName = "IsClustered"; 
+        public const string IsClusteredColumnName = "IsClustered";
         #endregion
 
         #region IsClusteredColumnOrdinal
@@ -211,7 +213,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         /// <summary>
         /// 
         /// </summary>
-        public const string PathSuffix = @"\.hsqldb\1.8.0" + m_File; 
+        public const string PathSuffix = @"\.hsqldb\" + FileName; 
         #endregion
 
         #region TableName
@@ -222,7 +224,6 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #endregion
         
         #endregion
-
 
         #region GetPath(Environment.SpecialFolder,string)
         /// <summary>
@@ -237,7 +238,9 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
             {
                 string path = Environment.GetFolderPath(type);
 
-                return (string.IsNullOrEmpty(path)) ? null : path + suffix;
+                return (string.IsNullOrEmpty(path)) 
+                    ? null 
+                    : Path.Combine(path,suffix);
             }
             catch (Exception)
             {
@@ -259,7 +262,9 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
             {
                 string path = Environment.GetEnvironmentVariable(key);
 
-                return (string.IsNullOrEmpty(path)) ? null : path + suffix;
+                return (string.IsNullOrEmpty(path))
+                    ? null 
+                    : Path.Combine(path, suffix);
             }
             catch (Exception)
             {
@@ -277,7 +282,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         {
             try
             {
-                return Environment.CurrentDirectory + m_File;
+                return Path.Combine(Environment.CurrentDirectory, FileName);
             }
             catch (Exception)
             {
@@ -305,7 +310,10 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
 
             DataSet dseMaster = new DataSet();
 
-            dseMaster.ReadXmlSchema(new StringReader(DataSetSchema));
+            using (TextReader reader = new StringReader(DataSetSchema))
+            {
+                dseMaster.ReadXmlSchema(reader);
+            }
 
             for (int i = 0; i < paths.Length; i++)
             {
@@ -324,10 +332,14 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
                     {
                         //Console.WriteLine("processing " + path);
                         DataSet dse = new DataSet();
-                        TextReader reader = new StringReader(DataSetSchema);
-
-                        dse.ReadXmlSchema(reader);
+                        //
+                        using (TextReader reader = new StringReader(DataSetSchema))
+                        {
+                            dse.ReadXmlSchema(reader);
+                        }
+                        //
                         dse.ReadXml(path, XmlReadMode.IgnoreSchema);
+                        //
                         dseMaster.Merge(dse);
                     }
                 }

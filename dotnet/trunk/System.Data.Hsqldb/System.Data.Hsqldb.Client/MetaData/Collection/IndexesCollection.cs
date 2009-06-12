@@ -60,7 +60,8 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region Constants
 
         private const string sql =
-@"SELECT *
+@"-- System.Data.Hsqldb.Client.MetaData.Collection.IndexesCollection
+SELECT *
   FROM (SELECT DISTINCT tc.constraint_catalog
                        ,tc.constraint_schema
                        ,tc.constraint_name
@@ -207,7 +208,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
 
         #endregion
 
-        #region IndexesCollection(HsqlConnection)
+        #region IndexesCollection()
 
         /// <summary>
         /// Initializes a new instance of the <see cref="IndexesCollection"/> class.
@@ -248,9 +249,10 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region FillTable(DataTable,string[])
 
         /// <summary>
-        /// Fills the given <c>Indexes</c> metadata collection table.
+        /// Fills the given <c>Indexes</c> metadata collection table
+        /// using the given connection and restrictions.
         /// </summary>
-        /// <param name="connection">The connection.</param>
+        /// <param name="connection">The connection from which to fill the table.</param>
         /// <param name="table">The table to fill.</param>
         /// <param name="restrictions">The restrictions to apply.</param>
         public override void FillTable(HsqlConnection connection, 

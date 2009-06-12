@@ -123,7 +123,8 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region Constants
 
         private const string sql =
-@"select sc.table_cat as table_catalog
+@"-- System.Data.Hsqldb.Client.MetaData.Collection.ColumnsCollection
+ select sc.table_cat as table_catalog
        ,sc.table_schem as table_schema
        ,sc.table_name
        ,sc.column_name
@@ -315,13 +316,14 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         }
         #endregion
 
-        #region FillTable(DataTable,string[])
+        #region FillTable(HsqlConnection,DataTable,string[])
         /// <summary>
-        /// Fills the given <c>Columns</c> metdata collection table.
+        /// Fills the given <c>Columns</c> metadata collection table
+        /// using the given connection and restrictions.
         /// </summary>
         /// <param name="connection">The connection.</param>
         /// <param name="table">The table to fill.</param>
-        /// <param name="restrictions">The restrictions.</param>
+        /// <param name="restrictions">The restrictions to apply.</param>
         public override void FillTable(HsqlConnection connection,
             DataTable table, string[] restrictions)
         {
@@ -341,7 +343,9 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
             schemaNamePattern = TranslateSchema(connection, schemaNamePattern);
 
             StringBuilder query = new StringBuilder(sql)
-                //.Append(And("TABLE_CAT", "=", catalog))
+#if CATALOG_RESTRICTIONS
+                .Append(And("TABLE_CAT", "=", catalog))
+#endif
                 .Append(And("TABLE_SCHEM", "LIKE", schemaNamePattern))
                 .Append(And("TABLE_NAME", "LIKE", tableNamePattern))
                 .Append(And("COLUMN_NAME", "LIKE", columnNamePattern));
@@ -437,7 +441,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
                     int? charMaxLength = (int?)values[icharmaxlen];
                     int? charOctetLength = (int?)values[icharoctlen];
                     //
-                    Nullable<int> ni;
+                    int? ni;
                     int? numPrecision = (int?)values[inumprec];
                     short? numPrecRadix = (short?)(int?)values[inumprecrad];
                     int? numScale = (int?)values[inumscale];

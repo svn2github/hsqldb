@@ -54,16 +54,16 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection.Base
     /// <author name="boucherb@users"/>
     public abstract class MetaDataCollection
     {
-        #region Constants
+        #region Static Readonly Fields
+
+        #region DefaultSchemaQuery
         static readonly string DefaultSchemaQuery = string.Format(
 @"-- {0}.DefaultSchemaQuery 
 SELECT SCHEMA_NAME
   FROM INFORMATION_SCHEMA.SYSTEM_SCHEMAS 
  WHERE (IS_DEFAULT=TRUE)",
-            typeof(MetaDataCollection).FullName);
+    typeof(MetaDataCollection).FullName);
         #endregion
-
-        #region Fields
 
         #region Comma
         /// <summary>
@@ -73,7 +73,7 @@ SELECT SCHEMA_NAME
         /// Avoids creating a new char[] object every time
         /// <c>string.Split(comma)</c> is invoked.
         /// </remarks>
-        protected static readonly char[] Comma = new char[] { ',' }; 
+        protected static readonly char[] Comma = new char[] { ',' };
         #endregion
 
         #endregion
@@ -84,7 +84,7 @@ SELECT SCHEMA_NAME
         /// <summary>
         /// For subclasses.
         /// </summary>
-        protected MetaDataCollection() : base(){}
+        protected MetaDataCollection() : base() { }
         #endregion
 
         #endregion Constructors
@@ -106,7 +106,10 @@ SELECT SCHEMA_NAME
         /// </remarks>
         /// <param name="connection">The connection.</param>
         /// <param name="restrictions">The restrictions.</param>
-        /// <returns></returns>
+        /// <returns>
+        /// A schema table filled with data rows satisfying
+        /// the given <c>restrictions</c>.
+        /// </returns>
         public virtual DataTable GetSchema(HsqlConnection connection,
             string[] restrictions)
         {
@@ -125,7 +128,7 @@ SELECT SCHEMA_NAME
 
         #region CreateTable()
         /// <summary>
-        /// Produces a metadata collection table .
+        /// Produces a metadata collection table.
         /// </summary>
         /// <remarks>
         /// The returned object should be an empty 
@@ -135,14 +138,17 @@ SELECT SCHEMA_NAME
         /// collection of metadata.
         /// </remarks>
         /// <returns>
-        /// The table.
+        /// An empty data table whose column collection is
+        /// suitable for representing the values of the
+        /// specific metadata collection.
         /// </returns>
         public abstract DataTable CreateTable();
         #endregion
 
         #region FillTable(HsqlConnection,DataTable,string[])
         /// <summary>
-        /// Fills the metadata collection table.
+        /// Fills the given metadata collection table using
+        /// the given connection and restrictions.
         /// </summary>
         /// <remarks>
         /// It is expected that the <c>table</c> was obtained by
@@ -151,9 +157,15 @@ SELECT SCHEMA_NAME
         /// the table's column collection before passing the table
         /// to this method.
         /// </remarks>
-        /// <param name="connection">The connection.</param>
-        /// <param name="table">The table.</param>
-        /// <param name="restrictions">The restrictions.</param>
+        /// <param name="connection">
+        /// The connection from which to fill the table.
+        /// </param>
+        /// <param name="table">
+        /// The table to fill.
+        /// </param>
+        /// <param name="restrictions">
+        /// The restrictions used to fill the table.
+        /// </param>
         public abstract void FillTable(
             HsqlConnection connection,
             DataTable table,
@@ -168,12 +180,11 @@ SELECT SCHEMA_NAME
         /// <summary>
         /// Executes the specified SQL query.
         /// </summary>
-        /// <param name="connection">The connection.</param>
+        /// <param name="connection">The connection on which to execute 
+        /// the query.</param>
         /// <param name="sql">The SQL query to execute.</param>
         /// <returns>A new data reader holding the result</returns>
-        protected HsqlDataReader Execute(
-            HsqlConnection connection, 
-            string sql)
+        protected HsqlDataReader Execute(HsqlConnection connection, string sql)
         {
             return new HsqlDataReader(connection.Session.ExecuteDirect(sql));
         }
@@ -189,8 +200,8 @@ SELECT SCHEMA_NAME
         /// <param name="where">The where clause.</param>
         /// <returns>A new data reader holding the result.</returns>
         protected HsqlDataReader ExecuteSelect(
-            HsqlConnection connection, 
-            string table, 
+            HsqlConnection connection,
+            string table,
             string where)
         {
             StringBuilder select = new StringBuilder("SELECT * FROM ");
@@ -216,7 +227,7 @@ SELECT SCHEMA_NAME
         /// <param name="connection">The connection.</param>
         /// <param name="schemaName">Name of the schema.</param>
         /// <returns></returns>
-        protected string TranslateSchema(HsqlConnection connection, 
+        protected string TranslateSchema(HsqlConnection connection,
             string schemaName)
         {
             if (connection.Settings.DefaultSchemaQualification
@@ -225,7 +236,7 @@ SELECT SCHEMA_NAME
                 string defaultSchema = connection.Session.ExecuteScalarDirect(
                     DefaultSchemaQuery) as string;
 
-                return (string.IsNullOrEmpty(defaultSchema)) 
+                return (string.IsNullOrEmpty(defaultSchema))
                     ? schemaName : defaultSchema;
             }
             else
@@ -255,7 +266,7 @@ SELECT SCHEMA_NAME
         /// </returns>
         public static string[] GetRestrictions(string[] restrictions, int count)
         {
-            string[] l_restrictions = new string[count];
+            string[] rval = new string[count];
 
             if (restrictions != null)
             {
@@ -263,11 +274,11 @@ SELECT SCHEMA_NAME
 
                 for (int i = 0; i < count; i++)
                 {
-                    l_restrictions[i] = restrictions[i];
+                    rval[i] = restrictions[i];
                 }
             }
 
-            return l_restrictions;
+            return rval;
         }
         #endregion
 
@@ -318,7 +329,7 @@ SELECT SCHEMA_NAME
         /// <c>String.Empty</c> is returned (corresponding to the empty
         /// SQL predicate); else if <c>value</c> is String.Empty,
         /// then <c>" AND ident IS NULL</c> is returned; else
-        /// if <c>value</c>is a string object, then it is converted
+        /// if <c>value</c> is a string object, then it is converted
         /// to the SQL string literal form; if the case-insensitive
         /// value of <c>oper</c> is "LIKE", then if <c>value</c> contains
         /// no wildcard characters, <c>oper</c> is conterted to "=";
@@ -530,12 +541,22 @@ SELECT SCHEMA_NAME
         #region IsBestMatchProviderTypeName(string)
         /// <summary>
         /// Determines whether the characteristics of the provider-specific
-        /// SQL data type with the given type name most closely match the
-        /// characteristics expected provider-specific data type code.
+        /// SQL data type denoted by the given type name most closely match the
+        /// characteristics expected for the corresponding provider-specific
+        /// data type code.
         /// </summary>
         /// <remarks>
-        /// The test is simple: <c>return ("VARCHAR_IGNORECASE" != typeName);</c>
-        /// No check for valid <c>typeName</c> is performed.
+        /// <para>
+        /// Because there is presently only one case for which there exist two
+        /// type names that map to the same type code, the test is
+        /// (perhaps overly) simple:
+        /// </para>
+        /// <para>
+        /// <c>return ("VARCHAR_IGNORECASE" != typeName);</c>
+        /// </para>
+        /// <para>
+        /// Note that no check for valid <c>typeName</c> is performed.
+        /// </para>
         /// </remarks>
         /// <param name="typeName">
         /// Name of the data type.
@@ -550,16 +571,19 @@ SELECT SCHEMA_NAME
         }
         #endregion
 
-
-        #region MyRegion
+        #region IsLongProviderType(int)
         /// <summary>
-        /// Determines whether the indicated SQL data type is long.
+        /// Determines whether the specified SQL data type code
+        /// denots a SQL data type that is is long variant of an
+        /// intrinsic character or octet sequence type, such
+        /// as LONGVARCHAR, LONGBINARY, BLOB or CLOB.
         /// </summary>
-        /// <param name="jdbcType">A JDBC type code denoting an SQL data type.</param>
+        /// <param name="type">
+        /// An integral data type code denoting an SQL data type.
+        /// </param>
         /// <returns>
         /// <c>true</c> if the indicated SQL data type is a
-        /// long variant of an intrinsic type;
-        /// otherwise, <c>false</c>.
+        /// long variant of an intrinsic type; otherwise, <c>false</c>.
         /// </returns>
         public static bool IsLongProviderType(int type)
         {
@@ -567,18 +591,19 @@ SELECT SCHEMA_NAME
                    || (type == (int)HsqlProviderType.LongVarBinary)
                    || (type == (int)HsqlProviderType.Clob)
                    || (type == (int)HsqlProviderType.Blob);
-        } 
+        }
         #endregion
-
 
         #region IsNullable(int)
         /// <summary>
         /// Determines whether the specified <see cref="DataTypeNullability"/>
         /// code denotes that the corresponding data element is nullable.
         /// </summary>
-        /// <param name="nullability">The JDBC nullability code.</param>
+        /// <param name="nullability">
+        /// An <c>Int32</c> representation of the data type nullability code.
+        /// </param>
         /// <returns>
-        /// <c>true</c> if the specified JDBC nullability code
+        /// <c>true</c> if the specified nullability code
         /// indicates that the corresponding data element is nullable;
         /// otherwise, <c>false</c>.
         /// </returns>
@@ -707,7 +732,7 @@ SELECT SCHEMA_NAME
                             ? 0
                             : 1 + createParameters.Split(Comma).Length;
 
-            int last = count - 1;
+            int last = (count - 1);
 
             StringBuilder createFormat = new StringBuilder();
 
@@ -739,41 +764,36 @@ SELECT SCHEMA_NAME
 
         #region IsFixedLength(int)
         /// <summary>
-        /// Determines whether the specified JDBC data type code represents an
+        /// Determines whether the specified data type code denotes an
         /// SQL fixed length data type.
         /// </summary>
-        /// <param name="jdbcType">
-        /// JDBC data type code
-        /// </param>
+        /// <param name="type">data type code</param>
         /// <returns>
-        /// <c>true</c> if the specified JDBC type code represents an
+        /// <c>true</c> if the specified data type code denotes an
         /// SQL fixed length data type; otherwise, <c>false</c>.
         /// </returns>
-        public static bool IsFixedLength(int jdbcType)
+        public static bool IsFixedLength(int type)
         {
-
-            switch (jdbcType)
+            switch (type)
             {
-                case (int)HsqlProviderType.Array:
-                case (int)HsqlProviderType.Blob:
-                case (int)HsqlProviderType.Clob:
-                case (int)HsqlProviderType.DataLink:
-                case (int)HsqlProviderType.Distinct:
-                case (int)HsqlProviderType.JavaObject:
-                case (int)HsqlProviderType.LongVarBinary:
-                case (int)HsqlProviderType.LongVarChar:
-                case (int)HsqlProviderType.Object:
-                case (int)HsqlProviderType.Ref:
-                case (int)HsqlProviderType.Struct:
-                case (int)HsqlProviderType.VarBinary:
-                case (int)HsqlProviderType.VarChar:
-                case (int)HsqlProviderType.Xml:
+                case (int)HsqlProviderType.BigInt:
+                case (int)HsqlProviderType.Boolean:
+                // case (int)HsqlProviderType.Char: // checkme
+                case (int)HsqlProviderType.Date:
+                case (int)HsqlProviderType.Double:
+                case (int)HsqlProviderType.Float:
+                case (int)HsqlProviderType.Integer:
+                case (int)HsqlProviderType.Real:
+                case (int)HsqlProviderType.SmallInt:
+                case (int)HsqlProviderType.Time:
+                case (int)HsqlProviderType.TimeStamp:
+                case (int)HsqlProviderType.TinyInt:
                     {
-                        return false;
+                        return true;
                     }
                 default:
                     {
-                        return true;
+                        return false;
                     }
             }
         }

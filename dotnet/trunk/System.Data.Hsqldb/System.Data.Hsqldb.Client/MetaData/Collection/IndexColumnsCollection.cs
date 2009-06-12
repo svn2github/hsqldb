@@ -58,7 +58,8 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region Constants
 
         private const string sql =
-@"SELECT *
+@"-- System.Data.Hsqldb.Client.MetaData.Collection.IndexColumnsCollection
+SELECT *
   FROM (SELECT DISTINCT tc.constraint_catalog
                        ,tc.constraint_schema
                        ,tc.constraint_name
@@ -227,7 +228,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
 
         #endregion
 
-        #region IndexColumnsCollection(HsqlConnection
+        #region IndexColumnsCollection()
 
         /// <summary>
         /// Initializes a new instance of the <see cref="IndexColumnsCollection"/> class.
@@ -267,11 +268,12 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region FillTable(DataTable,string[])
 
         /// <summary>
-        /// Fills the index columns table.
+        /// Fills the given <c>IndexColumns</c> metadata collection table
+        /// using the given connection and restrictions.
         /// </summary>
-        /// <param name="connection">The connection.</param>
-        /// <param name="table">The table.</param>
-        /// <param name="restrictions">The restrictions.</param>
+        /// <param name="connection">The connection from which to fill the table.</param>
+        /// <param name="table">The table to fill.</param>
+        /// <param name="restrictions">The restrictions to apply.</param>
         public override void FillTable(HsqlConnection connection, 
             DataTable table, string[] restrictions)
         {
@@ -292,7 +294,10 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
 
             StringBuilder query = new StringBuilder(sql);
 
-            query.Append(And("TABLE_CATALOG", "=", catalogName))
+            query
+#if CATALOG_RESTRICTIONS
+                .Append(And("TABLE_CATALOG", "=", catalogName))
+#endif
                 .Append(And("TABLE_SCHEMA", "LIKE", schemaNamePattern))
                 .Append(And("TABLE_NAME", "LIKE", tableNamePattern))
                 .Append(And("INDEX_NAME", "LIKE", indexNamePattern))

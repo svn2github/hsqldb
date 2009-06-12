@@ -62,20 +62,18 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     {
         #region Constants
         private const string sql =
-@"select value, null, null 
-    from information_schema.system_sessioninfo
-   where key = 'DATABASE'";
+@"-- System.Data.Hsqldb.Client.MetaData.Collection.DatabasesCollection
+select value, null, null
+ from information_schema.system_sessioninfo
+where key = 'DATABASE'";
         #endregion
 
-        #region DatabasesCollection(HsqlConnection)
+        #region DatabasesCollection()
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DatabasesCollection"/> class.
         /// </summary>
-        public DatabasesCollection()
-            : base()
-        {
-        }
+        public DatabasesCollection() : base() { }
 
         #endregion
 
@@ -90,9 +88,9 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
             DataTable table = new DataTable(HCN.Databases);
             DataColumnCollection cols = table.Columns;
 
-            AddColumn(cols, null, "database_name", typeof (object));
-            AddColumn(cols, null, "dbid", typeof (int));
-            AddColumn(cols, null, "create_date", typeof (DateTime));
+            AddColumn(cols, null, "database_name", typeof(object));
+            AddColumn(cols, null, "dbid", typeof(int));
+            AddColumn(cols, null, "create_date", typeof(DateTime));
 
             return table;
         }
@@ -102,12 +100,13 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region FillTable(DataTable,string[])
 
         /// <summary>
-        /// Fills a <c>Databases</c> metadata collection table.
+        /// Fills a <c>Databases</c> metadata collection table using the
+        /// given connection and restrictions.
         /// </summary>
-        /// <param name="connection">The connection.</param>
-        /// <param name="table">The table.</param>
+        /// <param name="connection">The connection from which to fill the table.</param>
+        /// <param name="table">The table to fill.</param>
         /// <param name="restrictions">The restrictions.</param>
-        public override void FillTable(HsqlConnection connection, 
+        public override void FillTable(HsqlConnection connection,
             DataTable table, string[] restrictions)
         {
             string databaseNamePattern = GetRestrictions(restrictions, 1)[0];
@@ -133,56 +132,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
 
                     AddRow(table, databaseName, null, null);
                 }
-            }            
-
-            //Like predicate;
-
-            //if (databaseNamePattern == null)
-            //{
-            //    predicate = null;
-            //}
-            //else
-            //{
-            //    predicate = new Like(false, null);
-
-            //    predicate.SetPattern(databaseNamePattern);
-            //}
-
-            //switch (m_connection.m_settings.Protocol)
-            //{
-            //    case ConnectionProtocol.File:
-            //    case ConnectionProtocol.Res:
-            //    case ConnectionProtocol.Mem:
-            //        {
-            //            Vector v = DatabaseManager.getDatabaseURIs();
-            //            int count = v.size();
-
-            //            for (int i = 0; i < count; i++)
-            //            {
-            //                string databaseName = (string)v.elementAt(i);
-
-            //                if ((predicate == null) || predicate.Matches(databaseName) == true);                                
-            //                {
-            //                    AddRow(table, databaseName, (short)i, null);
-            //                }
-            //            }
-
-            //            break;
-            //        }
-            //    default:
-            //        {
-            //            HsqlSession session = m_connection.Session;
-            //            string databaseName = (string)session
-            //                .ExecuteScalarDirect(sql);
-
-            //            if (predicate == null || predicate.Matches(databaseName) == true)
-            //            {
-            //                AddRow(table, databaseName, 0, null);
-            //            }
-
-            //            break;
-            //        }
-            //}
+            }
         }
 
         #endregion

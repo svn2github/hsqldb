@@ -150,7 +150,7 @@ namespace System.Data.Hsqldb.Client.MetaData
 
         /// <summary>
         /// Constructs a new <c>HsqlDatabaseMetaData</c> instance
-        /// with the given connection.
+        /// for the given connection.
         /// </summary>
         /// <param name="connection">The connection.</param>
         public HsqlDatabaseMetaData(HsqlConnection connection)
@@ -206,8 +206,7 @@ namespace System.Data.Hsqldb.Client.MetaData
         /// <param name="collectionName">Name of the collection.</param>
         /// <param name="restrictions">The restrictions.</param>
         /// <returns>DataTable</returns>
-        public DataTable GetSchema(string collectionName,
-            string[] restrictions)
+        public DataTable GetSchema(string collectionName, string[] restrictions)
         {
             if (collectionName == null)
             {

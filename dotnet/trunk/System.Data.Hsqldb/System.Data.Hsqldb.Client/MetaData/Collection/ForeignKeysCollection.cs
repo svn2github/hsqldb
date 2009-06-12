@@ -58,7 +58,8 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region Constants
 
         private const string sql =
-@"SELECT tc.constraint_catalog
+@"-- System.Data.Hsqldb.Client.MetaData.Collection.ForeignKeysCollection
+ SELECT tc.constraint_catalog
       ,tc.constraint_schema
       ,tc.constraint_name
       ,tc.constraint_type
@@ -108,15 +109,12 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         
         #endregion
 
-        #region ForeignKeysCollection(HsqlConnection)
+        #region ForeignKeysCollection()
         /// <summary>
         /// Initializes a new instance of the
         /// <see cref="ForeignKeysCollection"/> class.
         /// </summary>
-        public ForeignKeysCollection()
-            : base()
-        {
-        } 
+        public ForeignKeysCollection() : base() { } 
         #endregion
 
         #region CreateTable()
@@ -151,10 +149,11 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
 
         #region FillTable(DataTable,string[])
         /// <summary>
-        /// Fills the given ForeignKeys metadata collection table.
+        /// Fills the given <c>ForeignKeys</c> metadata collection
+        /// table using the given connection and restrictions.
         /// </summary>
-        /// <param name="connection">The connection.</param>
-        /// <param name="table">The table.</param>
+        /// <param name="connection">The connection from which to fill the table.</param>
+        /// <param name="table">The table to file.</param>
         /// <param name="restrictions">The restrictions.</param>
         public override void FillTable(HsqlConnection connection,
             DataTable table, string[] restrictions)
@@ -176,7 +175,9 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
             StringBuilder query = new StringBuilder(sql);
 
             query
-                //.Append(And("TABLE_CATALOG", "=", catalogName))
+#if CATALOG_RESTRICTIONS
+                .Append(And("TABLE_CATALOG", "=", catalogName))
+#endif
                 .Append(And("TABLE_SCHEMA", "LIKE", schemaNamePattern))
                 .Append(And("TABLE_NAME", "LIKE", tableNamePattern))
                 .Append(And("CONSTRAINT_NAME", "LIKE", constraintNamePattern));
@@ -235,8 +236,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         /// <param name="table">The table to which to add the row.</param>
         /// <param name="constraintCatalog">The constraint's catalog.</param>
         /// <param name="constraintSchema">The constraint's schema.</param>
-        /// <param name="constraintName">
-        /// Simple name of the constraint.</param>
+        /// <param name="constraintName">Simple name of the constraint.</param>
         /// <param name="constraintType">Type of the constraint.</param>
         /// <param name="tableCatalog">The table's catalog.</param>
         /// <param name="tableSchema">The table's schema.</param>
@@ -244,10 +244,8 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         /// <param name="uniqueTableCatalog">The unique table catalog.</param>
         /// <param name="uniqueTableSchema">The unique table schema.</param>
         /// <param name="uniqueTableName">Name of the unique table.</param>
-        /// <param name="isDeferrable">
-        /// Whether the constraint is deferrable.</param>
-        /// <param name="initiallyDeferred">
-        /// Whether the constraint is initially deferred.</param>
+        /// <param name="isDeferrable">Whether the constraint is deferrable.</param>
+        /// <param name="initiallyDeferred">Whether the constraint is initially deferred.</param>
         /// <param name="matchOption">The match option.</param>
         /// <param name="updateRule">The update rule.</param>
         /// <param name="deleteRule">The delete rule.</param>
@@ -256,8 +254,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
             string constraintCatalog, string constraintSchema,
             string constraintName, string constraintType,
             string tableCatalog, string tableSchema, string tableName,
-            string uniqueTableCatalog, string uniqueTableSchema,
-            string uniqueTableName,
+            string uniqueTableCatalog, string uniqueTableSchema, string uniqueTableName,
             string isDeferrable, string initiallyDeferred,
             string matchOption, string updateRule, string deleteRule)
         {

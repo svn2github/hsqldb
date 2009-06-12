@@ -59,7 +59,8 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region Constants
 
         private const string sql =
-@"select type_name
+@"-- System.Data.Hsqldb.Client.MetaData.Collection.DataTypesCollection
+ select type_name
        ,data_type
        ,precision
        ,literal_prefix
@@ -82,7 +83,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
 
         #endregion
 
-        #region DataTypesCollection(DatabaseMetaData)
+        #region DataTypesCollection()
         /// <summary>
         /// Initializes a new instance of the <see cref="DataTypesCollection"/> class.
         /// </summary>
@@ -128,10 +129,11 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
 
         #region FillTable(DataTable,string[])
         /// <summary>
-        /// Fills a DataTypes metadata collection table.
+        /// Fills a <c>DataTypes</c> metadata collection table
+        /// using the given connection and restrictions.
         /// </summary>
-        /// <param name="connection">The connection.</param>
-        /// <param name="table">The table.</param>
+        /// <param name="connection">The connection from which to fill the table.</param>
+        /// <param name="table">The table to file.</param>
         /// <param name="restrictions">The restrictions.</param>
         public override void FillTable(HsqlConnection connection,
             DataTable table, string[] restrictions)
@@ -144,8 +146,8 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
                 {
                     reader.GetValues(values);
 
-                    string typeName = (string) values[0];
-                    int jdbcType = (int) values[1];
+                    string providerTypeName = (string) values[0];
+                    int providerDbType = (int) values[1];
                     int? columnSize = (int?) values[2];
                     string literalPrefix = (string) values[3];
                     string literalSuffix = (string)values[4];
@@ -164,11 +166,11 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
                     //int? numPrecRadix = (int?)values[17];
                     //int? typeSub = (int?)values[18];
 
-                    string createFormat = ToCreateFormat(typeName, createParameters);
-                    string dataType = Convert.ToString(HsqlConvert.ToDataType(jdbcType));
-                    bool isBestMatch = IsBestMatchProviderTypeName(typeName);
-                    bool isFixedLength = IsFixedLength(jdbcType);
-                    bool isLong = IsLongProviderType(jdbcType);
+                    string createFormat = ToCreateFormat(providerTypeName, createParameters);
+                    string dataType = Convert.ToString(HsqlConvert.ToDataType(providerDbType));
+                    bool isBestMatch = IsBestMatchProviderTypeName(providerTypeName);
+                    bool isFixedLength = IsFixedLength(providerDbType);
+                    bool isLong = IsLongProviderType(providerDbType);
                     bool isNullable = IsNullable(nullability);
                     bool isSearchable = IsSearchable(searchability);
                     bool isSearchableWithLike = IsSearchableWithLike(searchability);
@@ -176,7 +178,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
                     bool isLiteralSupported = true;
 
                     AddRow(table,
-                           typeName, jdbcType,
+                           providerTypeName, providerDbType,
                            columnSize,
                            createFormat, createParameters,
                            dataType, isAutoIncrementable, isBestMatch,
@@ -196,11 +198,11 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         /// <param name="table">
         /// The table to fill.
         /// </param>
-        /// <param name="typeName">
-        /// The SQL data type name.
+        /// <param name="providerTypeName">
+        /// The HSQLDB SQL type name.
         /// </param>
-        /// <param name="jdbcType">
-        /// The JDBC data type code.
+        /// <param name="providerDbType">
+        /// The HSQLDB data type code.
         /// </param>
         /// <param name="columnSize">
         /// The maximum size or precision of the SQL data type.
@@ -268,8 +270,8 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         /// </param>
         public static void AddRow(
             DataTable table,
-            string typeName,
-            int jdbcType,
+            string sqlTypeName,
+            int providerDbType,
             long? columnSize,
             string createFormat,
             string createParameters,
@@ -293,8 +295,8 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         {
             DataRow row = table.NewRow();
 
-            row[MDCN.TypeName] = typeName;
-            row[MDCN.ProviderDbType] = jdbcType;
+            row[MDCN.TypeName] = sqlTypeName;
+            row[MDCN.ProviderDbType] = providerDbType;
             if (columnSize != null)
             {
                 row[MDCN.ColumnSize] = columnSize;

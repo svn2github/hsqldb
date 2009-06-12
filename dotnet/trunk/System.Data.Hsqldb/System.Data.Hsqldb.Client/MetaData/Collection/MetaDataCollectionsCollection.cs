@@ -54,7 +54,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// </summary>
     public class MetaDataCollectionsCollection : Base.CachedMetadataCollection
     {
-        #region MetaDataCollectionsCollection(HsqlConnection)
+        #region MetaDataCollectionsCollection()
 
         /// <summary>
         /// Initializes a new instance of the
@@ -67,9 +67,13 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region CreateTable()
 
         /// <summary>
-        /// Creates the table.
+        /// Creates a new <c>IMetaDataCollections</c> metadata collection table.
         /// </summary>
-        /// <returns>The table.</returns>
+        /// <returns>
+        /// A new <see cref="DataTable"/> initialized with the columns
+        /// required to hold the metadata about the metadata collections
+        /// supported by the HSQLDB ADO.NET data provider.
+        /// </returns>
         public override DataTable CreateTable()
         {
             DataTable table = new DataTable(CN.MetaDataCollections);

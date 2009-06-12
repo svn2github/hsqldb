@@ -56,7 +56,8 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     {
         #region Constants
         private const string sql =
-@"SELECT fktable_cat as constraint_catalog
+@"-- System.Data.Hsqldb.Client.MetaData.Collection.ForeignKeyColumnsCollection
+ SELECT fktable_cat as constraint_catalog
         ,fktable_schem as constraint_schema
         ,fk_name as constraint_name
         ,fktable_cat as table_catalog
@@ -72,7 +73,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
   WHERE 1=1";
         #endregion
 
-        #region ForeignKeyColumnsCollection(HsqlConnection)
+        #region ForeignKeyColumnsCollection()
         /// <summary>
         /// Initializes a new instance of the <see cref="ForeignKeyColumnsCollection"/> class.
         /// </summary>
@@ -108,10 +109,11 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
 
         #region FillTable(DataTable,string[])
         /// <summary>
-        /// Fills the table.
+        /// Fills the given <c>ForeignKeyColumnsCollection</c> table
+        /// using the given connection and restrictions.
         /// </summary>
-        /// <param name="connection">The connection.</param>
-        /// <param name="table">The table.</param>
+        /// <param name="connection">The connection from which to fill the table.</param>
+        /// <param name="table">The table to fill.</param>
         /// <param name="restrictions">The restrictions.</param>
         public override void FillTable(HsqlConnection connection, 
             DataTable table, string[] restrictions)
@@ -135,7 +137,9 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
             StringBuilder query = new StringBuilder(sql);
 
             query
+#if CATALOG_RESTRICTIONS
                 .Append(And("TABLE_CATALOG", "=", catalogName))
+#endif
                 .Append(And("TABLE_SCHEMA", "LIKE", schemaNamePattern))
                 .Append(And("TABLE_NAME", "LIKE", tableNamePattern))
                 .Append(And("CONSTRAINT_NAME", "LIKE", constraintNamePattern))

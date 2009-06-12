@@ -56,16 +56,13 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// <author name="boucherb@users"/>
     public class DataSourceInformationCollection : Base.CachedMetadataCollection
     {
-        #region DataSourceInformationCollection(HsqlConnection
+        #region DataSourceInformationCollection()
 
         /// <summary>
         /// Constructs a new <c>DataSourceInformationCollection</c> instance
         /// with the given connection.
         /// </summary>
-        public DataSourceInformationCollection()
-            : base()
-        {
-        }
+        public DataSourceInformationCollection() : base() { }
 
         #endregion
 
@@ -112,11 +109,11 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region FillTable(DataTable,string[])
 
         /// <summary>
-        /// Fills the table.
+        /// Fills a <c>DataSourceInformationCollection</c> table using the given connection and restrictions.
         /// </summary>
-        /// <param name="connection">The connection.</param>
-        /// <param name="table">The table.</param>
-        /// <param name="restrictions">The restrictions.</param>
+        /// <param name="connection">The connection from which to fill the table (ignored).</param>
+        /// <param name="table">The table to fill.</param>
+        /// <param name="restrictions">The restrictions (ignored).</param>
         public override void FillTable(HsqlConnection connection,
             DataTable table, string[] restrictions)
         {
@@ -146,10 +143,10 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region AddRow(...)
 
         /// <summary>
-        /// Adds the row.
+        /// Adds a row to the given <c>DataSourceInformationCollection</c> table.
         /// </summary>
         /// <param name="table">
-        /// The table.
+        /// The table to which to add the row.
         /// </param>
         /// <param name="compositeIdentifierSeparatorPattern">
         /// The composite identifier separator pattern.
