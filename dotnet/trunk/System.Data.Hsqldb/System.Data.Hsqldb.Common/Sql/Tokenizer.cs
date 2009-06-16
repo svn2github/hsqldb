@@ -1275,9 +1275,7 @@ namespace System.Data.Hsqldb.Common.Sql
 
                                 return rval;
                             }
-                            catch (Exception ex)
-                            {
-                            }
+                            catch (Exception) { }
                         }
 
                         tokenType = SqlTokenType.DecimalLiteral;

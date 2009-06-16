@@ -79,12 +79,14 @@ namespace System.Data.Hsqldb.Common.Sql.Types
     /// </para>
     /// <para>
     /// From Java, this means ensuring that the database instance can find all
-    /// of the classes it needs at runtime, for instance by configuring the
+    /// of the classes it needs at runtime, for example by configuring the
     /// <c>CLASSPATH</c> environment variable.  From .NET, this means ensuring
     /// that the database instance can load all of the assemblies it needs at
     /// runtime, which likely implies installing assemblies in the global
-    /// assembly cache (GAC) or co-locating them in the directory containing
-    /// the executable with which the database instance is started.
+    /// assembly cache (GAC), co-locating them in the directory containing
+    /// the executable with which the database instance is started, or registering
+    /// and alternative assemly resolution provider with the app domain hosting
+    /// the database instance.
     /// </para>
     /// </remarks>
     /// <author name="boucherb@users"/>

@@ -1155,7 +1155,7 @@ namespace System.Data.Hsqldb.Common
                     }
                 case (int)HsqlProviderType.Decimal:
                     {
-                        return typeof(java.math.BigDecimal);
+                        return typeof(JavaBigDecimal);
                     }
                 case (int)HsqlProviderType.Distinct:
                     {
@@ -1163,19 +1163,19 @@ namespace System.Data.Hsqldb.Common
                     }
                 case (int)HsqlProviderType.Double:
                     {
-                        return typeof(java.lang.Double);
+                        return typeof(JavaDouble);
                     }
                 case (int)HsqlProviderType.Float:
                     {
-                        return typeof(java.lang.Double);
+                        return typeof(JavaDouble);
                     }
                 case (int)HsqlProviderType.Integer:
                     {
-                        return typeof(java.lang.Integer);
+                        return typeof(JavaInteger);
                     }
                 case (int)HsqlProviderType.JavaObject:
                     {
-                        return typeof(java.lang.Object);
+                        return typeof(JavaObject);
                     }
                 case (int)HsqlProviderType.LongVarBinary:
                     {
@@ -1476,8 +1476,6 @@ namespace System.Data.Hsqldb.Common
             }
         }
         #endregion
-
-
 
         #region Exception Factory Methods
 

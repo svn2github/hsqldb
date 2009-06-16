@@ -53,7 +53,7 @@ using DbType = System.Data.DbType;
 using Trace = org.hsqldb.Trace;
 using HsqlTypes = org.hsqldb.Types;
 
-using DotNetObject = System.Data.Hsqldb.Common.Sql.Types.SqlObject;
+using SqlObject = System.Data.Hsqldb.Common.Sql.Types.SqlObject;
 using HsqlBinary = org.hsqldb.types.Binary;
 using JavaObject = org.hsqldb.types.JavaObject;
 using JavaBigDecimal = java.math.BigDecimal;
@@ -1945,7 +1945,7 @@ namespace System.Data.Hsqldb.Common
                 }
                 else
                 {
-                    return DotNetObject.Deserialize(javaObject.getBytes(),
+                    return SqlObject.Deserialize(javaObject.getBytes(),
                         out isJavaObject);
                 }
             }
