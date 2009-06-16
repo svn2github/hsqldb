@@ -1285,10 +1285,10 @@ namespace System.Data.Hsqldb.Client
 
         #region Public Instance Methods
 
+        #region AddBatch()
         /// <summary>
         /// Adds an element to be executed as part of a batch update in
-        /// response
-        /// to invoking <see cref="ExecuteBatch()"/>
+        /// response to invoking <see cref="ExecuteBatch()"/>
         /// </summary>
         /// <remarks>
         /// <para>
@@ -1310,7 +1310,8 @@ namespace System.Data.Hsqldb.Client
             {
                 AddBatchInternal();
             }
-        }
+        } 
+        #endregion
 
         #region DeriveParameters()
         /// <summary>
@@ -1429,6 +1430,7 @@ namespace System.Data.Hsqldb.Client
         }
         #endregion
 
+        #region ExecuteBatch()
         /// <summary>
         /// submits a batch update to the underlying data source for execution.
         /// </summary>
@@ -1506,7 +1508,8 @@ namespace System.Data.Hsqldb.Client
             {
                 return ExecuteBatchInternal();
             }
-        }
+        } 
+        #endregion
 
         #region UnPrepare()
         /// <summary>
