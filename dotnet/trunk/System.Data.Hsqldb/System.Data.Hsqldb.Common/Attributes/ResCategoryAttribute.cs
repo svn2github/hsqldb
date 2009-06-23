@@ -40,7 +40,7 @@ using System.Resources;
 using System.Text;
 #endregion
 
-namespace System.Data.Hsqldb.Client.Design.Attribute
+namespace System.Data.Hsqldb.Common.Attribute
 {
     #region ResCategoryAttribute
     /// <summary>
@@ -51,9 +51,9 @@ namespace System.Data.Hsqldb.Client.Design.Attribute
     [AttributeUsage(AttributeTargets.All)]
     public class ResCategoryAttribute : CategoryAttribute
     {
+        public const string Data = "ResCategory_Data";
         #region Fields
-        private static readonly ResourceManager rm = 
-            global::System.Data.Hsqldb.Common.Properties.Resources.ResourceManager; 
+        private static readonly ResourceManager rm = Properties.Resources.ResourceManager; 
         #endregion
 
         #region Constructors
