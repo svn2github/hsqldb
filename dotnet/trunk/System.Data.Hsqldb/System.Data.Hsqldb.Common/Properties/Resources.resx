@@ -117,7 +117,13 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Dbconnection_ConnectionString" xml:space="preserve">
+	<data name="ResCategory_Data" xml:space="preserve">
+    <value><![CDATA[Data]]></value>
+  </data>	
+  <data name="DbCommand_StatementCompletedEventHandler" xml:space="preserve">
+    <value><![CDATA[Statement Completed Event]]></value>
+  </data>	
+  <data name="DbConnection_ConnectionString" xml:space="preserve">
     <value><![CDATA[Controls how an open connection is established.]]></value>
   </data>
   <data name="DbConnection_Database" xml:space="preserve">
