@@ -37,9 +37,11 @@
 using System;
 using System.Data.Common;
 using System.Runtime.Serialization;
-using org.hsqldb;
+
 using SQLException = java.sql.SQLException;
 using HsqlException = org.hsqldb.HsqlException;
+using HsqlTrace = org.hsqldb.Trace;
+using HsqlResult = org.hsqldb.Result;
 
 #endregion
 
@@ -106,7 +108,7 @@ namespace System.Data.Hsqldb.Common
         /// The message to display for this exception.
         /// </param>
         public HsqlDataSourceException(string message)
-            : this(message, Trace.GENERAL_ERROR, "S1000") { }
+            : this(message, HsqlTrace.GENERAL_ERROR, "S1000") { }
         #endregion
 
         #region HsqlDataSourceException(SerializationInfo,StreamingContext)
@@ -157,12 +159,10 @@ namespace System.Data.Hsqldb.Common
         /// <param name="innerException">
         /// The cause.
         /// </param>
-        public HsqlDataSourceException(
-            string message,
-            Exception innerException)
-            : base(message, innerException)
+        public HsqlDataSourceException(string message,
+            Exception innerException) : base(message, innerException)
         {
-            m_code = Trace.GENERAL_ERROR;
+            m_code = HsqlTrace.GENERAL_ERROR;
             m_state = "S1000";
         }
         #endregion
@@ -183,7 +183,7 @@ namespace System.Data.Hsqldb.Common
         /// The error code for the exception.
         /// </param>
         public HsqlDataSourceException(string message, int errorCode)
-            : this(Trace.error(errorCode, message)) { }
+            : this(HsqlTrace.error(errorCode, message)) { }
         #endregion
 
         #region HsqlDataSourceException(string,int,string)
@@ -200,16 +200,28 @@ namespace System.Data.Hsqldb.Common
         /// <param name="sqlState">
         /// The SQL state for the exception
         /// </param>
-        public HsqlDataSourceException(
-            string message,
-            int errorCode,
-            string sqlState)
-            : base(message)
+        public HsqlDataSourceException(string message, int errorCode,
+            string sqlState) : base(message)
         {
             m_code = errorCode;
             m_state = sqlState;
         }
         #endregion
+
+        public HsqlDataSourceException(string message, int errorCode,
+            string sqlState, IEnumerable<HsqlDataSourceException> chain)
+            : this(message, errorCode, sqlState)
+        {
+            if (chain != null)
+            {
+                HsqlDataSourceExceptionCollection exceptions = this.Exceptions;
+                
+                foreach (HsqlDataSourceException exception in chain)
+                {
+                    exceptions.Add(exception);
+                }
+            }
+        }
 
         #region HsqlDataSourceException(java.sql.SQLException)
         /// <summary>
@@ -220,7 +232,7 @@ namespace System.Data.Hsqldb.Common
         /// The <c>java.sql.SQLException</c> to wrap.
         /// </param>
         [CLSCompliant(false)]
-        public HsqlDataSourceException(java.sql.SQLException se)
+        public HsqlDataSourceException(SQLException se) 
             : base(se.getMessage(), se)
         {
             m_code = se.getErrorCode();
@@ -244,6 +256,7 @@ namespace System.Data.Hsqldb.Common
         public HsqlDataSourceException(HsqlException he)
             : base(he.getMessage(), he)
         {
+            he.
             m_state = he.getSQLState();
             m_code = he.getErrorCode();
         }
@@ -260,7 +273,7 @@ namespace System.Data.Hsqldb.Common
         /// </remarks>
         /// <param name="result">The result.</param>
         [CLSCompliant(false)]
-        public HsqlDataSourceException(Result result)
+        public HsqlDataSourceException(HsqlResult result)
             : this(new HsqlException(result)) { }
         #endregion
 

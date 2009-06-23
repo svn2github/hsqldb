@@ -63,7 +63,7 @@ namespace System.Data.Hsqldb.Common
         private List<HsqlDataSourceException> m_exceptions;
         #endregion
 
-        #region Constructor
+        #region Constructors
 
         #region HsqlDataSourceExceptionCollection()
         /// <summary>

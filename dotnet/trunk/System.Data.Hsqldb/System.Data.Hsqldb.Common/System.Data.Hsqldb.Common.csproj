@@ -76,6 +76,7 @@
     </Compile>
     <Compile Include="HsqlDataSourceException.cs" />
     <Compile Include="HsqlDataSourceExceptionCollection.cs" />
+    <Compile Include="HsqlWarningEventArgs.cs" />
     <Compile Include="IO\JavaInputStreamAdapter.cs" />
     <Compile Include="IO\JavaInputStreamWrapper.cs" />
     <Compile Include="IO\JavaOutputStreamAdapter.cs" />
@@ -92,7 +93,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-	  <Compile Include="Sql\Types\SqlObject.cs" />
+    <Compile Include="Sql\Types\SqlObject.cs" />
     <Compile Include="Sql\Predicate\Like.cs" />
     <Compile Include="Sql\Token.cs" />
     <Compile Include="Sql\Token.IdFor.cs">
