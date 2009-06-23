@@ -185,25 +185,26 @@ namespace System.Data.Hsqldb.Common.Sql.Predicate
 
         #region Matches(string)
         /// <summary>
-        /// Tests if the given value matches this <c>LIKE</c> pattern.
+        /// Tests if the given <c>predicand</c> satisfies this predicate.
         /// </summary>
-        /// <param name="value">The value.</param>
+        /// <param name="predicand">To test.</param>
         /// <returns>
-        /// <c>true</c> if the given value matches; <c>false</c> otherwise.
+        /// <c>null</c> if <c>predicand</c> is <c>null</c>;
+        /// <c>true</c> if <c>predicand</c> satisfies this predicate;
+        /// <c>false</c> otherwise.
         /// </returns>
-        public bool? Matches(string value)
+        public bool? Matches(string predicand)
         {
-            return (value == null)
+            return (predicand == null)
                 ? (bool?)null
                 : m_patternIsNull
                 ? (bool?)false
-                : Matches(
-                    (m_ignoreCase
-                        ? (value = value.ToUpper(CultureInfo.CurrentCulture))
-                        : value),
-                /*patternIndex*/0,
-                /*valueStartIndex*/0,
-                /*valueEndIndex*/value.Length);
+                : Matches((m_ignoreCase 
+                      ? predicand.ToUpper(CultureInfo.CurrentCulture) 
+                      : predicand),
+                      /*patternIndex*/0,
+                      /*valueStartIndex*/0,
+                      /*valueEndIndex*/predicand.Length);
         }
         #endregion
 
