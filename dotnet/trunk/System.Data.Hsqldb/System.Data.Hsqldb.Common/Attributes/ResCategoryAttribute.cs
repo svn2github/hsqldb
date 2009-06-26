@@ -51,7 +51,17 @@ namespace System.Data.Hsqldb.Common.Attribute
     [AttributeUsage(AttributeTargets.All)]
     public class ResCategoryAttribute : CategoryAttribute
     {
-        public const string Data = "ResCategory_Data";
+        /// <summary>
+        /// 
+        /// </summary>
+        public static class ResKey
+        {
+            /// <summary>
+            /// 
+            /// </summary>
+            public const string ForData = "ResCategory_Data";
+        }
+
         #region Fields
         private static readonly ResourceManager rm = Properties.Resources.ResourceManager; 
         #endregion

@@ -42,6 +42,7 @@ using SQLException = java.sql.SQLException;
 using HsqlException = org.hsqldb.HsqlException;
 using HsqlTrace = org.hsqldb.Trace;
 using HsqlResult = org.hsqldb.Result;
+using System.Collections.Generic;
 
 #endregion
 
@@ -124,15 +125,14 @@ namespace System.Data.Hsqldb.Common
         /// The <see cref="StreamingContext"/> that contains contextual
         /// information about the source or destination.
         ///</param>
-        public HsqlDataSourceException(
-            SerializationInfo info,
-            StreamingContext context)
-            : base(info, context)
+        public HsqlDataSourceException(SerializationInfo info,
+            StreamingContext context) : base(info, context)
         {
             m_code = (int)info.GetValue("m_code", typeof(int));
             m_state = (string)info.GetValue("m_state", typeof(string));
-            m_exceptions = (HsqlDataSourceExceptionCollection)info.GetValue(
-                "m_exceptions", typeof(HsqlDataSourceExceptionCollection));
+            m_exceptions = (HsqlDataSourceExceptionCollection) info.GetValue(
+                "m_exceptions",
+                typeof(HsqlDataSourceExceptionCollection));
         }
         #endregion
 
@@ -208,6 +208,14 @@ namespace System.Data.Hsqldb.Common
         }
         #endregion
 
+        #region HsqlDataSourceException(string,int,string,IEnumerable<HsqlDataSourceException>)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="HsqlDataSourceException"/> class.
+        /// </summary>
+        /// <param name="message">The error message.</param>
+        /// <param name="errorCode">The vendor error code.</param>
+        /// <param name="sqlState">The SQLSTATE code.</param>
+        /// <param name="chain">The exception chain.</param>
         public HsqlDataSourceException(string message, int errorCode,
             string sqlState, IEnumerable<HsqlDataSourceException> chain)
             : this(message, errorCode, sqlState)
@@ -215,13 +223,14 @@ namespace System.Data.Hsqldb.Common
             if (chain != null)
             {
                 HsqlDataSourceExceptionCollection exceptions = this.Exceptions;
-                
+
                 foreach (HsqlDataSourceException exception in chain)
                 {
                     exceptions.Add(exception);
                 }
             }
-        }
+        } 
+        #endregion
 
         #region HsqlDataSourceException(java.sql.SQLException)
         /// <summary>
@@ -256,7 +265,6 @@ namespace System.Data.Hsqldb.Common
         public HsqlDataSourceException(HsqlException he)
             : base(he.getMessage(), he)
         {
-            he.
             m_state = he.getSQLState();
             m_code = he.getErrorCode();
         }

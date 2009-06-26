@@ -72,7 +72,7 @@ namespace System.Data.Hsqldb.Client
 
             #endregion
             #region CacheSizeScale
-            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.CachesizeScale"/>.</summary>
+            /// <summary>Default value for the property <see cref="HsqlConnectionStringBuilder.CacheSizeScale"/>.</summary>
             /// <value>8</value>
             public const byte CacheSizeScale = 8;
 

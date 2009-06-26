@@ -38,8 +38,7 @@ using System;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
-using System.Data.Hsqldb.Client.Design;
-using System.Data.Hsqldb.Client.Design.Attribute;
+using System.Data.Hsqldb.Common.Attribute;
 using System.Data.Hsqldb.Common.Enumeration;
 using System.Data.Hsqldb.Client.Internal;
 using System.Data.Hsqldb.Client.MetaData;
@@ -78,6 +77,9 @@ namespace System.Data.Hsqldb.Client
         private HsqlSession m_session;
         private HsqlTransaction m_transaction;
         private HsqlEnlistment m_enlistment;
+#if DEBUG
+        private HsqlEnlistment m_enlistment_dbg;
+#endif
         private ConnectionState m_connectionState = ConnectionState.Closed;
         private string m_connectionString;
         internal HsqlConnectionStringBuilder m_settings;
@@ -188,6 +190,14 @@ namespace System.Data.Hsqldb.Client
 
             if (preserveEnlistment)
             {
+#if DEBUG
+                // Without this, it is difficult to debug
+                // because the m_enlistment's connection
+                // ceases to be this one and this connection
+                // loses its reference to the enlistment
+                // (m_enlistment is set null below).
+                m_enlistment_dbg = m_enlistment;
+#endif
                 // ...then until it ceases to participate in a
                 // System.Transactions.Transaction, the enlistment
                 // needs a valid local transaction to commit or
@@ -219,9 +229,9 @@ namespace System.Data.Hsqldb.Client
 
             if (!enlisted)
             {
-                // No need to roll back here. This will happend automatically
-                // on the back end in response to the session.Close() call
-                // below.
+                // No need to roll back here. This will happen automatically
+                // a moment later on the back end in response to the 
+                // session.Close() call below.
                 if (transaction != null)
                 {
                     transaction.DisposeInternal(/*rollback*/false);
@@ -443,7 +453,6 @@ namespace System.Data.Hsqldb.Client
         #endregion
 
         #region SetStateInternal(ConnectionState)
-
         /// <summary>
         /// Sets the state of this <c>HsqlConnection</c>.
         /// </summary>
@@ -459,9 +468,46 @@ namespace System.Data.Hsqldb.Client
 
             m_connectionState = newState;
 
-            base.OnStateChange(new StateChangeEventArgs(oldState, newState));
+            try
+            {
+                base.OnStateChange(new StateChangeEventArgs(oldState, newState));
+            }
+            catch (Exception ex)
+            {
+                if (HsqlDiagnostics.MustRethrowEventProcessingException(ex))
+                {
+                    throw;
+                }
+            }
         }
+        #endregion
 
+        #region OnWarning(HsqlWarningEventArgs)
+        /// <summary>
+        /// Raises the <see cref="E:Warning"/> event.
+        /// </summary>
+        /// <param name="warning">
+        /// The instance containing the event data.
+        /// </param>
+        internal void OnWarning(HsqlWarningEventArgs warning)
+        {
+            HsqlWarningEventHandler handler = this.Warning;
+
+            if (handler != null)
+            {
+                try
+                {
+                    handler(this, warning);
+                }
+                catch (Exception ex)
+                {
+                    if (HsqlDiagnostics.MustRethrowEventProcessingException(ex))
+                    {
+                        throw;
+                    }                    
+                }
+            }
+        } 
         #endregion
 
         #endregion

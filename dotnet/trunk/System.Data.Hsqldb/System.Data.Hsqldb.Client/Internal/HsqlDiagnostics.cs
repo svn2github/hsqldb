@@ -197,6 +197,36 @@ namespace System.Data.Hsqldb.Client.Internal
         } 
         #endregion
 
+
+        #region HandleEventProcessingException(Exception)
+        /// <summary>
+        /// Handles the event processing exception.
+        /// </summary>
+        /// <param name="exception">The exception.</param>
+        internal static bool MustRethrowEventProcessingException(Exception exception)
+        {
+            Type exceptionType = exception.GetType();
+
+            if (exceptionType == typeof(StackOverflowException) ||
+                exceptionType == typeof(OutOfMemoryException) ||
+                exceptionType == typeof(ThreadAbortException) ||
+                exceptionType == typeof(NullReferenceException) ||
+                exceptionType == typeof(AccessViolationException) ||
+                typeof(System.Security.SecurityException).IsAssignableFrom(exceptionType))
+            {
+                return true;
+            }
+
+            else
+            {
+#if TRACE
+                System.Diagnostics.Trace.TraceWarning(exception.ToString());
+#endif
+                return false;
+            }
+        }
+        #endregion
+
         #region ThreadToString(Thread)
         /// <summary>
         /// Retrieves the <c>string</c> representation of

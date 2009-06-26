@@ -71,7 +71,7 @@ namespace System.Data.Hsqldb.Client
     ///      alt="HsqlCommand Class Diagram"/>
     /// </summary>
     /// <remarks>
-    /// Represents an SQL statement or stored procedure to execute against a data source.
+    /// Represents an SQL statement or stored procedure to execute against an HSQLDB data source.
     /// </remarks>
     /// <author name="boucherb@users"/>
     [DefaultEvent("RecordsAffected")]
@@ -87,7 +87,7 @@ namespace System.Data.Hsqldb.Client
         #region HsqlCommand()
 
         /// <summary>
-        /// Constructs a new <c>HsqlCommand</c> instance that not initially
+        /// Constructs a new <c>HsqlCommand</c> instance that is not initially
         /// associated with any connection.
         /// </summary>
         /// <remarks>
@@ -99,7 +99,7 @@ namespace System.Data.Hsqldb.Client
         /// <para>
         /// An instance constructed in such a fashion must
         /// first be associated with an open connection and
-        /// have meaningful <c>CommandText</c> assigned the
+        /// have meaningful <c>CommandText</c> assigned
         /// before it can be executed successfully.
         /// </para>
         /// </remarks>
@@ -169,10 +169,9 @@ namespace System.Data.Hsqldb.Client
         /// The way in which to initially interpret the command text.
         /// </param>
         public HsqlCommand(HsqlConnection connection, String commandText,
-            CommandType commandType)
-            : this(connection, commandText)
+            CommandType commandType) : this(connection, commandText)
         {
-            m_commandType = HsqlCommand.ToSupportedCommandType(CommandType);
+            this.CommandType = commandType;
         }
 
         #endregion

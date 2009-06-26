@@ -48,7 +48,7 @@ using Key = System.Data.Hsqldb.Client.HsqlConnectionStringBuilder.ConnectionStri
 using Keyword = System.Data.Hsqldb.Common.Enumeration.ConnectionStringKeyword;
 using Utils = System.Data.Hsqldb.Client.HsqlConnectionStringBuilder.Util;
 using System.Data.Hsqldb.Client.Internal;
-using System.Data.Hsqldb.Client.Design.Attribute;
+using System.Data.Hsqldb.Common.Attribute;
 
 #endregion
 

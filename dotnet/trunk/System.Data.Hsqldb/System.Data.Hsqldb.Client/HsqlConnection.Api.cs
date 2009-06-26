@@ -38,8 +38,11 @@ using System;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
-using System.Data.Hsqldb.Client.Design;
-using System.Data.Hsqldb.Client.Design.Attribute;
+using System.Threading;
+using System.Transactions;
+
+using System.Data.Hsqldb.Common;
+using System.Data.Hsqldb.Common.Attribute;
 using System.Data.Hsqldb.Common.Enumeration;
 using System.Data.Hsqldb.Client.Internal;
 using System.Data.Hsqldb.Client.MetaData;
@@ -48,18 +51,37 @@ using System.Data.Hsqldb.Client.MetaData;
 using System.Drawing;
 #endif
 
-using System.Threading;
-using System.Transactions;
-using System.Data.Hsqldb.Common;
-
 #endregion
 
 namespace System.Data.Hsqldb.Client
 {
     public sealed partial class HsqlConnection
     {
+        #region Events
+
+        #region Warning
+        /// <summary>
+        /// Occurs when a member access action raises a warning condition.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This may occur, for example, to indicate that an invalid value
+        /// used to set a property has been silently converted to a default
+        /// valid value.
+        /// </para>
+        /// <para>
+        /// Note also that the warning events of associated 'child' objects may
+        /// propagate to a 'parent' connection object in the absence of locally
+        /// registered subscriptions.
+        /// </para>
+        /// </remarks>
+        public event HsqlWarningEventHandler Warning; 
+        #endregion
+
+        #endregion
+
         #region DbConnection Members
-        
+
         #region Method Overrides
 
         #region BeginDbTransaction(IsolationLevel)

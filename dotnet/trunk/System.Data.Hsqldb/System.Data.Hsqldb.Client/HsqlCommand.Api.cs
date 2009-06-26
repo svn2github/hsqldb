@@ -39,15 +39,17 @@ using System.ComponentModel;
 #if W32DESIGN
 using System.Drawing;
 #endif
-
 using System.Data;
 using System.Data.Common;
 using System.Text;
 using System.Threading;
 
-using System.Data.Hsqldb.Common.Enumeration;
 using System.Data.Hsqldb.Client.Internal;
 using System.Data.Hsqldb.Client.MetaData;
+
+using System.Data.Hsqldb.Common;
+using System.Data.Hsqldb.Common.Attribute;
+using System.Data.Hsqldb.Common.Enumeration;
 using System.Data.Hsqldb.Common.Sql;
 
 using ParameterMetaData = org.hsqldb.Result.ResultMetaData;
@@ -55,8 +57,6 @@ using PMD = java.sql.ParameterMetaData.__Fields;
 using Result = org.hsqldb.Result;
 using ResultConstants = org.hsqldb.ResultConstants.__Fields;
 using HsqlTypes = org.hsqldb.Types;
-using System.Data.Hsqldb.Common;
-
 #endregion
 
 namespace System.Data.Hsqldb.Client
@@ -66,10 +66,24 @@ namespace System.Data.Hsqldb.Client
     public sealed partial class HsqlCommand : DbCommand, ICloneable
     {
         #region Events
-        /// <summary>Occurs when the execution of an <see cref="HsqlCommand"/> completes.</summary>
+        /// <summary>
+        /// Occurs when a member access action raises a warning condition.
+        /// </summary>
+        /// <remarks>
+        /// This may occur, for example, to indicate that an invalid value
+        /// used to set a property has been silently converted to a default
+        /// valid value.
+        /// </remarks>
+        public event HsqlWarningEventHandler Warning;
+
+        #region StatementCompleted
+        /// <summary>
+        /// Occurs when the execution of an <see cref="HsqlCommand"/> completes.
+        /// </summary>
         /// <filterpriority>2</filterpriority>
-        [Category("Data"), Description("Statement Completed Event")]
-        public event StatementCompletedEventHandler StatementCompleted;
+        [ResCategory(ResCategoryAttribute.ResKey.ForData), ResDescription("DbCommand_StatementCompletedEventHandler")]
+        public event StatementCompletedEventHandler StatementCompleted; 
+        #endregion
         #endregion
 
         #region DbCommand Members
@@ -86,9 +100,8 @@ namespace System.Data.Hsqldb.Client
         /// Currently ignored (does nothing).
         /// </para>
         /// <para>
-        /// When implemented, the expected behavior is that if there is nothing to
-        /// cancel, then nothing happens, and even if there is a command in process,
-        /// no exception is generated in the event that the attempt to cancel fails.
+        /// When implemented, should only signal intent and 
+        /// should never throw an exception.
         /// </para>
         /// </remarks>
         public override void Cancel()
@@ -104,7 +117,7 @@ namespace System.Data.Hsqldb.Client
         /// Creates a new <see cref="HsqlParameter"/> object.
         /// </summary>
         /// <remarks>
-        /// This method simply delegates to <see cref="CreateParameter()"/>.
+        /// Simply delegates to <see cref="CreateParameter()"/>.
         /// </remarks>
         /// <returns>
         /// A new <see cref="HsqlParameter"/> object.
@@ -243,9 +256,9 @@ namespace System.Data.Hsqldb.Client
         /// the wider implications.
         /// </para>
         /// <para>
-        /// Sadly, the list of design descisions that lead to such
-        /// consequences is still quite large in ADO.NET 2.0, certainly too
-        /// large to warrant enumerating further here.
+        /// Sadly, the list of design descisions that lead to such consequences is
+        /// still quite large in ADO.NET 2.0, and is certainly too large to warrant
+        /// enumerating further here.
         /// </para>
         /// <para>
         /// In an ideal world, on the other hand, each object instance that
@@ -312,7 +325,7 @@ namespace System.Data.Hsqldb.Client
         /// of effectively invoking <see cref="UnPrepare()"/>, which,
         /// if successful, closes the underlying compiled statement,
         /// releasing both any local resources, as well as any remote reources
-        /// allocated to its representation and managment.
+        /// allocated to its representation and management.
         /// </remarks>
         /// <param name="disposing">
         /// <c>true</c> to release both managed and unmanaged resources; 
@@ -321,7 +334,8 @@ namespace System.Data.Hsqldb.Client
         /// <exception cref="HsqlDataSourceException">
         /// If disposal requires invalidation of the prepared
         /// state of this command, then any exception raised as
-        /// a result is rethrown here.
+        /// a result of attempting to close the underlying compiled
+        /// statement is rethrown here.
         /// </exception>
         protected override void Dispose(bool disposing)
         {
@@ -340,14 +354,14 @@ namespace System.Data.Hsqldb.Client
         /// Executes this command against its connection.
         /// </summary>
         /// <remarks>
-        /// This method simply delegates to 
+        /// Simply delegates to 
         /// <see cref="HsqlCommand.ExecuteReader(CommandBehavior)"/>.
         /// </remarks>
         /// <param name="behavior">
         /// Specifies a number of behavioral constraints upon the execution.
         /// </param>
         /// <returns>
-        /// The result of execution as a <see cref="HsqlDataReader"/>.
+        /// The result of execution as an <see cref="HsqlDataReader"/>.
         /// </returns>
         /// <exception cref="InvalidOperationException">
         /// When the <see cref="Connection"/> is not set.
@@ -395,7 +409,11 @@ namespace System.Data.Hsqldb.Client
         {
             lock (SyncRoot)
             {
-                return ExecuteReaderInternal(CommandBehavior.Default);
+                HsqlDataReader reader = ExecuteReaderInternal(CommandBehavior.Default);
+
+                OnStatementCompleted(reader.RecordsAffected);
+
+                return reader;
             }
         }
 
@@ -588,7 +606,11 @@ namespace System.Data.Hsqldb.Client
         {
             lock (SyncRoot)
             {
-                return ExecuteReaderInternal(behavior);
+                HsqlDataReader reader = ExecuteReaderInternal(behavior);
+                
+                OnStatementCompleted(reader.RecordsAffected);
+                
+                return reader;
             }
         }
 
@@ -602,7 +624,10 @@ namespace System.Data.Hsqldb.Client
         /// suited to representation via an <c>HsqlDatatReader</c> than it
         /// is suited to being represented solely by a returned update count.
         /// </summary>
-        /// <returns>The number of rows affected by the execution.</returns>
+        /// <returns>
+        /// The number of rows affected by the execution; 
+        /// -1 if a query was executed.
+        /// </returns>
         /// <exception cref="InvalidOperationException">
         /// When the <see cref="Connection"/> is not set.
         /// -or- 
@@ -619,7 +644,11 @@ namespace System.Data.Hsqldb.Client
         {
             lock (SyncRoot)
             {
-                return ExecuteNonQueryInternal();
+                int rowsArrected = ExecuteNonQueryInternal();
+
+                OnStatementCompleted(rowsArrected);
+
+                return rowsArrected;
             }
         }
 
@@ -674,7 +703,11 @@ namespace System.Data.Hsqldb.Client
         {
             lock (SyncRoot)
             {
-                return ExecuteScalarInternal();
+                object result = ExecuteScalarInternal();
+
+                OnStatementCompleted(0);
+
+                return result;
             }
         }
 
@@ -725,7 +758,7 @@ namespace System.Data.Hsqldb.Client
         /// of the data values embedded in the command text.
         /// </para>
         /// <para>
-        /// Other factors that may affect the meaured relative overhead of
+        /// Other factors that may affect the measured relative overhead of
         /// re-parsing command text include the use of different table
         /// persistence engines (<c>Memory</c>, <c>Text</c>, <c>Cached</c>),
         /// database operation modes (<c>File</c>, <c>Mem</c> and <c>Res</c>)
@@ -733,7 +766,7 @@ namespace System.Data.Hsqldb.Client
         /// is enabled.
         /// </para>
         /// <para>
-        /// In general, if parsing and/or static binding dominate the time to
+        /// In general, if parsing and/or static binding dominates the time to
         /// execute a command, and especially if such a command is to be
         /// executed regularly, then it is best practice to prepare it
         /// before execution.
@@ -756,14 +789,14 @@ namespace System.Data.Hsqldb.Client
         /// rule-of-thumb is when inserting or updating large binary,
         /// character, numeric or decimal values, where parameterization
         /// combined with preparation should always be preferred, even in
-        /// the case whera a command will only be executed one.
+        /// the case whera a command will only be executed once.
         /// </para>
         /// <para>
         /// This is because parameterization combined with preparation avoids
         /// the massive overhead required to produce a statically bound UTF16
         /// representation of the command together with its parameter values,
         /// parse the resulting command, convert large value tokens to internal
-        /// binary representation and possibly again to character sequence
+        /// binary representation and possibly back again to character sequence
         /// representation in order to record changes in the database transaction
         /// log.
         /// </para>
@@ -805,7 +838,7 @@ namespace System.Data.Hsqldb.Client
         /// </para>
         /// <para>
         /// Third, in the worst case, when the resulting SQL character sequence
-        /// is submitted to the engine for execution,  it may be copied to a
+        /// is submitted to the engine for execution, it may be copied to a
         /// raw character array in one pass (e.g. for faster character-at-a-time
         /// tokenizing), yielding 4 + 2*32 = 68 MB.
         /// </para>
@@ -883,7 +916,7 @@ namespace System.Data.Hsqldb.Client
         /// If this object is <see cref="Prepare"/>d and the
         /// new <c>Connection</c> is distinct from the current
         /// <c>Connection</c>, then actions equivalent to invoking
-        /// <see cref="UnPrepare()"/> are performed using the
+        /// <see cref="UnPrepare()"/> are first performed using the
         /// current <c>Connection</c>, in order to release the
         /// underlying compiled statement, before such a task is
         /// made otherwise impossible by replacing by current
@@ -945,10 +978,10 @@ namespace System.Data.Hsqldb.Client
         /// The default value is an empty string ("").
         /// </remarks>
         /// <exception cref="HsqlDataSourceException">
-        /// If, when setting a new value, the current state of this object
-        /// and the current and new <c>CommandText</c> values dicate that,
-        /// effectively, <see cref="UnPrepare()"/> must be invoked, then any
-        /// exception raised as a result is rethrown here.
+        /// If assignment of a new value invalidates the prepared
+        /// state of this command, which effectively invokes 
+        /// <see cref="UnPrepare()"/>, then any exception raised
+        /// as a result is rethrown here.
         /// </exception>
         [Category("Data")]
         [Description("Command text to execute")]
@@ -970,6 +1003,12 @@ namespace System.Data.Hsqldb.Client
                     InvalidateStatement();
 
                     m_commandText = value;
+                    // Not a perfect optimization, but behavior
+                    // is not incorrect under false positives,
+                    // so a perfect test is not required and a better
+                    // (but slow / complex) test defeats the purpose
+                    // of introducing an optimization in the first
+                    // place.
                     m_commandTextHasParameters = 
                         (value.IndexOfAny(m_ParmeterChars) >= 0);
                 }
@@ -981,8 +1020,9 @@ namespace System.Data.Hsqldb.Client
         #region CommandTimeout
 
         /// <summary>
-        /// Specifies the time to wait before terminating an attempt
-        /// to execute this command and generating an error.
+        /// Specifies the time to wait before terminating an 
+        /// in-progress attempt to execute this command and 
+        /// generating an error.
         /// </summary>
         /// <remarks>
         /// Although stored and retrieved accurately, the value is
@@ -1007,8 +1047,9 @@ namespace System.Data.Hsqldb.Client
             {
                 if (value < 0)
                 {
-                    throw new ArgumentException(
-                        "Invalid Command Timeout: " + value,
+                    throw new ArgumentException(string.Format(
+                        "Invalid Command Timeout: {0}", 
+                        value),
                         "value");
                 }
                 if (value != m_commandTimeout)
@@ -1037,8 +1078,9 @@ namespace System.Data.Hsqldb.Client
         /// </value>
         /// <exception cref="HsqlDataSourceException">
         /// If assignment of a new value invalidates the prepared
-        /// state of this command, then any exception raised as
-        /// a result is rethrown here.
+        /// state of this command, which effectively invokes 
+        /// <see cref="UnPrepare()"/>, then any exception raised
+        /// as a result is rethrown here.
         /// </exception>
         [Category("Data")]
         [DefaultValue(CommandType.Text)]
@@ -1053,7 +1095,7 @@ namespace System.Data.Hsqldb.Client
                 {
                     InvalidateStatement();
 
-                    m_commandType = HsqlCommand.ToSupportedCommandType(value);
+                    m_commandType = HsqlCommand.ToSupportedCommandType(value, this);
                 }
             }
         }
@@ -1158,7 +1200,7 @@ namespace System.Data.Hsqldb.Client
         /// </value>
         /// <exception cref="ArgumentOutOfRangeException">
         /// When setting a new value and it does not match
-        /// on the the <c>UpdateRowSource</c> values: {<c>None</c>, 
+        /// one of the <c>UpdateRowSource</c> values: {<c>None</c>, 
         /// <c>OutputParameters</c>, <c>FirstReturnedRecord</c>, 
         /// <c>Both</c>}.
         /// </exception>
@@ -1182,9 +1224,7 @@ namespace System.Data.Hsqldb.Client
                     }
                     default:
                     {
-                        throw new ArgumentOutOfRangeException(
-                            "value", 
-                            value, 
+                        throw new ArgumentOutOfRangeException("value", value,
                             "Invalid UpdatedRowSource enumeration value");
                     }
                 }
@@ -1201,8 +1241,7 @@ namespace System.Data.Hsqldb.Client
         #region DbConnection
 
         /// <summary>
-        /// Specifies the <c>HsqlConnection</c> used to
-        /// execute this command.
+        /// Specifies the <c>HsqlConnection</c> used to execute this command.
         /// </summary>
         /// <value>The connection to the data source.</value>       
         protected override DbConnection DbConnection
@@ -1232,8 +1271,8 @@ namespace System.Data.Hsqldb.Client
         #region DbTransaction
 
         /// <summary>
-        /// Specifies the <see cref="HsqlTransaction"/>
-        /// within which command executes.
+        /// Specifies the <see cref="HsqlTransaction"/> within which this
+        /// command executes.
         /// </summary>
         /// <value>
         /// The transaction within which this command executes.
@@ -1281,6 +1320,7 @@ namespace System.Data.Hsqldb.Client
         #endregion
 
         #endregion         
+
         #region Other Members
 
         #region Public Instance Methods
@@ -1297,7 +1337,7 @@ namespace System.Data.Hsqldb.Client
         /// against the parameter metdata of the prepared form of the command
         /// to assure there are no unbound parameters and, if successful, 
         /// converting the present <see cref="Parameters"/> into an array of
-        /// object values, which are then added to an internal list for batch
+        /// object values coerced to , which are then added to an internal list for batch
         /// execution against the prepared form of the command.
         /// </para>
         /// <para>
@@ -1513,12 +1553,15 @@ namespace System.Data.Hsqldb.Client
 
         #region UnPrepare()
         /// <summary>
-        /// Releases any resources associated with maintaining this command
-        /// object in a prepared state.
+        /// Releases any resources associated with maintaining
+        /// the prepared state of this command.
         /// </summary>
         /// <remarks>
         /// After this call, <see cref="IsPrepared"/> will be <c>false</c>. 
         ///</remarks>
+        /// <exception cref="HsqlDataSourceException">
+        /// When a data source access error occurs.
+        /// </exception>
         public void UnPrepare()
         {
             lock (SyncRoot)

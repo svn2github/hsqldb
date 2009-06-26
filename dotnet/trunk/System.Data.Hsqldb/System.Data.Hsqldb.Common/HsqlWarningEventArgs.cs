@@ -5,7 +5,7 @@ namespace System.Data.Hsqldb.Common
     /// <summary>
     /// 
     /// </summary>
-    delegate void HsqlWarningEventHandler(object sender, HsqlWarningEventArgs args);
+    public delegate void HsqlWarningEventHandler(object sender, HsqlWarningEventArgs args);
 
     /// <summary>
     /// 

@@ -37,8 +37,7 @@ using System;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
-using System.Data.Hsqldb.Client.Design;
-using System.Data.Hsqldb.Client.Design.Attribute;
+using System.Data.Hsqldb.Common.Attribute;
 using System.Data.Hsqldb.Client.Internal;
 #if W32DESIGN
 using System.Drawing;
@@ -51,7 +50,7 @@ namespace System.Data.Hsqldb.Client
     /// <summary>
     /// Represents the method that will handle the 
     /// <see cref="E:HsqlDataAdapter.RowUpdating"/> event of
-    /// a <see cref="HsqlDataAdapter"/see>.
+    /// a <see cref="HsqlDataAdapter" </see>.
     /// </summary>
     public delegate void HsqlRowUpdatingEventHandler(object sender,
         HsqlRowUpdatingEventArgs e); 
