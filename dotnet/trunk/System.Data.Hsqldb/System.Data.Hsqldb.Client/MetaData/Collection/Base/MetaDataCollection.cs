@@ -660,8 +660,8 @@ SELECT SCHEMA_NAME
         /// type code indicates that a corresponding data element
         /// represents some kind of number value.
         /// </summary>
-        /// <param name="jdbcType">
-        /// The JDBC data type code.
+        /// <param name="type">
+        /// The provide-specific data type code.
         /// </param>
         /// <returns>
         /// <c>true</c> if the given code denotes an SQL number data type;

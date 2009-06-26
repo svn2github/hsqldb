@@ -198,7 +198,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         /// <param name="table">
         /// The table to fill.
         /// </param>
-        /// <param name="providerTypeName">
+        /// <param name="sqlTypeName">
         /// The HSQLDB SQL type name.
         /// </param>
         /// <param name="providerDbType">
