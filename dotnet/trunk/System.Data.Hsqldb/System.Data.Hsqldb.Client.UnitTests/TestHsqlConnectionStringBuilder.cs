@@ -74,7 +74,7 @@ namespace System.Data.Hsqldb.Client.UnitTests
             {
                 success = testSubject.TryGetValue("foo", out value);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
 
             }

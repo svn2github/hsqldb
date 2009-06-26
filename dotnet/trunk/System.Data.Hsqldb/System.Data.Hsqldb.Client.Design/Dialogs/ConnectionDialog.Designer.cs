@@ -65,7 +65,8 @@ namespace System.Data.Hsqldb.Client.Design.Dialog
         /// </summary>
         private void InitializeComponent()
         {
-            this.connectionControl1 = new ConnectionControl();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ConnectionDialog));
+            this.connectionControl1 = new System.Data.Hsqldb.Client.Design.Control.ConnectionControl();
             this.SuspendLayout();
             // 
             // connectionControl1
@@ -82,6 +83,7 @@ namespace System.Data.Hsqldb.Client.Design.Dialog
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(379, 225);
             this.Controls.Add(this.connectionControl1);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "ConnectionDialog";
             this.Text = "ConnectionDialog";
             this.ResumeLayout(false);
