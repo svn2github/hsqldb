@@ -5718,7 +5718,7 @@ namespace System.Data.Hsqldb.Common
             public static JavaInteger ToSmallInt(double doubleValue)
             {
                 if (doubleValue <= short.MaxValue
-                    && doubleValue <= short.MinValue
+                    && short.MinValue <= doubleValue
                     && !(JavaDouble.isInfinite(doubleValue)
                         || JavaDouble.isNaN(doubleValue)))
                 {
@@ -5752,7 +5752,7 @@ namespace System.Data.Hsqldb.Common
             public static JavaInteger ToSmallInt(decimal decimalValue)
             {
                 if (decimalValue <= short.MaxValue
-                    && decimalValue <= short.MinValue)
+                    && short.MinValue <= decimalValue)
                 {
                     return ValuePool.getInt((int)decimalValue);
                 }

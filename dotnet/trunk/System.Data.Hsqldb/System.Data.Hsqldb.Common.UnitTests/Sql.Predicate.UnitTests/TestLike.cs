@@ -33,7 +33,7 @@ namespace System.Data.Hsqldb.Common.Sql.Predicate.UnitTests
             Assert.That(!testSubject.Matches("foobar").Value);
             Assert.That(!testSubject.Matches("foo").Value);
 
-            testSubject = new Like(ignoreCase = true, escapeCharacter);
+            testSubject = new Like(/*ignorecase*/true,/*escapechar*/'\\');
 
             testSubject.SetPattern("FOO%");
 

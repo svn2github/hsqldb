@@ -128,7 +128,7 @@ namespace System.Data.Hsqldb.Common.UnitTests
             catch (ArgumentException ae)
             {
                 Assert.AreEqual("isolationLevel", ae.ParamName);
-                Assert.AreEqual(string.Format("Unsupported: {0}", IsolationLevel.Chaos), ae.Message); 
+                Assert.AreEqual("Unsupported Level: Chaos\r\nParameter name: isolationLevel", ae.Message); 
             }
 
             try
@@ -140,7 +140,7 @@ namespace System.Data.Hsqldb.Common.UnitTests
             catch (ArgumentException ae)
             {
                 Assert.AreEqual("isolationLevel", ae.ParamName);
-                Assert.AreEqual(string.Format("Unsupported (0) ", IsolationLevel.Snapshot), ae.Message); 
+                Assert.AreEqual("Unsupported Level: Snapshot\r\nParameter name: isolationLevel", ae.Message);  
             }
         }
 
@@ -212,7 +212,7 @@ namespace System.Data.Hsqldb.Common.UnitTests
             Assert.AreEqual(typeof(java.lang.Double), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Double));
             Assert.AreEqual(typeof(java.lang.Double), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Float));
             Assert.AreEqual(typeof(java.lang.Integer), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Integer));
-            Assert.AreEqual(typeof(java.lang.Object), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.JavaObject));
+            Assert.AreEqual(typeof(org.hsqldb.types.JavaObject), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.JavaObject));
             Assert.AreEqual(typeof(byte[]), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.LongVarBinary));
             Assert.AreEqual(typeof(string), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.LongVarChar));
             Assert.AreEqual(typeof(void), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Null));
@@ -384,7 +384,6 @@ namespace System.Data.Hsqldb.Common.UnitTests
             object o = new object();
             int targetType = java.sql.Types.BIGINT;
 
-
             try
             {
                 throw HsqlConvert.UnknownConversion(o, targetType);
@@ -411,6 +410,9 @@ namespace System.Data.Hsqldb.Common.UnitTests
         }
     }
 
+    /// <summary>
+    /// A vanilla stub parameter to a Command object, required for testing purposes
+    /// </summary>
     public class FakeDataParameter : IDataParameter
     {
         DbType m_dbType = DbType.Object;
@@ -421,16 +423,15 @@ namespace System.Data.Hsqldb.Common.UnitTests
         DataRowVersion m_sourceVersion = DataRowVersion.Current;
         object m_value;
 
+        /// <summary>
+        /// Creates a new, inititialized instance.
+        /// </summary>
         public FakeDataParameter() { }
 
-        public FakeDataParameter(
-            DbType dbType, 
-            ParameterDirection parameterDirection, 
-            bool nullable, 
-            string parameterName, 
-            string sourceColumn, 
-            DataRowVersion sourceVersion, 
-            object value)
+        public FakeDataParameter(DbType dbType, 
+            ParameterDirection parameterDirection, bool nullable, 
+            string parameterName, string sourceColumn, 
+            DataRowVersion sourceVersion, object value)
         {
             m_dbType = dbType;
             m_parmeterDirection = parameterDirection;
@@ -441,8 +442,10 @@ namespace System.Data.Hsqldb.Common.UnitTests
             m_value = value;
         }
 
-        public FakeDataParameter(DbType dbType, string parameterName, object value)
-            : this(dbType, ParameterDirection.Input, true, null, null, DataRowVersion.Current, value) { }
+        public FakeDataParameter(DbType dbType, 
+            string parameterName, object value): this(dbType, 
+            ParameterDirection.Input, true, null, null, 
+            DataRowVersion.Current, value) { }
 
         public FakeDataParameter(string parameterName, object value) 
             : this(DbType.Object, parameterName, value) { }
