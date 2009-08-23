@@ -1579,25 +1579,32 @@ namespace System.Data.Hsqldb.Common.Sql
 
                 if (WasIdentifierChain)
                 {
-                    string qualifierPart = IdentifierChainPredecessor;
-
-                    if (WasIdentifierChainPredecessorDelimited)
+                    if (EnforceTwoPartIdentifierChain)
                     {
-                        qualifierPart = HsqlStringConverter.toQuotedString(
-                            qualifierPart, '"', true);
-                    }
+                        string qualifierPart = IdentifierChainPredecessor;
 
-                    if (WasDelimitedIdentifier)
-                    {
-                        token = HsqlStringConverter.toQuotedString(
-                            m_token, '"', true);
+                        if (WasIdentifierChainPredecessorDelimited)
+                        {
+                            qualifierPart = HsqlStringConverter.toQuotedString(
+                                qualifierPart, '"', true);
+                        }
+
+                        if (WasDelimitedIdentifier)
+                        {
+                            token = HsqlStringConverter.toQuotedString(
+                                m_token, '"', true);
+                        }
+                        else
+                        {
+                            token = m_token;
+                        }
+
+                        token = qualifierPart + '.' + token;
                     }
                     else
                     {
-                        token = m_token;
-                    }
 
-                    token = qualifierPart + '.' + token;
+                    }
                 }
                 else if (WasDelimitedIdentifier)
                 {

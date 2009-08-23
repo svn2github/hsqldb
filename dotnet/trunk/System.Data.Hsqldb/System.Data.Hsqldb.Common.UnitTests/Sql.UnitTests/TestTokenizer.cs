@@ -139,47 +139,47 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
             // Array Literal
 
             testParameters.Add(new NextAsLiteralValueTestParameters(
-                "foo", 
-                HsqlProviderType.Array, 
+                "foo",
+                HsqlProviderType.Array,
                 null,
-                org.hsqldb.Trace.UNEXPECTED_TOKEN, 
+                org.hsqldb.Trace.UNEXPECTED_TOKEN,
                 "SQL ARRAY literal tokens are not supposed to be supported"));
 
             // BigInt Literal
 
             testParameters.Add(new NextAsLiteralValueTestParameters(
-                "-1", 
-                HsqlProviderType.BigInt, 
+                "-1",
+                HsqlProviderType.BigInt,
                 null,
-                org.hsqldb.Trace.UNEXPECTED_TOKEN, 
+                org.hsqldb.Trace.UNEXPECTED_TOKEN,
                 "Atomic retrieval of a negative BIGINT literal is not supposed to be supported."));
 
             testParameters.Add(new NextAsLiteralValueTestParameters(
-                "0", 
-                HsqlProviderType.BigInt, 
+                "0",
+                HsqlProviderType.BigInt,
                 new java.lang.Long(0),
-                null, 
+                null,
                 null));
 
             testParameters.Add(new NextAsLiteralValueTestParameters(
-                "1", 
-                HsqlProviderType.BigInt, 
+                "1",
+                HsqlProviderType.BigInt,
                 new java.lang.Long(1),
-                null, 
+                null,
                 null));
 
             testParameters.Add(new NextAsLiteralValueTestParameters(
-                long.MaxValue.ToString(), 
-                HsqlProviderType.BigInt, 
+                long.MaxValue.ToString(),
+                HsqlProviderType.BigInt,
                 new java.lang.Long(long.MaxValue),
-                null, 
+                null,
                 null));
 
             testParameters.Add(new NextAsLiteralValueTestParameters(
-                long.MinValue.ToString(), 
+                long.MinValue.ToString(),
                 HsqlProviderType.BigInt,
                 null,
-                org.hsqldb.Trace.UNEXPECTED_TOKEN, 
+                org.hsqldb.Trace.UNEXPECTED_TOKEN,
                 "Atomic retrieval of a negative BIGINT literal is not supposed to be supported."));
 
             // Binary Literal
@@ -187,7 +187,7 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
             testParameters.Add(new NextAsLiteralValueTestParameters(
                 "/* a binary literal value */ 'AFD14E7B9F82' ", 
                 HsqlProviderType.Binary,
-                new HsqlBinary(HsqlStringConverter.hexToByte("AFD14E7B9F82"), false),
+                new org.hsqldb.types.Binary(HsqlStringConverter.hexToByte("AFD14E7B9F82"),false),
                 null, 
                 null));
 
@@ -489,13 +489,73 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
         [Test, OfMember("IdentiferChain")]
         public void IdentiferChain()
         {
-            Assert.Fail("TODO");
+            object[] input = new object[]
+            {
+                new object [] 
+                {
+                    "foo.bar.baz", 
+                    new Token[]{
+                        new Token("FOO",SqlTokenType.Name),
+                        new Token("BAR",SqlTokenType.Name),
+                        new Token("BAZ",SqlTokenType.Name)
+                    }
+                },
+                new object [] 
+                {
+                    "\"foo\".bar.\"baz\"", 
+                    new Token[]{
+                        new Token("foo",SqlTokenType.DelimitedIdentifier),
+                        new Token("BAR",SqlTokenType.Name),
+                        new Token("baz",SqlTokenType.DelimitedIdentifier)
+                    }
+                },
+                new object [] 
+                {
+                    "\"foo.bar\".baz", 
+                    new Token[]{
+                        new Token("foo.bar",SqlTokenType.DelimitedIdentifier),
+                        new Token("BAZ",SqlTokenType.Name)
+                    }
+                }
+            };
+
+            foreach (object[] item in input)
+            {
+                string toTokenize = item[0] as string;
+                Token[] expectedTokens = item[1] as Token[];
+
+                Tokenizer testSubject = new Tokenizer(toTokenize);
+
+                string result = testSubject.GetNextAsName();
+                Token[] actualTokens = new List<Token>(testSubject.IdentifierChain).ToArray();
+
+                Assert.AreEqual(expectedTokens.Length, actualTokens.Length);
+
+                for (int i = 0; i < expectedTokens.Length; i++)
+                {
+                    Token expectedToken = expectedTokens[i];
+                    Token actualToken = actualTokens[i];
+
+                    Assert.AreEqual(expectedToken, actualToken);
+                }
+
+            }
         }
 
         [Test, OfMember("IdentiferChainPredecessor")]
         public void IdentiferChainPredecessor()
         {
-            Assert.Fail("TODO");
+            Tokenizer testSubject = new Tokenizer("foo.bar.baz");
+
+            string token = testSubject.GetNextAsString();
+
+            Assert.AreEqual("BAR", testSubject.IdentifierChainPredecessor);
+
+            testSubject.Reset("bing.foo.\"bar\".baz");
+
+            token = testSubject.GetNextAsString();
+
+            Assert.AreEqual("bar", testSubject.IdentifierChainPredecessor);
         }
         
         [Test, OfMember("IdentiferChainLengthExceeded")]
@@ -545,12 +605,12 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
                 Assert.AreEqual(org.hsqldb.Trace.ASSERT_FAILED, -((HsqlDataSourceException)ex).ErrorCode);
             }
 
-            Tokenizer testSubject = new Tokenizer("t2 t2 t3");
+            Tokenizer testSubject = new Tokenizer("t1 t2 t3");
 
-            testSubject.GetThis("t1");
+            testSubject.GetThis("T1");
             object rval;
 
-            if (!testSubject.IsGetThis("t3"))
+            if (!testSubject.IsGetThis("T3"))
             {
                 try
                 {
@@ -788,7 +848,16 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
         [Test, OfMember("NormalizedToken")]
         public void NormalizedToken()
         {
-            Assert.Fail("TODO");
+            Tokenizer testSubject = new Tokenizer("select 'Let''s Have a nice day!' from DUAL");
+
+            testSubject.GetNextAsString();
+
+            Assert.AreEqual("SELECT", testSubject.NormalizedToken);
+
+            testSubject.GetNextAsString();
+
+            Assert.AreEqual("'Let''s Have a nice day!'", testSubject.NormalizedToken);
+
         }
 
         [Test, OfMember("ParameterName")]

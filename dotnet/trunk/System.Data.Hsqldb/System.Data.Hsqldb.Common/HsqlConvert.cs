@@ -1130,7 +1130,7 @@ namespace System.Data.Hsqldb.Common
                     }
                 case (int)HsqlProviderType.Binary:
                     {
-                        return typeof(byte[]);
+                        return typeof(Binary);
                     }
                 case (int)HsqlProviderType.Blob:
                     {
@@ -1154,7 +1154,7 @@ namespace System.Data.Hsqldb.Common
                     }
                 case (int)HsqlProviderType.Date:
                     {
-                        return typeof(java.sql.Date);
+                        return typeof(java.util.Date);
                     }
                 case (int)HsqlProviderType.Decimal:
                     {
@@ -1182,7 +1182,7 @@ namespace System.Data.Hsqldb.Common
                     }
                 case (int)HsqlProviderType.LongVarBinary:
                     {
-                        return typeof(byte[]);
+                        return typeof(Binary);
                     }
                 case (int)HsqlProviderType.LongVarChar:
                     {
@@ -1194,7 +1194,7 @@ namespace System.Data.Hsqldb.Common
                     }
                 case (int)HsqlProviderType.Numeric:
                     {
-                        return typeof(java.math.BigDecimal);
+                        return typeof(JavaBigDecimal);
                     }
                 case (int)HsqlProviderType.Object:
                     {
@@ -1202,7 +1202,7 @@ namespace System.Data.Hsqldb.Common
                     }
                 case (int)HsqlProviderType.Real:
                     {
-                        return typeof(java.lang.Double);
+                        return typeof(JavaDouble);
                     }
                 case (int)HsqlProviderType.Ref:
                     {
@@ -1210,7 +1210,7 @@ namespace System.Data.Hsqldb.Common
                     }
                 case (int)HsqlProviderType.SmallInt:
                     {
-                        return typeof(java.lang.Integer);
+                        return typeof(JavaInteger);
                     }
                 case (int)HsqlProviderType.Struct:
                     {
@@ -1218,19 +1218,19 @@ namespace System.Data.Hsqldb.Common
                     }
                 case (int)HsqlProviderType.Time:
                     {
-                        return typeof(java.sql.Time);
+                        return typeof(JavaTime);
                     }
                 case (int)HsqlProviderType.TimeStamp:
                     {
-                        return typeof(java.sql.Timestamp);
+                        return typeof(JavaTimestamp);
                     }
                 case (int)HsqlProviderType.TinyInt:
                     {
-                        return typeof(java.lang.Integer);
+                        return typeof(JavaInteger);
                     }
                 case (int)HsqlProviderType.VarBinary:
                     {
-                        return typeof(byte[]);
+                        return typeof(Binary);
                     }
                 case (int)HsqlProviderType.VarChar:
                     {
