@@ -139,8 +139,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      *        new jdbcResultSetMetaData object
      * @throws SQLException if a database access error occurs
      */
-    jdbcResultSetMetaData(Result r,
-                          HsqlProperties props) throws SQLException {
+    jdbcResultSetMetaData(Result r, HsqlProperties props) throws SQLException {
         init(r, props);
     }
 
@@ -194,9 +193,12 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         columnCount = r.getColumnCount();
 
         // fredt -  props is null for internal connections, so always use the default behaviour in this case
-        useColumnName = props == null ? true
-                                      : props.isPropertyTrue(
-                                          "get_column_name");
+        useColumnName = true;
+
+        if (props != null) {
+            useColumnName = props.isPropertyTrue("get_column_name", true);
+        }
+
         columnMetaData = new jdbcColumnMetaData[columnCount];
         rmd            = r.metaData;
 
@@ -215,8 +217,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
                                                             : rmd
                                                             .schemaNames[i];
             cmd.tableName      = rmd.tableNames[i] == null ? ""
-                                                           : rmd
-                                                           .tableNames[i];
+                                                           : rmd.tableNames[i];
             cmd.columnName     = rmd.colNames[i] == null ? ""
                                                          : rmd.colNames[i];
             cmd.columnLabel    = rmd.colLabels[i] == null ? ""
@@ -285,7 +286,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 
             Boolean iua = Types.isUnsignedAttribute(type);
 
-            cmd.isSigned = iua != null &&!iua.booleanValue();
+            cmd.isSigned = iua != null && !iua.booleanValue();
 
             Boolean ics = Types.isCaseSensitive(type);
 
@@ -1144,6 +1145,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
                                     String.valueOf(column));
         }
     }
+
 //#ifdef JAVA6
 /*
     public <T> T unwrap(Class<T> iface) throws SQLException
@@ -1156,5 +1158,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 */
+
 //#endif JAVA6
 }

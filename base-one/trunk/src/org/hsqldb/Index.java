@@ -814,7 +814,7 @@ public class Index {
 
         while (x != null) {
             int c = compareRowNonUnique(session, rowdata, colIndex,
-                                        x.getData());
+                                        x.getData(), count);
 
             if (c == 0) {
                 found = x;

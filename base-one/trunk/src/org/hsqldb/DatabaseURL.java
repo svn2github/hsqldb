@@ -59,9 +59,9 @@ public class DatabaseURL {
      * Returns true if type represents an in-process connection to a file backed
      * database.
      */
-    public static boolean isFileBasedDatabaseType(String url) {
+    public static boolean isFileBasedDatabaseType(String type) {
 
-        if (url == S_FILE || url == S_RES) {
+        if (type == S_FILE || type == S_RES) {
             return true;
         }
 
@@ -71,9 +71,9 @@ public class DatabaseURL {
     /**
      * Returns true if type represents an in-process connection to database.
      */
-    public static boolean isInProcessDatabaseType(String url) {
+    public static boolean isInProcessDatabaseType(String type) {
 
-        if (url == S_FILE || url == S_RES || url == S_MEM) {
+        if (type == S_FILE || type == S_RES || type == S_MEM) {
             return true;
         }
 
@@ -81,33 +81,43 @@ public class DatabaseURL {
     }
 
     /**
-     * Parses the url into components that are returned in a properties
-     * object. <p>
+     * Parses the url into components that are returned in a properties object.
      *
-     * The following components are isolated: <p>
+     * <p> The following components are isolated:
      *
-     * <ul>
-     * url: the original url<p>
-     * connection_type: a static string that indicate the protocol. If the
-     * url does not begin with a valid protocol, null is returned by this
-     * method instead of the properties object.<p>
-     * host: name of host in networked modes in lowercase<p>
-     * port: port number in networked mode, or 0 if not present<p>
-     * path: path of the resource on server in networked modes,
-     * / (slash) in all cases apart from
-     * servlet path which is / (slash) plus the name of the servlet<p>
-     * database: database name. For memory, resource and networked modes,
-     * this is returned in lowercase, for file databases the original
-     * case of characters is preserved. Returns empty string if name is not
-     * present in the url.<p>
-     * for each protocol if port number is not in the url<p>
-     * Additional connection properties specified as key/value pairs.
+     * <p>
+     * <ul> url: the original url
+     *
+     * <p> connection_type: a static string that indicate the protocol. If the
+     * url does not begin with a valid protocol, null is returned by this method
+     * instead of the properties object.
+     *
+     * <p> host: name of host in networked modes in lowercase
+     *
+     * <p> port: port number in networked mode, or 0 if not present
+     *
+     * <p> path: path of the resource on server in networked modes, minimum
+     * (slash) with path elements appended apart from servlet path which is
+     * (slash) plus the name of the servlet
+     *
+     * <p> database: database name. For memory, networked modes,
+     * this is returned in lowercase, for file: and res: databases the original case of
+     * characters is preserved. Returns empty string if name is not present in
+     * the url.
+     *
+     * <p> for each protocol if port number is not in the url
+     *
+     * <p> Additional connection properties specified as key/value pairs.
      * </ul>
-     * @return null returned if the part that should represent the port is not
-     * an integer or the part for database name is empty.
-     * Empty HsqlProperties returned if if url does not begin with valid
-     * protocol and could refer to another JDBC driver.
      *
+     * @return null returned if the part that should represent the port is not
+     *   an integer or the part for database name is empty. Empty
+     *   HsqlProperties returned if if url does not begin with valid protocol
+     *   and could refer to another JDBC driver.
+     * @param url String
+     * @param hasPrefix indicates URL prefix is present
+     * @param noPath indicates empty path and verbatim use of path elements as
+     * database
      */
     public static HsqlProperties parseURL(String url, boolean hasPrefix) {
 
@@ -234,13 +244,13 @@ public class DatabaseURL {
                 }
             }
         } else {
-            if (type == S_MEM || type == S_RES) {
-                database = urlImage.substring(pos, semicolpos).toLowerCase();
+            if (type == S_MEM) {
+                database = urlImage.substring(pos, semicolpos);
+            } else if (type == S_RES) {
+                database = url.substring(pos, semicolpos);
 
-                if (type == S_RES) {
-                    if (database.indexOf('/') != 0) {
-                        database = '/' + database;
-                    }
+                if (database.indexOf('/') != 0) {
+                    database = '/' + database;
                 }
             } else {
                 database = url.substring(pos, semicolpos);
