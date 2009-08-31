@@ -105,9 +105,12 @@ final class TableFilter {
     Expression eAnd;
 
     //
-    boolean      isOuterJoin;                      // table joined with OUTER JOIN
-    boolean      isAssigned;                       // conditions have been assigned to this
+    boolean isOuterJoin;                           // table joined with OUTER JOIN
+    boolean isAssigned;                            // conditions have been assigned to this
+
+    //
     boolean      isMultiFindFirst;                 // findFirst() uses multi-column index
+    int          multiFindCount;                   // column count to match
     Expression[] findFirstExpressions;             // expressions for column values
 
     //
@@ -323,10 +326,20 @@ final class TableFilter {
 
         eAnd.getEquiJoinColumns(this, check, expr);
 
-        if (ArrayUtil.containsAllTrueElements(check, filterIndex.colCheck)) {
-            isMultiFindFirst     = true;
-            findFirstExpressions = expr;
+        int count = ArrayUtil.countStartIntIndexesInBooleanArray(
+            filterIndex.getColumns(), check);
+
+        if (count <= 1) {
+            return;
         }
+
+        for (int i = count; i < filterIndex.colIndex.length; i++) {
+            expr[filterIndex.colIndex[i]] = null;
+        }
+
+        isMultiFindFirst     = true;
+        findFirstExpressions = expr;
+        multiFindCount       = count;
     }
 
     private void setCondition(Session session,
@@ -504,13 +517,14 @@ final class TableFilter {
                         break;
                     }
 
-                    value = Column.convertObject(value, types[i]);
+                    value              = Column.convertObject(value, types[i]);
                     currentJoinData[i] = e.getValue(session, types[i]);
                 }
             }
 
             it = convertible
-                 ? filterIndex.findFirstRow(session, currentJoinData)
+                 ? filterIndex.findFirstRow(session, currentJoinData,
+                                            multiFindCount)
                  : filterIndex.emptyIterator();
 
             if (!it.hasNext()) {
@@ -526,8 +540,8 @@ final class TableFilter {
             int    valuetype  = eStart.getArg2().getDataType();
             int    targettype = eStart.getArg().getDataType();
 
-            it = getFirstIterator(session, eStart.getType(), value,
-                                  valuetype, filterIndex, targettype);
+            it = getFirstIterator(session, eStart.getType(), value, valuetype,
+                                  filterIndex, targettype);
         }
 
         while (true) {
@@ -613,7 +627,7 @@ final class TableFilter {
             if (isMultiFindFirst) {
                 if (filterIndex.compareRowNonUnique(
                         session, currentJoinData, filterIndex.colIndex,
-                        currentData) != 0) {
+                        currentData, multiFindCount) != 0) {
                     break;
                 }
             }
@@ -634,8 +648,8 @@ final class TableFilter {
         }
 
         if (isMultiFindFirst) {
-            ArrayUtil.clearArray(ArrayUtil.CLASS_CODE_OBJECT,
-                                 currentJoinData, 0, currentJoinData.length);
+            ArrayUtil.clearArray(ArrayUtil.CLASS_CODE_OBJECT, currentJoinData,
+                                 0, currentJoinData.length);
         }
 
         currentRow  = null;

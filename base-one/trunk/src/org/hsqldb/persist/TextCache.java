@@ -780,6 +780,9 @@ public class TextCache extends DataFileCache {
         return ((RowInputText) rowIn).getLineNumber();
     }
 
+    protected void copyShadow(CachedObject[] rows, int offset,
+                              int count) throws IOException {}
+
     protected void setFileModified() throws IOException {
         fileModified = true;
     }

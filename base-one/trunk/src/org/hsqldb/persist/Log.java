@@ -138,6 +138,7 @@ public class Log {
     private int                    writeDelay;
     private int                    scriptFormat;
     private DataFileCache          cache;
+    private boolean                incBackup;
 
     Log(Database db) throws HsqlException {
 
@@ -153,10 +154,12 @@ public class Log {
         int logMegas = properties.getIntegerProperty(
             HsqlDatabaseProperties.hsqldb_log_size, 0);
 
-        maxLogSize = logMegas * 1024 * 1024;
+        maxLogSize = logMegas * 1024L * 1024;
         scriptFormat = properties.getIntegerProperty(
             HsqlDatabaseProperties.hsqldb_script_format,
             ScriptWriterBase.SCRIPT_TEXT_170);
+        incBackup = properties.isPropertyTrue(
+            HsqlDatabaseProperties.hsqldb_inc_backup);
         writeDelay     = properties.getDefaultWriteDelay();
         filesReadOnly  = database.isFilesReadOnly();
         scriptFileName = fileName + ".script";
@@ -208,6 +211,7 @@ public class Log {
                 }
 
             // continue as non-modified files
+            // fall through
             case HsqlDatabaseProperties.FILES_NOT_MODIFIED :
 
                 /**
@@ -318,6 +322,12 @@ public class Log {
     }
 
     void backupData() throws IOException {
+
+        if (incBackup) {
+            fa.removeElement(fileName + ".backup");
+
+            return;
+        }
 
         if (fa.isStreamElement(fileName + ".data")) {
             ZipUnzipFile.compressFile(fileName + ".data",
@@ -441,7 +451,7 @@ public class Log {
 
         long megas = properties.getIntegerProperty(
             HsqlDatabaseProperties.hsqldb_defrag_limit, 200);
-        long defraglimit = megas * 1024 * 1024;
+        long defraglimit = megas * 1024L * 1024;
         long lostSize    = cache.freeBlocks.getLostBlocksSize();
 
         return lostSize > defraglimit;
@@ -482,7 +492,7 @@ public class Log {
         properties.setProperty(HsqlDatabaseProperties.hsqldb_log_size,
                                String.valueOf(megas));
 
-        maxLogSize = megas * 1024 * 1024;
+        maxLogSize = megas * 1024L * 1024;
     }
 
     int getScriptType() {
@@ -528,6 +538,28 @@ public class Log {
             synchLog();
             dbLogWriter.setWriteDelay(delay);
         }
+    }
+
+    public void setIncrementalBackup(boolean val) throws HsqlException {
+
+        if (incBackup == val) {
+            return;
+        }
+
+        incBackup = val;
+
+        database.getProperties().setProperty(
+            HsqlDatabaseProperties.hsqldb_inc_backup, String.valueOf(val));
+        database.getProperties().save();
+
+        if (cache != null) {
+
+            // need to set file modified to force a backup if necessary
+            cache.incBackup    = true;
+            cache.fileModified = true;
+        }
+
+        database.logger.needsCheckpoint = true;
     }
 
     /**
@@ -739,6 +771,12 @@ public class Log {
      */
     private void restoreBackup() throws HsqlException {
 
+        if (incBackup) {
+            restoreBackupIncremental();
+
+            return;
+        }
+
         // in case data file cannot be deleted, reset it
         DataFileCache.deleteOrResetFreePos(database, fileName + ".data");
 
@@ -751,6 +789,36 @@ public class Log {
                               new Object[] {
                 fileName + ".backup", e.toString()
             });
+        }
+    }
+
+    /**
+     * Restores in from an incremental backup
+     */
+    private void restoreBackupIncremental() throws HsqlException {
+
+        try {
+            if (fa.isStreamElement(fileName + ".backup")) {
+                RAShadowFile.restoreFile(fileName + ".backup",
+                                         fileName + ".data");
+            } else {
+/*
+                // this is to ensure file has been written fully but it is not necessary
+                // as semantics dictate that if a backup does not exist, the file
+                // was never changed or was fully written to
+                if (FileUtil.exists(cacheFileName)) {
+                    int flags = DataFileCache.getFlags(cacheFileName);
+
+                    if (!BitMap.isSet(flags, DataFileCache.FLAG_ISSAVED)) {
+                        FileUtil.delete(cacheFileName);
+                    }
+                }
+*/
+            }
+
+            deleteBackup();
+        } catch (IOException e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, fileName + ".backup");
         }
     }
 

@@ -1370,11 +1370,11 @@ public class Table extends BaseTable {
         Trace.check(isCached, Trace.TABLE_NOT_FOUND);
 
         for (int i = 0; i < getIndexCount(); i++) {
-            int p = roots[i];
-            Row r = null;
+            int root = roots[i];
+            Row r    = null;
 
-            if (p != -1) {
-                r = (CachedRow) rowStore.get(p);
+            if (root != -1) {
+                r = (CachedRow) rowStore.get(root);
             }
 
             Node f = null;
@@ -2864,7 +2864,8 @@ public class Table extends BaseTable {
                 }
             }
         } else {
-            RowIterator it = bestIndex.findFirstRow(session, data);
+            RowIterator it = bestIndex.findFirstRow(session, data,
+                bestIndex.getVisibleColumns());
 
             while (true) {
                 row = it.next();

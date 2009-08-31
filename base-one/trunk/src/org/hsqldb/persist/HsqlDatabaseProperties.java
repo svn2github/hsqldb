@@ -175,6 +175,10 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         "hsqldb.max_char_or_varchar_display_size";
 
     //
+    public static final String hsqldb_inc_backup =
+        "hsqldb.incremental_backup";
+
+    //
     public static final String  db_version  = "version";
     private static final String db_readonly = "readonly";
     private static final String db_modified = "modified";
@@ -405,6 +409,9 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         // initial method of data file access
         setProperty(hsqldb_nio_data_file, true);
 
+        // initial method of data file access
+        setProperty(hsqldb_lock_file, true);
+
         // set default table type to MEMORY
         setProperty(hsqldb_default_table_type, "memory");
 
@@ -429,6 +436,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
             setProperty(hsqldb_log_size, 10);
             setProperty(sql_enforce_strict_size, true);
             setProperty(hsqldb_nio_data_file, false);
+            setProperty(hsqldb_lock_file, true);
         }
 
         // OOo end

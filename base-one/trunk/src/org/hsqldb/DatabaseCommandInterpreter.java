@@ -2364,15 +2364,36 @@ class DatabaseCommandInterpreter {
             case Token.DATABASE : {
                 session.checkAdmin();
                 session.checkDDLWrite();
-                tokenizer.getThis(Token.T_COLLATION);
 
-                String cname = tokenizer.getSimpleName();
+                token = tokenizer.getSimpleToken();
 
-                if (!tokenizer.wasQuotedIdentifier()) {
-                    throw Trace.error(Trace.INVALID_IDENTIFIER);
+                switch (Token.get(token)) {
+
+                    case Token.BACKUP : {
+                        tokenizer.getThis(Token.T_INCREMENT);
+
+                        Boolean b =
+                            (Boolean) tokenizer.getInType(Types.BOOLEAN);
+
+                        session.checkAdmin();
+                        session.checkDDLWrite();
+                        session.setScripting(false);
+                        database.logger.setIncrementalBackup(b.booleanValue());
+
+                        break;
+                    }
+                    case Token.COLLATION : {
+                        String cname = tokenizer.getSimpleName();
+
+                        if (!tokenizer.wasQuotedIdentifier()) {
+                            throw Trace.error(Trace.INVALID_IDENTIFIER);
+                        }
+
+                        database.collation.setCollation(cname);
+
+                        break;
+                    }
                 }
-
-                database.collation.setCollation(cname);
 
                 break;
             }

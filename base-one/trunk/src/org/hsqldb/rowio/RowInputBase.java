@@ -245,7 +245,7 @@ public abstract class RowInputBase extends HsqlByteArrayInputStream {
             buf = new byte[rowsize];
         }
 
-        filePos = filepos;
+        this.filePos = filepos;
         size    = count = rowsize;
         pos     = 4;
         buf[0]  = (byte) ((rowsize >>> 24) & 0xFF);

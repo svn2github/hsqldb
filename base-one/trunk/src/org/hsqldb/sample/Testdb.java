@@ -66,7 +66,7 @@ public class Testdb {
 
         dataSource.setDatabase("jdbc:hsqldb:" + db_file_name_prefix);
 
-        Connection c = dataSource.getConnection("sa", "");
+        conn = dataSource.getConnection("sa", "");
     }
 
     public void shutdown() throws SQLException {

@@ -399,6 +399,14 @@ public class Logger {
                            : 0;
     }
 
+    public synchronized void setIncrementalBackup(boolean val)
+    throws HsqlException {
+
+        if (log != null) {
+            log.setIncrementalBackup(val);
+        }
+    }
+
     /**
      *  Opens the TextCache object.
      */

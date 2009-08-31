@@ -54,7 +54,7 @@ public class TestAllTypes {
     protected String filepath = "/hsql/testalltypes/test";
 
 //    protected String filepath = "hsql://localhost/yourtest";
-    boolean    network = true;
+    boolean    network;
     String     user;
     String     password;
     Statement  sStatement;
@@ -88,6 +88,7 @@ public class TestAllTypes {
             sStatement  = null;
             cConnection = null;
 
+            TestSelf.deleteDatabase(filepath);
             HsqlProperties props      = new HsqlProperties(filepath);
             boolean        fileexists = props.checkFileExists();
 
@@ -99,7 +100,6 @@ public class TestAllTypes {
                 cConnection = dataSource.getConnection(user, password);
                 sStatement  = cConnection.createStatement();
 
-                sStatement.execute("SET SCRIPTFORMAT " + logType);
                 sStatement.execute("SET LOGSIZE " + 400);
                 sStatement.execute("SET WRITE_DELAY " + writeDelay);
                 sStatement.execute("SHUTDOWN");
@@ -139,6 +139,8 @@ public class TestAllTypes {
                                                    + " doublefield DOUBLE, "
                                                    + " bigdecimalfield DECIMAL, "
                                                    + " datefield DATE, "
+                                                   + " timefield TIME, "
+                                                   + " tsfield TIMESTAMP, "
                                                    + " filler VARCHAR); ";
 
         // adding extra index will slow down inserts a bit
@@ -199,7 +201,7 @@ public class TestAllTypes {
             }
 
             PreparedStatement ps = cConnection.prepareStatement(
-                "INSERT INTO test (firstname,lastname,zip,longfield,doublefield,bigdecimalfield,datefield,filler) VALUES (?,?,?,?,?,?,?,?)");
+                "INSERT INTO test (firstname,lastname,zip,longfield,doublefield,bigdecimalfield,datefield,timefield,tsfield,filler) VALUES (?,?,?,?,?,?,?,?,?,?)");
 
             ps.setString(1, "Julia");
             ps.setString(2, "Clancy");
@@ -215,12 +217,18 @@ public class TestAllTypes {
                 ps.setBigDecimal(6, null);
 
 //                ps.setDouble(6, randomgen.nextDouble());
-                ps.setDate(7, new java.sql.Date(nextIntRandom(randomgen, 1000)
-                                                * 24 * 3600 * 1000));
+                ps.setDate(7, new java.sql.Date(nextIntRandom(randomgen, 20000)
+                                                * 24L * 3600 * 1000));
+
+                ps.setTime(8, new java.sql.Time(nextIntRandom(randomgen, 24 * 3600 * 1000)
+                                                ));
+
+                ps.setTimestamp(9, new java.sql.Timestamp(nextIntRandom(randomgen, 20000)
+                                                * 24L * 3600 * 1000 + nextIntRandom(randomgen, 24 * 3600 * 1000)));
 
                 String varfiller = filler.substring(0, randomlength);
 
-                ps.setString(8, nextrandom + varfiller);
+                ps.setString(10, nextrandom + varfiller);
                 ps.execute();
 
                 if (reportProgress && (i + 1) % 10000 == 0) {
@@ -311,6 +319,7 @@ public class TestAllTypes {
             checkSelects();
             checkUpdates();
             sw.zero();
+            sStatement.execute("SHUTDOWN");
             cConnection.close();
             System.out.println("Closed connection: " + sw.elapsedTime());
         } catch (SQLException e) {

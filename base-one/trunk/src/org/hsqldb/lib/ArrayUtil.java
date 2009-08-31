@@ -377,7 +377,7 @@ public class ArrayUtil {
 
         for (int j = 0; j < count; j++) {
             if (arra[j] != arrb[j]) {
-                if (arra[j] == null ||!arra[j].equals(arrb[j])) {
+                if (arra[j] == null || !arra[j].equals(arrb[j])) {
                     return false;
                 }
             }
@@ -612,6 +612,25 @@ public class ArrayUtil {
     }
 
     /**
+     * Return array of indexes of boolean elements that are true.
+     */
+    public static int countStartIntIndexesInBooleanArray(int[] arra,
+            boolean[] arrb) {
+
+        int k = 0;
+
+        for (int i = 0; i < arra.length; i++) {
+            if (arrb[arra[i]]) {
+                k++;
+            } else {
+                break;
+            }
+        }
+
+        return k;
+    }
+
+    /**
      * Return true if for each true element in arrb, the corresponding
      * element in arra is true
      */
@@ -619,7 +638,7 @@ public class ArrayUtil {
             boolean[] arrb) {
 
         for (int i = 0; i < arra.length; i++) {
-            if (arrb[i] &&!arra[i]) {
+            if (arrb[i] && !arra[i]) {
                 return false;
             }
         }

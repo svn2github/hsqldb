@@ -684,18 +684,20 @@ public class Token {
     static final int        WRITE_DELAY           = 330;
 
     // added stuff
-    static final int VAR_POP     = 330;
-    static final int VAR_SAMP    = 331;
-    static final int STDDEV_POP  = 332;
-    static final int STDDEV_SAMP = 333;
-    static final int DEFRAG      = 334;
-    static final int INCREMENT   = 335;
-    static final int TOCHAR      = 336;
-    static final int DATABASE    = 337;
-    static final int SCHEMA      = 338;
-    static final int ROLE        = 339;
+    static final int VAR_POP     = 340;
+    static final int VAR_SAMP    = 341;
+    static final int STDDEV_POP  = 342;
+    static final int STDDEV_SAMP = 343;
+    static final int DEFRAG      = 344;
+    static final int INCREMENT   = 345;
+    static final int TOCHAR      = 346;
+    static final int DATABASE    = 347;
+    static final int SCHEMA      = 348;
+    static final int ROLE        = 349;
     static final int DOW         = 340;
     static final int INITIAL     = 341;
+    static final int BACKUP      = 342;
+    static final int COLLATION   = 343;
 
     //
     static {
@@ -718,10 +720,12 @@ public class Token {
         commandSet.put(T_ALIAS, ALIAS);
         commandSet.put(T_ALTER, ALTER);
         commandSet.put(T_AUTOCOMMIT, AUTOCOMMIT);
+        commandSet.put(T_BACKUP, BACKUP);
         commandSet.put(T_CACHED, CACHED);
         commandSet.put(T_CALL, CALL);
         commandSet.put(T_CHECK, CHECK);
         commandSet.put(T_CHECKPOINT, CHECKPOINT);
+        commandSet.put(T_COLLATION, COLLATION);
         commandSet.put(T_COLUMN, COLUMN);
         commandSet.put(T_COMMIT, COMMIT);
         commandSet.put(T_CONNECT, CONNECT);

@@ -806,7 +806,7 @@ public class Index {
      * @throws HsqlException
      */
     RowIterator findFirstRow(Session session,
-                             Object[] rowdata) throws HsqlException {
+                             Object[] rowdata, int count) throws HsqlException {
 
         Node    x      = getRoot(session);
         Node    found  = null;
@@ -1172,6 +1172,12 @@ public class Index {
     int compareRowNonUnique(Session session, Object[] a, int[] rowColMap,
                             Object[] b) throws HsqlException {
 
+        return compareRowNonUnique(session, a, rowColMap, b, rowColMap.length) ;
+    }
+
+    int compareRowNonUnique(Session session, Object[] a, int[] rowColMap,
+                            Object[] b, int colCount) throws HsqlException {
+
         int i = Column.compare(collation, a[rowColMap[0]], b[colIndex[0]],
                                colTypes[0]);
 
@@ -1181,7 +1187,7 @@ public class Index {
 
         int fieldcount = rowColMap.length;
 
-        for (int j = 1; j < fieldcount; j++) {
+        for (int j = 1; j < colCount; j++) {
             i = Column.compare(collation, a[rowColMap[j]], b[colIndex[j]],
                                colTypes[j]);
 
@@ -1192,7 +1198,6 @@ public class Index {
 
         return 0;
     }
-
     /**
      * compares two full table rows based on a set of columns
      *

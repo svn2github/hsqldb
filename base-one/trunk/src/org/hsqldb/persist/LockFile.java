@@ -795,9 +795,9 @@ public class LockFile {
         try {
             if (withCreateNewFile) {
                 try {
-                    file.createNewFile();
-
-                    return;
+                    if (file.createNewFile()) {
+                        return;
+                    }
                 } catch (IOException ioe) {}
             }
 

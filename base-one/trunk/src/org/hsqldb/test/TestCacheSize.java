@@ -92,7 +92,7 @@ public class TestCacheSize {
     boolean nioMode        = false;
 
     // script format {TEXT | BINARY | COMPRESSED}
-    String  logType       = "BINARY";
+    String  logType       = "TEXT";
     int     writeDelay    = 60;
     boolean indexZip      = false;
     boolean indexLastName = false;
@@ -107,10 +107,10 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows = 1024000;
+    int bigrows = 256000;
 
     // number of ops
-    int bigops    = 1024000;
+    int bigops    = 256000;
     int smallops  = 8000;
     int smallrows = 0xfff;
 

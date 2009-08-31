@@ -75,6 +75,8 @@ import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.rowio.RowInputBinary;
 import org.hsqldb.rowio.RowOutputBinary;
 
+import java.io.BufferedInputStream;
+
 // fredt@users 20020215 - patch 461556 by paul-h@users - server factory
 // fredt@users 20020424 - patch 1.7.0 by fredt - shutdown without exit
 // fredt@users 20021002 - patch 1.7.1 by fredt - changed notification method
@@ -188,7 +190,8 @@ class ServerConnection implements Runnable {
         try {
             socket.setTcpNoDelay(true);
 
-            dataInput  = new DataInputStream(socket.getInputStream());
+            dataInput = new DataInputStream(
+                new BufferedInputStream(socket.getInputStream()));
             dataOutput = new BufferedOutputStream(socket.getOutputStream());
 
             Result resultIn = Result.read(rowIn, dataInput);
