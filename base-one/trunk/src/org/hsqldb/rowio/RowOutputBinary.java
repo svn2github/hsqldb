@@ -348,7 +348,7 @@ public class RowOutputBinary extends RowOutputBase {
 
     public void setBuffer(byte[] buffer) {
 
-        buf = buffer;
+        this.buffer = buffer;
 
         reset();
     }

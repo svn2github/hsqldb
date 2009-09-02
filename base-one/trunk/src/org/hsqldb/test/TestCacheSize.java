@@ -186,6 +186,7 @@ public class TestCacheSize {
                                    + cacheSizeScale);
                 sStatement.execute("SET PROPERTY \"hsqldb.nio_data_file\" "
                                    + nioMode);
+                sStatement.execute("SET FILES INCREMENT BACKUP " + true);
                 sStatement.execute("SHUTDOWN");
                 cConnection.close();
             }

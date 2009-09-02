@@ -65,6 +65,7 @@ import java.awt.event.WindowListener;
 import java.awt.image.MemoryImageSource;
 
 import org.hsqldb.lib.java.JavaSystem;
+import org.hsqldb.lib.RCData;
 
 // sqlbob@users 20020401 - patch 1.7.0 by sqlbob (RMP) - enhancements
 // sqlbob@users 20020401 - patch 537501 by ulrivo - command line arguments
@@ -73,9 +74,8 @@ import org.hsqldb.lib.java.JavaSystem;
 /*
  * unsaved@users 20050426 - Switched default switch method from "-switch" to
  * "--switch" because "-switch" usage is ambiguous as used here.  Single
- * switches should
- * be reserved for single-letter switches which can be mixed like
- * "-u -r -l" = "-url".  -blaine
+ * switches should be reserved for single-letter switches which can be mixed
+ * like * "-u -r -l" = "-url".  -blaine
 */
 
 /**
@@ -118,21 +118,20 @@ implements ActionListener, WindowListener, KeyListener {
         } catch (Throwable t) {}
     }
 
-
 //#endif
     private static final String HELP_TEXT =
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.org.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.33 $"
+        + "problem reports or help requests:  $Revision: 3127 $"
         + (TT_AVAILABLE ? ""
                         : ("\n\nTransferTool classes are not in CLASSPATH.\n"
                            + "To enable the Tools menu, add 'transfer.jar' to your class path."));
     ;
     private static final String ABOUT_TEXT =
-        "$Revision: 1.33 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 3127 $ of DatabaseManager\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
-        + "Copyright (c) 2001-2007, The HSQL Development Group.\n"
+        + "Copyright (c) 2001-2009, The HSQL Development Group.\n"
         + "http://hsqldb.org  (User Guide available at this site).\n\n\n"
         + "You may use and redistribute according to the HSQLDB\n"
         + "license documented in the source code and at the web\n"
@@ -162,18 +161,12 @@ implements ActionListener, WindowListener, KeyListener {
 
     // (ulrivo): variables set by arguments from the commandline
     static String defDriver   = "org.hsqldb.jdbcDriver";
-    static String defURL      = "jdbc:hsqldb:.";
-    static String defUser     = "sa";
+    static String defURL      = "jdbc:hsqldb:mem:.";
+    static String defUser     = "SA";
     static String defPassword = "";
     static String defScript;
     static String defDirectory;
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param c
-     */
     public void connect(Connection c) {
 
         if (c == null) {
@@ -198,10 +191,6 @@ implements ActionListener, WindowListener, KeyListener {
         }
     }
 
-    /**
-     * Method declaration
-     *
-     */
     public void init() {
 
         DatabaseManager m = new DatabaseManager();
@@ -219,10 +208,9 @@ implements ActionListener, WindowListener, KeyListener {
     }
 
     /**
-     * Method declaration
+     * Run with --help switch for usage instructions.
      *
-     *
-     * @param arg
+     * @throws IllegalArgumentException for the obvious reason
      */
     public static void main(String[] arg) {
 
@@ -240,7 +228,7 @@ implements ActionListener, WindowListener, KeyListener {
         for (int i = 0; i < arg.length; i++) {
             lowerArg = arg[i].toLowerCase();
 
-            if (lowerArg.length() > 1 && lowerArg.charAt(1) == '-') {
+            if (lowerArg.startsWith("--")) {
                 lowerArg = lowerArg.substring(1);
             }
 
@@ -278,10 +266,22 @@ implements ActionListener, WindowListener, KeyListener {
                 bMustExit = false;
 
                 i--;
-            } else {
+            } else if (lowerArg.equals("-help")) {
                 showUsage();
 
                 return;
+            } else {
+                /* Syntax ERRORS should either throw or exit with non-0 status.
+                 * In our case, it may be unsafe to exit, so we throw.
+                 * (I.e. should provide easy way for caller to programmatically
+                 * determine that there was an invocation problem).
+                 */
+                throw new IllegalArgumentException(
+                    "Try:  java... " + DatabaseManagerSwing.class.getName()
+                    + " --help");
+
+                // No reason to localize, since the main syntax message is
+                // not localized.
             }
         }
 
@@ -334,6 +334,7 @@ implements ActionListener, WindowListener, KeyListener {
         System.out.println(
             "Usage: java DatabaseManager [--options]\n"
             + "where options include:\n"
+            + "    --help                show this message\n"
             + "    --driver <classname>  jdbc driver class\n"
             + "    --url <name>          jdbc url\n"
             + "    --user <name>         username used for connection\n"
@@ -342,14 +343,9 @@ implements ActionListener, WindowListener, KeyListener {
             + "    --rcfile <file>       (defaults to 'dbmanager.rc' in home dir)\n"
             + "    --dir <path>          default directory\n"
             + "    --script <file>       reads from script file\n"
-            + "    --noexit              do not call system.exit()\n"
-            + "(Single-hypen switches like '-driver' are also supported)");
+            + "    --noexit              do not call system.exit()");
     }
 
-    /**
-     * Method declaration
-     *
-     */
     void insertTestData() {
 
         try {
@@ -370,10 +366,6 @@ implements ActionListener, WindowListener, KeyListener {
         }
     }
 
-    /**
-     * Method declaration
-     *
-     */
     public void main() {
 
         fMain = new Frame("HSQL Database Manager");
@@ -477,14 +469,6 @@ implements ActionListener, WindowListener, KeyListener {
         txtCommand.requestFocus();
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param b
-     * @param name
-     * @param items
-     */
     void addMenu(MenuBar b, String name, String[] items) {
 
         /* It's a very poor design to encapsulate menu creation this way.
@@ -502,13 +486,6 @@ implements ActionListener, WindowListener, KeyListener {
         b.add(menu);
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param f
-     * @param m
-     */
     void addMenuItems(Menu f, String[] m) {
 
         for (int i = 0; i < m.length; i++) {
@@ -524,28 +501,10 @@ implements ActionListener, WindowListener, KeyListener {
         }
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param k
-     */
     public void keyPressed(KeyEvent k) {}
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param k
-     */
     public void keyReleased(KeyEvent k) {}
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param k
-     */
     public void keyTyped(KeyEvent k) {
 
         if (k.getKeyChar() == '\n' && k.isControlDown()) {
@@ -554,12 +513,6 @@ implements ActionListener, WindowListener, KeyListener {
         }
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param ev
-     */
     public void actionPerformed(ActionEvent ev) {
 
         String s = ev.getActionCommand();
@@ -785,13 +738,6 @@ implements ActionListener, WindowListener, KeyListener {
         }
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param s
-     * @param help
-     */
     void showHelp(String[] help) {
 
         txtCommand.setText(help[0]);
@@ -806,36 +752,12 @@ implements ActionListener, WindowListener, KeyListener {
         txtCommand.setCaretPosition(help[0].length());
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param e
-     */
     public void windowActivated(WindowEvent e) {}
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param e
-     */
     public void windowDeactivated(WindowEvent e) {}
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param e
-     */
     public void windowClosed(WindowEvent e) {}
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param ev
-     */
     public void windowClosing(WindowEvent ev) {
 
         try {
@@ -851,32 +773,13 @@ implements ActionListener, WindowListener, KeyListener {
         }
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param e
-     */
     public void windowDeiconified(WindowEvent e) {}
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param e
-     */
     public void windowIconified(WindowEvent e) {}
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param e
-     */
     public void windowOpened(WindowEvent e) {}
 
     /**
-     * Method declaration
      * Clear SQL Statements.
      */
     void clear() {
@@ -887,7 +790,6 @@ implements ActionListener, WindowListener, KeyListener {
     }
 
     /**
-     * Method declaration
      * Adjust this method for large strings...ie multi megabtypes.
      */
     void execute() {
@@ -922,7 +824,20 @@ implements ActionListener, WindowListener, KeyListener {
             int r = sStatement.getUpdateCount();
 
             if (r == -1) {
-                formatResultSet(sStatement.getResultSet());
+                ResultSet rs = sStatement.getResultSet();
+                try {
+                    formatResultSet(rs);
+                } catch (Throwable t) {
+                    g[0]  = "Error displaying the ResultSet";
+
+                    gResult.setHead(g);
+
+                    String s = t.getMessage();
+
+                    g[0] = s;
+
+                    gResult.addRow(g);
+                }
             } else {
                 g[0] = "update count";
 
@@ -953,10 +868,6 @@ implements ActionListener, WindowListener, KeyListener {
         System.gc();
     }
 
-    /**
-     * Method declaration
-     *
-     */
     void updateResult() {
 
         if (iResult == 0) {
@@ -980,12 +891,6 @@ implements ActionListener, WindowListener, KeyListener {
         txtCommand.requestFocus();
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param r
-     */
     void formatResultSet(ResultSet r) {
 
         if (r == null) {
@@ -1031,10 +936,6 @@ implements ActionListener, WindowListener, KeyListener {
         } catch (SQLException e) {}
     }
 
-    /**
-     * Method declaration
-     *
-     */
     void testPerformance() {
 
         String       all   = txtCommand.getText();
@@ -1153,10 +1054,6 @@ implements ActionListener, WindowListener, KeyListener {
         }
     }
 
-    /**
-     * Method declaration
-     *
-     */
     void showResultInText() {
 
         String[] col   = gResult.getHead();
@@ -1222,12 +1119,6 @@ implements ActionListener, WindowListener, KeyListener {
         txtResult.setText(b.toString());
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param s
-     */
     private void addToRecent(String s) {
 
         for (int i = 0; i < iMaxRecent; i++) {
@@ -1255,10 +1146,6 @@ implements ActionListener, WindowListener, KeyListener {
         iRecent = (iRecent + 1) % iMaxRecent;
     }
 
-    /**
-     * Method declaration
-     *
-     */
     private void initGUI() {
 
         Panel pQuery   = new Panel();
@@ -1315,15 +1202,17 @@ implements ActionListener, WindowListener, KeyListener {
         fMain.pack();
     }
 
-    /**
-     * Method declaration
-     *
-     */
     protected void refreshTree() {
+
+        boolean wasAutoCommit = false;
 
         tTree.removeAll();
 
         try {
+            wasAutoCommit = cConn.getAutoCommit();
+
+            cConn.setAutoCommit(false);
+
             int color_table  = Color.yellow.getRGB();
             int color_column = Color.orange.getRGB();
             int color_index  = Color.red.getRGB();
@@ -1432,6 +1321,10 @@ implements ActionListener, WindowListener, KeyListener {
             tTree.addRow("", "Error getting metadata:", "-", 0);
             tTree.addRow("-", e.getMessage());
             tTree.addRow("-", e.getSQLState());
+        } finally {
+            try {
+                cConn.setAutoCommit(wasAutoCommit);
+            } catch (SQLException e) {}
         }
 
         tTree.update();

@@ -40,9 +40,9 @@ import java.util.ArrayList;
  *
  * This class <b>will System.exit()</b> if any invocation fails.
  *
- * @author   Blaine Simpson, unsaved@users
+ * @author Blaine Simpson (blaine dot simpson at admc dot com)
  * @since    HSQLDB 1.8.0
- * @version  $Revision: 1.9 $
+ * @version  $Revision: 766 $, $Date: 2009-01-12 02:12:17 +0000 (Mon, 12 Jan 2009) $
  */
 public class MainInvoker {
 

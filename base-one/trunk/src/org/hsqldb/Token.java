@@ -341,6 +341,7 @@ public class Token {
     static final String        T_EVERY          = "EVERY";
     static final String        T_EXPLAIN        = "EXPLAIN";
     static final String        T_EXTRACT        = "EXTRACT";
+    static final String        T_FILES          = "FILES";
     static final String        T_GENERATED      = "GENERATED";
     static final String        T_IFNULL         = "IFNULL";
     static final String        T_IGNORECASE     = "IGNORECASE";
@@ -656,32 +657,33 @@ public class Token {
     static final int        CACHED                = 302;
     static final int        CHECKPOINT            = 303;
     static final int        EXPLAIN               = 304;
-    static final int        IGNORECASE            = 305;
-    static final int        INDEX                 = 306;
-    static final int        LOGSIZE               = 307;
-    static final int        MATCHED               = 308;
-    static final int        MAXROWS               = 309;
-    static final int        MEMORY                = 310;
-    static final int        MINUS                 = 311;
-    static final int        NEXT                  = 312;
-    static final int        OPENBRACKET           = 313;
-    static final int        PASSWORD              = 314;
-    static final int        PLAN                  = 315;
-    static final int        PROPERTY              = 316;
-    static final int        READONLY              = 317;
-    static final int        REFERENTIAL_INTEGRITY = 318;
-    static final int        RENAME                = 319;
-    static final int        RESTART               = 320;
-    static final int        SCRIPT                = 321;
-    static final int        SCRIPTFORMAT          = 322;
-    static final int        SEMICOLON             = 323;
-    static final int        SEQUENCE              = 324;
-    static final int        SHUTDOWN              = 325;
-    static final int        SOURCE                = 326;
-    static final int        TEMP                  = 327;
-    static final int        TEXT                  = 328;
-    static final int        VIEW                  = 329;
-    static final int        WRITE_DELAY           = 330;
+    static final int        FILES                 = 305;
+    static final int        IGNORECASE            = 306;
+    static final int        INDEX                 = 307;
+    static final int        LOGSIZE               = 308;
+    static final int        MATCHED               = 309;
+    static final int        MAXROWS               = 310;
+    static final int        MEMORY                = 311;
+    static final int        MINUS                 = 312;
+    static final int        NEXT                  = 313;
+    static final int        OPENBRACKET           = 314;
+    static final int        PASSWORD              = 315;
+    static final int        PLAN                  = 316;
+    static final int        PROPERTY              = 317;
+    static final int        READONLY              = 318;
+    static final int        REFERENTIAL_INTEGRITY = 319;
+    static final int        RENAME                = 320;
+    static final int        RESTART               = 321;
+    static final int        SCRIPT                = 322;
+    static final int        SCRIPTFORMAT          = 323;
+    static final int        SEMICOLON             = 324;
+    static final int        SEQUENCE              = 325;
+    static final int        SHUTDOWN              = 326;
+    static final int        SOURCE                = 327;
+    static final int        TEMP                  = 328;
+    static final int        TEXT                  = 329;
+    static final int        VIEW                  = 330;
+    static final int        WRITE_DELAY           = 331;
 
     // added stuff
     static final int VAR_POP     = 340;
@@ -714,7 +716,7 @@ public class Token {
 
         IntValueHashMap commandSet;
 
-        commandSet = new IntValueHashMap(67);
+        commandSet = new IntValueHashMap(73);
 
         commandSet.put(T_ADD, ADD);
         commandSet.put(T_ALIAS, ALIAS);
@@ -738,6 +740,7 @@ public class Token {
         commandSet.put(T_DROP, DROP);
         commandSet.put(T_EXCEPT, EXCEPT);
         commandSet.put(T_EXPLAIN, EXPLAIN);
+        commandSet.put(T_FILES, FILES);
         commandSet.put(T_FOREIGN, FOREIGN);
         commandSet.put(T_GRANT, GRANT);
         commandSet.put(T_IGNORECASE, IGNORECASE);

@@ -87,7 +87,7 @@ class JDBCBench {
 
                     if (DriverName.equals("org.hsqldb.jdbcDriver")) {
                         tableExtension  = "CREATE CACHED TABLE ";
-                        ShutdownCommand = "SHUTDOWN";
+//                        ShutdownCommand = "SHUTDOWN";
                         startupCommand  = "";
                     }
                 }
@@ -217,7 +217,7 @@ class JDBCBench {
             MemoryWatcher.start();
 
             transactions  = true;
-            prepared_stmt = false;
+            prepared_stmt = true;
             start_time    = System.currentTimeMillis();
 
             for (int i = 0; i < n_clients; i++) {
@@ -249,7 +249,7 @@ class JDBCBench {
             }
 
             transactions  = true;
-            prepared_stmt = false;
+            prepared_stmt = true;
             start_time    = System.currentTimeMillis();
 
             for (int i = 0; i < n_clients; i++) {
@@ -766,7 +766,9 @@ class JDBCBench {
                                + "\t records inserted");
 
             // for tests
-            Stmt.execute(ShutdownCommand);
+            if (ShutdownCommand.length() > 0) {
+                Stmt.execute(ShutdownCommand);
+            }
             Stmt.close();
         } catch (Exception E) {
             System.out.println(E.getMessage());

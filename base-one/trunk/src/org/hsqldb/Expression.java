@@ -1873,14 +1873,15 @@ public class Expression {
      * @param elist expression list
      */
     void getEquiJoinColumns(TableFilter filter, boolean[] columns,
-                            Expression[] elist) {
+                            Expression[] elist,
+                            HsqlArrayList indexConditions) {
 
         if (eArg != null) {
-            eArg.getEquiJoinColumns(filter, columns, elist);
+            eArg.getEquiJoinColumns(filter, columns, elist, indexConditions);
         }
 
         if (eArg2 != null) {
-            eArg2.getEquiJoinColumns(filter, columns, elist);
+            eArg2.getEquiJoinColumns(filter, columns, elist, indexConditions);
         }
 
         if (exprType == EQUAL) {
@@ -1893,6 +1894,8 @@ public class Expression {
                 if (eArg2.exprType == COLUMN || eArg2.exprType == VALUE) {
                     columns[eArg.columnIndex] = true;
                     elist[eArg.columnIndex]   = eArg2;
+
+                    indexConditions.add(this);
                 }
 
                 return;
@@ -1902,6 +1905,8 @@ public class Expression {
                 if (eArg.exprType == COLUMN || eArg.exprType == VALUE) {
                     columns[eArg2.columnIndex] = true;
                     elist[eArg2.columnIndex]   = eArg;
+
+                    indexConditions.add(this);
                 }
             }
         }

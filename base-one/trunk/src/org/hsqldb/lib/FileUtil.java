@@ -42,12 +42,12 @@ import org.hsqldb.lib.java.JavaSystem;
 
 /**
  * A collection of static file management methods.<p>
- * Also implements the default FileAccess method
+ * Also provides the default FileAccess implementation
  *
- * @author fredt@users
- * @author boucherb@users
+ * @author Campbell Boucher-Burnett (boucherb@users dot sourceforge.net)
+ * @author Fred Toussi (fredt@users dot sourceforge.net)
  * @author Ocke Janssen oj@openoffice.org
- * @version 1.8.0
+ * @version 1.8.1
  * @since 1.7.2
  */
 public class FileUtil implements FileAccess {
@@ -119,8 +119,8 @@ public class FileUtil implements FileAccess {
     /**
      * Delete the named file
      */
-    public void delete(String filename) {
-        (new File(filename)).delete();
+    public boolean delete(String filename) {
+        return (new File(filename)).delete();
     }
 
     /**
@@ -166,15 +166,17 @@ public class FileUtil implements FileAccess {
      * If a file with oldname does not exist, no file will exist after the
      * operation.
      */
-    private void renameOverwrite(String oldname, String newname) {
+    private boolean renameOverwrite(String oldname, String newname) {
 
-        delete(newname);
+        boolean deleted = delete(newname);
 
         if (exists(oldname)) {
             File file = new File(oldname);
 
-            file.renameTo(new File(newname));
+            return file.renameTo(new File(newname));
         }
+
+	    return deleted;
     }
 
     public static IOException toIOException(Throwable e) {

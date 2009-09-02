@@ -33,6 +33,11 @@ package org.hsqldb.lib;
 
 public class StringComparator implements ObjectComparator {
 
+    /*
+     * @author Fred Toussi (fredt@users dot sourceforge.net)
+     * @version 1.9.0
+     * @since 1.9.0
+     */
     public int compare(Object a, Object b) {
 
         // handle nulls

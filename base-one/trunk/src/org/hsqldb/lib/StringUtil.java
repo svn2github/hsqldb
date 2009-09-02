@@ -36,9 +36,10 @@ import java.lang.reflect.Array;
 /** Provides a collection of convenience methods for processing and
  * creating objects with <code>String</code> value components.
  *
- * @author fredt@users
- * @author boucherb@users
- * @version 1.7.2
+ * @author Campbell Boucher-Burnett (boucherb@users dot sourceforge.net)
+ * @author Fred Toussi (fredt@users dot sourceforge.net)
+ * @author Nitin Chauhan
+ * @version 1.8.1
  * @since 1.7.0
  */
 public class StringUtil {
@@ -54,22 +55,22 @@ public class StringUtil {
     public static String toLowerSubset(String source, char substitute) {
 
         int          len = source.length();
-        StringBuffer src = new StringBuffer(len);
+        StringBuffer sb  = new StringBuffer(len);
         char         ch;
 
         for (int i = 0; i < len; i++) {
             ch = source.charAt(i);
 
             if (!Character.isLetterOrDigit(ch)) {
-                src.append(substitute);
+                sb.append(substitute);
             } else if ((i == 0) && Character.isDigit(ch)) {
-                src.append(substitute);
+                sb.append(substitute);
             } else {
-                src.append(Character.toLowerCase(ch));
+                sb.append(Character.toLowerCase(ch));
             }
         }
 
-        return src.toString();
+        return sb.toString();
     }
 
     /**
@@ -119,19 +120,19 @@ public class StringUtil {
     public static String getList(String[] s, String separator, String quote) {
 
         int          len = s.length;
-        StringBuffer b   = new StringBuffer(len * 16);
+        StringBuffer sb  = new StringBuffer(len * 16);
 
         for (int i = 0; i < len; i++) {
-            b.append(quote);
-            b.append(s[i]);
-            b.append(quote);
+            sb.append(quote);
+            sb.append(s[i]);
+            sb.append(quote);
 
             if (i + 1 < len) {
-                b.append(separator);
+                sb.append(separator);
             }
         }
 
-        return b.toString();
+        return sb.toString();
     }
 
     public static String getList(Object[] s, String separator, String quote) {
@@ -171,19 +172,19 @@ public class StringUtil {
     public static String getList(int[] s, String separator, String quote) {
 
         int          len = s.length;
-        StringBuffer b   = new StringBuffer(len * 8);
+        StringBuffer sb  = new StringBuffer(len * 8);
 
         for (int i = 0; i < len; i++) {
-            b.append(quote);
-            b.append(s[i]);
-            b.append(quote);
+            sb.append(quote);
+            sb.append(s[i]);
+            sb.append(quote);
 
             if (i + 1 < len) {
-                b.append(separator);
+                sb.append(separator);
             }
         }
 
-        return b.toString();
+        return sb.toString();
     }
 
     /**
@@ -209,19 +210,19 @@ public class StringUtil {
                                  String quote) {
 
         int          len = s.length;
-        StringBuffer b   = new StringBuffer(len * 16);
+        StringBuffer sb  = new StringBuffer(len * 16);
 
         for (int i = 0; i < len; i++) {
-            b.append(quote);
-            b.append(s[i][0]);
-            b.append(quote);
+            sb.append(quote);
+            sb.append(s[i][0]);
+            sb.append(quote);
 
             if (i + 1 < len) {
-                b.append(separator);
+                sb.append(separator);
             }
         }
 
-        return b.toString();
+        return sb.toString();
     }
 
     /**
@@ -244,7 +245,6 @@ public class StringUtil {
 
     /**
      * Checks if text is empty (characters <= space)
-     * @author: Nitin Chauhan
      * @return boolean true if text is null or empty, false otherwise
      * @param s java.lang.String
      */
@@ -263,11 +263,11 @@ public class StringUtil {
     }
 
     /**
-     * Returns the size of substring that does not contain ane trailing spaces
+     * Returns the size of substring that does not contain any trailing spaces
      * @param s the string
      * @return trimmed size
      */
-    public static int rTrimSize(String s) {
+    public static int rightTrimSize(String s) {
 
         int i = s.length();
 

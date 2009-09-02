@@ -36,8 +36,8 @@ import java.lang.reflect.Array;
 /**
  * Collection of static methods for operations on arrays
  *
- * @author fredt@users
- * @version 1.7.2
+ * @author Fred Toussi (fredt@users dot sourceforge.net)
+ * @version 1.9.0
  * @since 1.7.2
  */
 public class ArrayUtil {
@@ -176,7 +176,7 @@ public class ArrayUtil {
      * @param array the array
      * @param usedElements count of elements of array in use
      * @param index point at which to add or remove elements
-     * @count number of elements to add or remove
+     * @param count number of elements to add or remove
      */
     public static void adjustArray(int type, Object array, int usedElements,
                                    int index, int count) {
@@ -320,6 +320,10 @@ public class ArrayUtil {
      */
     public static boolean haveEqualSets(int[] arra, int[] arrb, int count) {
 
+        if (ArrayUtil.haveEqualArrays(arra, arrb, count)) {
+            return true;
+        }
+
         if (count > arra.length || count > arrb.length) {
             return false;
         }
@@ -429,12 +433,8 @@ public class ArrayUtil {
      * </table>
      *
      * @param arra int[]; first column indexes
-     *
      * @param arrb int[]; second column indexes
-     *
      * @return int[] common indexes or <code>null</code> if there is no overlap.
-     *
-     * @short Return the overlap between two arrays of column indexes.
      */
     public static int[] commonElements(int[] arra, int[] arrb) {
 
@@ -518,7 +518,7 @@ public class ArrayUtil {
      */
     public static int find(byte[] arra, int start, int limit, byte[] arrb) {
 
-        int k = 0;
+        int k = start;
 
         limit = limit - arrb.length + 1;
 
@@ -563,16 +563,16 @@ public class ArrayUtil {
 
     /**
      * Returns an index into arra (or -1) where the character is in the
-     * charset byte array.
+     * byteSet byte array.
      */
     public static int findIn(byte[] arra, int start, int limit,
-                             byte[] charset) {
+                             byte[] byteSet) {
 
         int k = 0;
 
         for (; k < limit; k++) {
-            for (int i = 0; i < charset.length; i++) {
-                if (arra[k] == charset[i]) {
+            for (int i = 0; i < byteSet.length; i++) {
+                if (arra[k] == byteSet[i]) {
                     return k;
                 }
             }
@@ -601,8 +601,6 @@ public class ArrayUtil {
      * Set elements of arrb true if their indexes appear in arrb.
      */
     public static void intIndexesToBooleanArray(int[] arra, boolean[] arrb) {
-
-        int k = 0;
 
         for (int i = 0; i < arra.length; i++) {
             if (arra[i] < arrb.length) {
@@ -901,6 +899,10 @@ public class ArrayUtil {
 
         if (colarr == null) {
             return null;
+        }
+
+        if (colindex < 0) {
+            return colarr;
         }
 
         int[] intarr = new int[colarr.length];

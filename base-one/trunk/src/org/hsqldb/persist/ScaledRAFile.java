@@ -71,6 +71,7 @@ class ScaledRAFile implements ScaledRAInterface {
     final byte[]                   buffer;
     final HsqlByteArrayInputStream ba;
     long                           bufferOffset;
+    long                           fileLength;
 
     //
     long       seekPosition;
@@ -163,8 +164,9 @@ class ScaledRAFile implements ScaledRAInterface {
             HsqlDatabaseProperties.hsqldb_raf_buffer_scale, 12, 8, 13);
         int bufferSize = 1 << bufferScale;
 
-        buffer = new byte[bufferSize];
-        ba     = new HsqlByteArrayInputStream(buffer);
+        buffer     = new byte[bufferSize];
+        ba         = new HsqlByteArrayInputStream(buffer);
+        fileLength = length();
     }
 
     ScaledRAFile(Database database, String name,
@@ -180,8 +182,9 @@ class ScaledRAFile implements ScaledRAInterface {
             HsqlDatabaseProperties.hsqldb_raf_buffer_scale, 12);
         int bufferSize = 1 << bufferScale;
 
-        buffer = new byte[bufferSize];
-        ba     = new HsqlByteArrayInputStream(buffer);
+        buffer     = new byte[bufferSize];
+        ba         = new HsqlByteArrayInputStream(buffer);
+        fileLength = length();
     }
 
     public long length() throws IOException {
@@ -205,7 +208,7 @@ class ScaledRAFile implements ScaledRAInterface {
             byte[] temp = new byte[(int) tempSize];
 
             try {
-                long pos = file.length();
+                long pos = fileLength;
 
                 for (; pos < position - tempSize; pos += tempSize) {
                     file.seek(pos);
@@ -216,6 +219,7 @@ class ScaledRAFile implements ScaledRAInterface {
                 file.write(temp, 0, (int) (position - pos));
 
                 realPosition = position;
+                fileLength   = position;
             } catch (IOException e) {
                 appLog.logContext(e, null);
 
@@ -234,7 +238,6 @@ class ScaledRAFile implements ScaledRAInterface {
 
         long filePos    = seekPosition;
         long subOffset  = filePos % buffer.length;
-        long fileLength = file.length();
         long readLength = fileLength - (filePos - subOffset);
 
         try {
@@ -246,7 +249,10 @@ class ScaledRAFile implements ScaledRAInterface {
                 readLength = buffer.length;
             }
 
-            file.seek(filePos - subOffset);
+            if (realPosition != filePos - subOffset) {
+                file.seek(filePos - subOffset);
+            }
+
             file.readFully(buffer, 0, (int) readLength);
 
             bufferOffset = filePos - subOffset;
@@ -263,8 +269,6 @@ class ScaledRAFile implements ScaledRAInterface {
     public int read() throws IOException {
 
         try {
-            long fileLength = file.length();
-
             if (seekPosition >= fileLength) {
                 return -1;
             }
@@ -427,6 +431,10 @@ class ScaledRAFile implements ScaledRAInterface {
 
             seekPosition += len;
             realPosition = seekPosition;
+
+            if (realPosition > fileLength) {
+                fileLength = realPosition;
+            }
         } catch (IOException e) {
             resetPointer();
             appLog.logContext(e, null);
@@ -453,6 +461,10 @@ class ScaledRAFile implements ScaledRAInterface {
 
             seekPosition += 4;
             realPosition = seekPosition;
+
+            if (realPosition > fileLength) {
+                fileLength = realPosition;
+            }
         } catch (IOException e) {
             resetPointer();
             appLog.logContext(e, null);
@@ -479,6 +491,10 @@ class ScaledRAFile implements ScaledRAInterface {
 
             seekPosition += 8;
             realPosition = seekPosition;
+
+            if (realPosition > fileLength) {
+                fileLength = realPosition;
+            }
         } catch (IOException e) {
             resetPointer();
             appLog.logContext(e, null);
@@ -520,6 +536,7 @@ class ScaledRAFile implements ScaledRAInterface {
             file.seek(seekPosition);
 
             realPosition = seekPosition;
+            fileLength   = file.length();
         } catch (Throwable e) {}
     }
 }

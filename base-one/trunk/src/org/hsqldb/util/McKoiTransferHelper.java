@@ -38,7 +38,7 @@ import java.sql.SQLException;
 /**
  * Helper class for conversion from a different databases
  *
- * @author sqlbob@users
+ * @author Bob Preston (sqlbob@users dot sourceforge.net)
  * @version 1.7.0
  */
 class McKoiTransferHelper extends TransferHelper {

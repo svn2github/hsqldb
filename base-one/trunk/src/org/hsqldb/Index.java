@@ -1185,8 +1185,6 @@ public class Index {
             return i;
         }
 
-        int fieldcount = rowColMap.length;
-
         for (int j = 1; j < colCount; j++) {
             i = Column.compare(collation, a[rowColMap[j]], b[colIndex[j]],
                                colTypes[j]);

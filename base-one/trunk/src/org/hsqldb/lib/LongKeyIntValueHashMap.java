@@ -36,8 +36,8 @@ import java.util.NoSuchElementException;
 import org.hsqldb.store.BaseHashMap;
 
 /**
- * @author fredt@users
- * @version 1.7.2
+ * @author Fred Toussi (fredt@users dot sourceforge.net)
+ * @version 1.9.0
  * @since 1.7.2
  */
 public class LongKeyIntValueHashMap extends BaseHashMap {
@@ -46,25 +46,19 @@ public class LongKeyIntValueHashMap extends BaseHashMap {
     private Collection values;
 
     public LongKeyIntValueHashMap() {
-        this(16, 0.75f);
+        this(8);
     }
 
     public LongKeyIntValueHashMap(boolean minimize) {
 
-        this(16, 0.75f);
+        this(8);
 
         minimizeOnEmpty = minimize;
     }
 
     public LongKeyIntValueHashMap(int initialCapacity)
     throws IllegalArgumentException {
-        this(initialCapacity, 0.75f);
-    }
-
-    public LongKeyIntValueHashMap(int initialCapacity,
-                                  float loadFactor)
-                                  throws IllegalArgumentException {
-        super(initialCapacity, loadFactor, BaseHashMap.longKeyOrValue,
+        super(initialCapacity, 0.75f, BaseHashMap.longKeyOrValue,
               BaseHashMap.intKeyOrValue, false);
     }
 

@@ -1,12 +1,20 @@
 Chronological Change List
 
 This file is the accumulated list of changes in the course of development of
-hsqldb 1.8.0, including point releases, in reverse chronological order.
+hsqldb 1.8.x, including point releases, in reverse chronological order.
 
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
-post 1.8.0.10
+
+2009.09.01  1.8.1.0
+
+Added support for SET FILES INCREMENT BACKUP { TRUE | FALSE } - the same as 
+documented 1.9 functionality
+Fixed regression of get_column_names connection properties - now defaults to true
+Fixed lock file issue - reverted to default lock file creation
+Allowed mixed-case resource paths for res: databases
+Fixed issue with text table source
 Fixed issue with LIKE statements not working in CHECK constraints
 Changed rounding of DECIMAL values in division to ROUND_DOWN for uniformity
 with other integer types. Now 7/4 and 7/5 both return 1, while the first one was

@@ -156,9 +156,9 @@ public class HsqlDatabaseProperties extends HsqlProperties {
 
     // versions
     public static final String VERSION_STRING_1_7_0     = "1.7.0";
-    public static final String VERSION_STRING_1_8_0     = "1.8.0";
+    public static final String VERSION_STRING_1_8_0     = "1.8.1";
     public static final String FIRST_COMPATIBLE_VERSION = "1.8.0";
-    public static final String THIS_VERSION             = "1.8.0";
+    public static final String THIS_VERSION             = "1.8.1";
     public static final String THIS_FULL_VERSION        = "1.8.0.10";
     public static final String THIS_CACHE_VERSION       = "1.7.0";
     public static final String PRODUCT_NAME = "HSQL Database Engine";
@@ -235,6 +235,10 @@ public class HsqlDatabaseProperties extends HsqlProperties {
     public static final String textdb_lvs          = "textdb.lvs";
 
     static {
+
+        // hxsql specific properties
+        meta.put(hsqldb_inc_backup,
+                 getMeta(hsqldb_inc_backup, SQL_PROPERTY, false));
 
         // string defaults for protected props
         meta.put(db_version, getMeta(db_version, FILE_PROPERTY, null));
@@ -408,6 +412,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
 
         // initial method of data file access
         setProperty(hsqldb_nio_data_file, true);
+        setProperty(hsqldb_inc_backup, false);
 
         // initial method of data file access
         setProperty(hsqldb_lock_file, true);

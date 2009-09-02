@@ -46,7 +46,6 @@ import org.hsqldb.Trace;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.HsqlTimer;
 import org.hsqldb.lib.StringConverter;
-import org.hsqldb.lib.java.JavaSystem;
 
 /**
  * Base cooperative file locking implementation and <tt>LockFile</tt>
@@ -216,7 +215,7 @@ import org.hsqldb.lib.java.JavaSystem;
  *
  * In particular, if {@link #USE_NIO_FILELOCK_PROPERTY} is true and the required
  * classes are available at static initialization, then <tt>newLockFile()</tt>
- * produces {@link org.hsqldb.NIOLockFile NIOLockFile} instances.<p>
+ * produces {@link org.hsqldb.persist.NIOLockFile NIOLockFile} instances.<p>
  *
  * When <tt>NIOLockFile</tt> instances are produced, then it is possible that
  * true kernel-enforced advisory or manditory file locking is used to protect
@@ -352,8 +351,8 @@ import org.hsqldb.lib.java.JavaSystem;
  * <tt>NIOLockFile</tt> to the hsqldb.jar if such features are reported
  * present. <p>
  *
- * @author boucherb@users
- * @version 1.8.0.10
+ * @author Campbell Boucher-Burnett (boucherb@users dot sourceforge.net)
+ * @version 1.8.1
  * @since 1.7.2
  */
 public class LockFile {
@@ -812,7 +811,12 @@ public class LockFile {
 
 //#else
 /*
+
         if (!file.exists()) {
+            if (withCreateNewFile) {
+                openRAF();
+                closeRAF();
+            }
             return;
         }
 
@@ -1059,7 +1063,7 @@ public class LockFile {
      */
     private final void openRAF()
     throws LockFile.UnexpectedFileNotFoundException,
-           LockFile.FileSecurityException {
+           LockFile.FileSecurityException, LockFile.UnexpectedFileIOException {
 
         try {
             raf = new RandomAccessFile(file, "rw");
@@ -1068,7 +1072,7 @@ public class LockFile {
         } catch (FileNotFoundException ex) {
             throw new UnexpectedFileNotFoundException(this, "openRAF", ex);
         } catch (IOException ex) {
-            throw new UnexpectedFileNotFoundException(this, "openRAF", ex);
+            throw new UnexpectedFileIOException(this, "openRAF", ex);
         }
     }
 
@@ -1613,9 +1617,11 @@ public class LockFile {
             }
         }
 
-        // TODO:
-        // Do not want to specify just BaseException in the throws clause.
-        // Is this really the cleanest way?
+        /**
+         * @todo:
+         * Do not want to specify just BaseException in the throws clause.
+         * Is this really the cleanest way?
+         */
         if (!success) {
             if (reason instanceof FileSecurityException) {
                 throw (FileSecurityException) reason;
@@ -2256,7 +2262,7 @@ public class LockFile {
     public static final class UnexpectedFileNotFoundException
     extends BaseException {
 
-        private final IOException reason;
+        private final FileNotFoundException reason;
 
         /**
          * Constructs a new <tt>UnexpectedFileNotFoundException<tt>. <p>
@@ -2266,9 +2272,9 @@ public class LockFile {
          *        was originally thrown (may be passed up serveral levels)
          * @param reason the underlying exception
          */
-        public UnexpectedFileNotFoundException(final LockFile lockFile,
-                                               final String inMethod,
-                                               final IOException reason) {
+        public UnexpectedFileNotFoundException(
+                final LockFile lockFile, final String inMethod,
+                final FileNotFoundException reason) {
 
             super(lockFile, inMethod);
 
@@ -2280,7 +2286,7 @@ public class LockFile {
          *
          * @return Value of property reason.
          */
-        public IOException getReason() {
+        public FileNotFoundException getReason() {
             return this.reason;
         }
 

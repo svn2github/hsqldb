@@ -69,6 +69,7 @@ package org.hsqldb;
 import org.hsqldb.index.RowIterator;
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HashMappedList;
+import org.hsqldb.lib.HsqlArrayList;
 
 // fredt@users 20030813 - patch 1.7.2 - fix for column comparison within same table bugs #572075 and 722443
 // fredt@users 20031012 - patch 1.7.2 - better OUTER JOIN implementation
@@ -317,14 +318,15 @@ final class TableFilter {
             return;
         }
 
-        boolean[]    check    = filterTable.getNewColumnCheckList();
-        Expression[] expr     = new Expression[check.length];
-        int          colindex = eStart.getArg().getColumnNr();
+        boolean[]     check           = filterTable.getNewColumnCheckList();
+        Expression[]  expr            = new Expression[check.length];
+        int           colindex        = eStart.getArg().getColumnNr();
+        HsqlArrayList indexConditions = new HsqlArrayList();
 
         check[colindex] = true;
         expr[colindex]  = eStart.getArg2();
 
-        eAnd.getEquiJoinColumns(this, check, expr);
+        eAnd.getEquiJoinColumns(this, check, expr, indexConditions);
 
         int count = ArrayUtil.countStartIntIndexesInBooleanArray(
             filterIndex.getColumns(), check);
@@ -340,6 +342,13 @@ final class TableFilter {
         isMultiFindFirst     = true;
         findFirstExpressions = expr;
         multiFindCount       = count;
+
+        for (int i = 0; i < indexConditions.size(); i++) {
+            eEnd = new Expression(Expression.AND, eEnd,
+                                  (Expression) indexConditions.get(i));
+        }
+
+        //
     }
 
     private void setCondition(Session session,

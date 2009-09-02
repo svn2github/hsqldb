@@ -107,7 +107,7 @@ implements org.hsqldb.rowio.RowInputInterface {
     public String readString() throws IOException {
 
         int    length = readInt();
-        String s      = StringConverter.readUTF(buf, pos, length);
+        String s      = StringConverter.readUTF(buffer, pos, length);
 
         s   = ValuePool.getString(s);
         pos += length;
@@ -190,7 +190,7 @@ implements org.hsqldb.rowio.RowInputInterface {
         if (out != null) {
             out.reset(rowsize);
 
-            buf = out.getBuffer();
+            buffer = out.getBuffer();
         }
 
         super.reset();
@@ -206,7 +206,7 @@ implements org.hsqldb.rowio.RowInputInterface {
         if (out != null) {
             out.reset(rowsize);
 
-            buf = out.getBuffer();
+            buffer = out.getBuffer();
         }
 
         super.resetRow(filepos, rowsize);

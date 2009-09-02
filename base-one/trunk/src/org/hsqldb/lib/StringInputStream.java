@@ -37,7 +37,7 @@ import java.io.InputStream;
 /**
  * minimal InputStream subclass to fetch bytes form a String
  *
- * @author fredt@users
+ * @author Fred Toussi (fredt@users dot sourceforge.net)
  * @version 1.7.0
  */
 public class StringInputStream extends InputStream {

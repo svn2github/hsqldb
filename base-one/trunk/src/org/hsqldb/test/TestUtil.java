@@ -93,7 +93,7 @@ public class TestUtil {
                 }
 
                 line = line.substring(
-                    0, org.hsqldb.lib.StringUtil.rTrimSize(line));
+                    0, org.hsqldb.lib.StringUtil.rightTrimSize(line));
 
                 //if the line is blank or a comment, then ignore it
                 if ((line.length() == 0) || line.startsWith("--")) {
@@ -826,7 +826,7 @@ class IgnoreParsedSection extends ParsedSection {
          * Therefore, renaming to inLines. */
 
         // Inefficient to parse this into SQL when we aren't going to use
-        // it as SQL.  Should probably just be removed to use the 
+        // it as SQL.  Should probably just be removed to use the
         // super() constructor.
         super(inLines);
 

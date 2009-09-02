@@ -41,7 +41,7 @@ import java.util.NoSuchElementException;
  *  Based on similar Enumerator code by boucherb@users
  *
  * @author fred@users
- * @version 1.7.2
+ * @version 1.9.0
  * @since HSQLDB 1.7.2
  */
 public class WrapperIterator implements Iterator {
@@ -94,10 +94,8 @@ public class WrapperIterator implements Iterator {
     }
 
     /**
-     * Constructor for a chained iterator that retuns the elements of the two
+     * Constructor for a chained iterator that returns the elements of the two
      * specified iterators.
-     *
-     * @param element the single object to iterate
      */
     public WrapperIterator(Iterator it1, Iterator it2) {
 
@@ -207,6 +205,10 @@ public class WrapperIterator implements Iterator {
     }
 
     public void remove() {
+        throw new NoSuchElementException();
+    }
+
+    public void setValue(Object value) {
         throw new NoSuchElementException();
     }
 }

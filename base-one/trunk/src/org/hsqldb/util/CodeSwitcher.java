@@ -66,6 +66,7 @@
 
 package org.hsqldb.util;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -86,7 +87,7 @@ import java.util.Vector;
 /**
  * Modifies the source code to support different JDK or profile settings. <p>
  * <pre>
- * Usage: java CodeSwitcher [paths] [labels] [+][-]
+ * Usage: java CodeSwitcher paths|{--pathlist=listfile} [{+|-}label...] [+][-]
  * If no labels are specified then all used
  * labels in the source code are shown.
  * Use +MODE to switch on the things labeld MODE
@@ -134,24 +135,75 @@ public class CodeSwitcher {
             return;
         }
 
-        boolean path = false;
+        File listFile = null;
+        File baseDir  = null;
 
         for (int i = 0; i < a.length; i++) {
             String p = a[i];
 
             if (p.startsWith("+")) {
                 s.vSwitchOn.addElement(p.substring(1));
+            } else if (p.startsWith("--basedir=")) {
+                baseDir = new File(p.substring("--basedir=".length()));
+            } else if (p.startsWith("--pathlist=")) {
+                listFile = new File(p.substring("--pathlist=".length()));
             } else if (p.startsWith("-")) {
                 s.vSwitchOff.addElement(p.substring(1));
             } else {
                 s.addDir(p);
-
-                path = true;
             }
         }
 
-        if (!path) {
-            printError("no path specified");
+        if (baseDir != null) {
+            if (listFile == null) {
+                System.err.println(
+                    "--basedir= setting ignored, since only used for list files");
+            } else {
+                if (!baseDir.isDirectory()) {
+                    System.err.println("Skipping listfile since basedir '"
+                                       + baseDir.getAbsolutePath()
+                                       + "' is not a directory");
+
+                    listFile = null;
+                }
+            }
+        }
+
+        if (listFile != null) {
+            try {
+                BufferedReader br =
+                    new BufferedReader(new FileReader(listFile));
+                String st, p;
+                int    hashIndex;
+                File   f;
+
+                while ((st = br.readLine()) != null) {
+                    hashIndex = st.indexOf('#');
+                    p         = ((hashIndex > -1) ? st.substring(0, hashIndex)
+                                                  : st).trim();
+
+                    if (p.length() < 1) {
+                        continue;
+                    }
+
+                    f = (baseDir == null) ? (new File(p))
+                                          : (new File(baseDir, p));
+
+                    if (f.isFile()) {
+                        s.addDir(f);
+                    } else {
+                        System.err.println("Skipping non-file '" + p.trim()
+                                           + "'");
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to read pathlist file '"
+                                   + listFile.getAbsolutePath() + "'");
+            }
+        }
+
+        if (s.size() < 1) {
+            printError("No path specified, or no specified paths qualify");
             showUsage();
         }
 
@@ -162,13 +214,19 @@ public class CodeSwitcher {
         }
     }
 
+    public int size() {
+        return (vList == null) ? 0
+                               : vList.size();
+    }
+
     /**
      * Method declaration
      *
      */
     static void showUsage() {
 
-        System.out.print("Usage: java CodeSwitcher [paths] [labels] [+][-]\n"
+        System.out.print("Usage: java CodeSwitcher paths|{--pathlist=listfile} "
+                         + "[{+|-}label...] [+][-]\n"
                          + "If no labels are specified then all used\n"
                          + "labels in the source code are shown.\n"
                          + "Use +MODE to switch on the things labeld MODE\n"
@@ -229,22 +287,23 @@ public class CodeSwitcher {
     }
 
     /**
-     * Method declaration
-     *
+     * Wrapper
      *
      * @param path
      */
     void addDir(String path) {
+        addDir(new File(path));
+    }
 
-        File f = new File(path);
+    void addDir(File f) {
 
-        if (f.isFile() && path.endsWith(".java")) {
-            vList.addElement(path);
+        if (f.isFile() && f.getName().endsWith(".java")) {
+            vList.addElement(f.getPath());
         } else if (f.isDirectory()) {
-            String[] list = f.list();
+            File[] list = f.listFiles();
 
             for (int i = 0; i < list.length; i++) {
-                addDir(path + File.separatorChar + list[i]);
+                addDir(list[i]);
             }
         }
     }
@@ -254,8 +313,6 @@ public class CodeSwitcher {
      *
      *
      * @param name
-     *
-     * @return
      */
     boolean processFile(String name) {
 

@@ -41,8 +41,8 @@ import java.util.NoSuchElementException;
  * The memory footprint of the HsqlDeque doubles when it gets full
  * but does not shrink when it gets empty.
  *
- * @author fredt@users
- * @version 1.7.2
+ * @author Fred Toussi (fredt@users dot sourceforge.net)
+ * @version 1.9.0
  * @since 1.7.0
  */
 public class HsqlDeque extends BaseList implements HsqlList {
@@ -61,6 +61,10 @@ public class HsqlDeque extends BaseList implements HsqlList {
 
     public int size() {
         return elementCount;
+    }
+
+    public boolean isEmpty() {
+        return elementCount == 0;
     }
 
     public Object getFirst() throws NoSuchElementException {
@@ -199,6 +203,10 @@ public class HsqlDeque extends BaseList implements HsqlList {
 
     public void clear() {
 
+        if (elementCount == 0) {
+            return;
+        }
+
         firstindex = endindex = elementCount = 0;
 
         for (int i = 0; i < list.length; i++) {
@@ -206,12 +214,37 @@ public class HsqlDeque extends BaseList implements HsqlList {
         }
     }
 
+    public int indexOf(Object value) {
+
+        for (int i = 0; i < elementCount; i++) {
+            int index = firstindex + i;
+
+            if (index >= list.length) {
+                index -= list.length;
+            }
+
+            if (list[index] == value) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     public Object remove(int index) {
 
         int    target = getInternalIndex(index);
         Object value  = list[target];
 
-        if (target >= firstindex) {
+        if (target == firstindex) {
+            list[firstindex] = null;
+
+            firstindex++;
+
+            if (firstindex == list.length) {
+                firstindex = 0;
+            }
+        } else if (target > firstindex) {
             System.arraycopy(list, firstindex, list, firstindex + 1,
                              target - firstindex);
 
@@ -226,14 +259,16 @@ public class HsqlDeque extends BaseList implements HsqlList {
             System.arraycopy(list, target + 1, list, target,
                              endindex - target - 1);
 
-            list[endindex] = null;
-
             endindex--;
+
+            list[endindex] = null;
 
             if (endindex == 0) {
                 endindex = list.length;
             }
         }
+
+        elementCount--;
 
         if (elementCount == 0) {
             firstindex = endindex = 0;
@@ -263,78 +298,34 @@ public class HsqlDeque extends BaseList implements HsqlList {
             return;
         }
 
-        // essential to at least double the capacity for the loop to work
         Object[] newList = new Object[list.length * 2];
 
-        for (int i = 0; i < list.length; i++) {
-            newList[i] = list[i];
-        }
-
-        list    = newList;
-        newList = null;
+        System.arraycopy(list, firstindex, newList, firstindex,
+                         list.length - firstindex);
 
         if (endindex <= firstindex) {
-            int tail = firstindex + elementCount - endindex;
+            System.arraycopy(list, 0, newList, list.length, endindex);
 
-            for (int i = 0; i < endindex; i++) {
-                list[tail + i] = list[i];
-                list[i]        = null;
-            }
-
-            endindex = firstindex + elementCount;
+            endindex = list.length + endindex;
         }
+
+        list = newList;
     }
-/*
-    public static void main(String[] args) {
 
-        HsqlDeque d = new HsqlDeque();
+    public void toArray(Object[] array) {
+        int tempCount = list.length - firstindex;
 
-        for (int i = 0; i < 9; i++) {
-            d.add(new Integer(i));
+        if (tempCount > elementCount) {
+            tempCount = elementCount;
         }
 
-        d.removeFirst();
-        d.removeFirst();
-        d.add(new Integer(9));
-        d.add(new Integer(10));
+        System.arraycopy(list, firstindex, array, 0, tempCount);
 
-        for (int i = 0; i < d.size(); i++) {
-            System.out.println(d.get(i));
+        if (endindex <= firstindex) {
+            System.arraycopy(list, 0, array, tempCount, endindex);
+
+            endindex = list.length + endindex;
         }
 
-        System.out.println();
-        d.add(new Integer(11));
-        d.add(new Integer(12));
-
-        for (int i = 0; i < d.size(); i++) {
-            System.out.println(d.get(i));
-        }
-
-        d.addFirst(new Integer(1));
-        d.addFirst(new Integer(0));
-        d.addFirst(new Integer(-1));
-        d.addFirst(new Integer(-2));
-
-        for (int i = 0; i < d.size(); i++) {
-            System.out.println(d.get(i));
-        }
-
-        System.out.println();
-        d.removeFirst();
-        d.removeFirst();
-        d.removeFirst();
-
-        for (int i = 0; i < d.size(); i++) {
-            System.out.println(d.get(i));
-        }
-
-        System.out.println();
-
-        Iterator it = d.iterator();
-
-        for (; it.hasNext(); ) {
-            System.out.println(it.next());
-        }
     }
-*/
 }

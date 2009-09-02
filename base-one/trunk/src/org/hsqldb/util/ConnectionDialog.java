@@ -74,16 +74,6 @@ class ConnectionDialog extends Dialog implements ActionListener, ItemListener {
     private Choice       types, recent;
 
     /**
-     * Method declaration
-     *
-     *
-     * @param driver
-     * @param url
-     * @param user
-     * @param password
-     *
-     * @return
-     *
      * @throws Exception
      */
     public static Connection createConnection(String driver, String url,
@@ -105,10 +95,6 @@ class ConnectionDialog extends Dialog implements ActionListener, ItemListener {
         super(owner, title, true);
     }
 
-    /**
-     * Method declaration
-     *
-     */
     private void create() {
 
         Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
@@ -228,7 +214,7 @@ class ConnectionDialog extends Dialog implements ActionListener, ItemListener {
         pText.add(mURL);
         pLabel.add(createLabel("User:"));
 
-        mUser = new TextField("sa");
+        mUser = new TextField("SA");
 
         mUser.addActionListener(this);
         pText.add(mUser);
@@ -278,15 +264,6 @@ class ConnectionDialog extends Dialog implements ActionListener, ItemListener {
         show();
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param owner
-     * @param title
-     *
-     * @return
-     */
     public static Connection createConnection(Frame owner, String title) {
 
         ConnectionDialog dialog = new ConnectionDialog(owner, title);
@@ -296,14 +273,6 @@ class ConnectionDialog extends Dialog implements ActionListener, ItemListener {
         return dialog.mConnection;
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param s
-     *
-     * @return
-     */
     protected static Label createLabel(String s) {
 
         Label l = new Label(s);
@@ -313,14 +282,6 @@ class ConnectionDialog extends Dialog implements ActionListener, ItemListener {
         return l;
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param center
-     *
-     * @return
-     */
     protected static Panel createBorderPanel(Component center) {
 
         Panel p = new Panel();
@@ -337,12 +298,6 @@ class ConnectionDialog extends Dialog implements ActionListener, ItemListener {
         return p;
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param ev
-     */
     public void actionPerformed(ActionEvent ev) {
 
         String s = ev.getActionCommand();
@@ -382,12 +337,6 @@ class ConnectionDialog extends Dialog implements ActionListener, ItemListener {
         }
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param e
-     */
     public void itemStateChanged(ItemEvent e) {
 
         String s = (String) e.getItem();

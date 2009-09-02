@@ -41,7 +41,7 @@ import java.sql.Types;
 /**
  * Conversions to / from Hsqldb
  *
- * @author sqlbob@users
+ * @author Bob Preston (sqlbob@users dot sourceforge.net)
  * @version 1.7.0
  */
 class HsqldbTransferHelper extends TransferHelper {

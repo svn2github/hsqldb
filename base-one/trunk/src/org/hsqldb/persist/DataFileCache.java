@@ -66,7 +66,7 @@ public class DataFileCache {
     protected FileAccess fa;
 
     // flags
-//    public static final int FLAG_ISSHADOWED = 1;
+    public static final int FLAG_ISSHADOWED = 1;
     public static final int FLAG_ISSAVED = 2;
     public static final int FLAG_ROWINFO = 3;
 

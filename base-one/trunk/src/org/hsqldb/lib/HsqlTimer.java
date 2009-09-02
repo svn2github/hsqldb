@@ -546,7 +546,7 @@ public final class HsqlTimer implements ObjectComparator, ThreadFactory {
                             // ensure that really late tasks don't
                             // completely saturate the head of the
                             // task queue
-                            period = 0;     // TODO: is -1, -2 ... fairer?
+                            period = 0;     /** @todo : is -1, -2 ... fairer? */
                         } else if (late > 0) {
 
                             // compensate for scheduling overruns
@@ -788,7 +788,7 @@ public final class HsqlTimer implements ObjectComparator, ThreadFactory {
          * a new, equivalent task with the new period is scheduled for
          * immediate first execution and returned to the caller. <p>
          *
-         * @param period the new period
+         * @param newPeriod the new period
          * @return a task reference, as per the rules stated above.
          */
         synchronized Object setPeriod(final long newPeriod) {

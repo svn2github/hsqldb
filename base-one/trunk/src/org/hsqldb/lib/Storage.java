@@ -38,7 +38,7 @@ import java.io.IOException;
  *
  * @author Ocke Janssen oj@openoffice.org
  * @version 1.8.0
- * @since 1.80
+ * @since 1.8.0
  */
 public interface Storage {
 

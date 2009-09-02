@@ -51,7 +51,7 @@ import javax.swing.UIManager;
 /**
  * Common code in the Swing versions of DatabaseManager and Tranfer
  *
- * @author sqlbob@users
+ * @author Bob Preston (sqlbob@users dot sourceforge.net)
  * @version 1.7.2
  * @since 1.7.0
  */

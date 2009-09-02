@@ -36,8 +36,8 @@ import java.util.NoSuchElementException;
 /**
  * Abstract base for Lists
  *
- * @author fredt@users
- * @version 1.7.2
+ * @author Fred Toussi (fredt@users dot sourceforge.net)
+ * @version 1.9.0
  * @since 1.7.0
  */
 abstract class BaseList {
@@ -53,13 +53,13 @@ abstract class BaseList {
     abstract int size();
 
     public boolean contains(Object o) {
-        return find(o) == -1 ? false
+        return indexOf(o) == -1 ? false
                              : true;
     }
 
     public boolean remove(Object o) {
 
-        int i = find(o);
+        int i = indexOf(o);
 
         if (i == -1) {
             return false;
@@ -70,7 +70,7 @@ abstract class BaseList {
         return true;
     }
 
-    int find(Object o) {
+    public int indexOf(Object o) {
 
         for (int i = 0, size = size(); i < size; i++) {
             Object current = get(i);
@@ -96,6 +96,18 @@ abstract class BaseList {
             result = true;
 
             add(it.next());
+        }
+
+        return result;
+    }
+
+    public boolean addAll(Object[] array) {
+
+        boolean  result = false;
+        for (int i = 0; i < array.length; i++) {
+            result = true;
+
+            add(array[i]);
         }
 
         return result;
@@ -183,6 +195,10 @@ abstract class BaseList {
                 return;
             }
 
+            throw new NoSuchElementException();
+        }
+
+        public void setValue(Object value) {
             throw new NoSuchElementException();
         }
     }

@@ -39,7 +39,7 @@ import java.util.Hashtable;
 /**
  * Base class for conversion from a different databases
  *
- * @author sqlbob@users
+ * @author Bob Preston (sqlbob@users dot sourceforge.net)
  * @version 1.7.0
  */
 class TransferHelper {

@@ -136,6 +136,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 
 import org.hsqldb.lib.java.JavaSystem;
+import org.hsqldb.lib.RCData;
 
 //dmarshall@users - 20020101 - original swing port of DatabaseManager
 //sqlbob@users 20020401 - patch 537501 by ulrivo - commandline arguments
@@ -180,6 +181,7 @@ import org.hsqldb.lib.java.JavaSystem;
  * New class based on Hypersonic SQL original
  *
  * @author dmarshall@users
+ * @author Bob Preston (sqlbob@users dot sourceforge.net)
  * @version 1.8.0
  * @since 1.7.0
  */
@@ -265,16 +267,16 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.org.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.79 $"
+        + "problem reports or help requests:  $Revision: 3127 $"
         + (TT_AVAILABLE ? ""
                         : ("\n\nTransferTool classes are not in CLASSPATH.\n"
                            + "To enable the Tools menu, add 'transfer.jar' "
                            + "to your class path."));
     ;
     private static final String ABOUT_TEXT =
-        "$Revision: 1.79 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 3127 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
-        + "Copyright (c) 2001-2007, The HSQL Development Group.\n"
+        + "Copyright (c) 2001-2009, The HSQL Development Group.\n"
         + "http://hsqldb.org  (User Guide available at this site).\n\n\n"
         + "You may use and redistribute according to the HSQLDB\n"
         + "license documented in the source code and at the web\n"
@@ -391,8 +393,8 @@ implements ActionListener, WindowListener, KeyListener {
     //                                new Point(4, 4), "HourGlass cursor");
     // (ulrivo): variables set by arguments from the commandline
     static String  defDriver   = "org.hsqldb.jdbcDriver";
-    static String  defURL      = "jdbc:hsqldb:.";
-    static String  defUser     = "sa";
+    static String  defURL      = "jdbc:hsqldb:mem:.";
+    static String  defUser     = "SA";
     static String  defPassword = "";
     static String  defScript;
     static String  defDirectory;
@@ -487,6 +489,11 @@ implements ActionListener, WindowListener, KeyListener {
         }
     }
 
+    /**
+     * Run with --help switch for usage instructions.
+     *
+     * @throws IllegalArgumentException for the obvious reason
+     */
     public static void main(String[] arg) {
 
         System.getProperties().put("sun.java2d.noddraw", "true");
@@ -503,7 +510,7 @@ implements ActionListener, WindowListener, KeyListener {
         for (int i = 0; i < arg.length; i++) {
             lowerArg = arg[i].toLowerCase();
 
-            if (lowerArg.length() > 1 && lowerArg.charAt(1) == '-') {
+            if (lowerArg.startsWith("--")) {
                 lowerArg = lowerArg.substring(1);
             }
 
@@ -535,10 +542,22 @@ implements ActionListener, WindowListener, KeyListener {
                 bMustExit = false;
 
                 i--;
-            } else {
+            } else if (lowerArg.equals("-help")) {
                 showUsage();
 
                 return;
+            } else {
+                /* Syntax ERRORS should either throw or exit with non-0 status.
+                 * In our case, it may be unsafe to exit, so we throw.
+                 * (I.e. should provide easy way for caller to programmatically
+                 * determine that there was an invocation problem).
+                 */
+                throw new IllegalArgumentException(
+                    "Try:  java... " + DatabaseManagerSwing.class.getName()
+                    + " --help");
+
+                // No reason to localize, since the main syntax message is
+                // not localized.
             }
         }
 
@@ -637,18 +656,11 @@ implements ActionListener, WindowListener, KeyListener {
             // Workaround for EXTREME SLOWNESS getting this info from O.
             showIndexDetails = !isOracle;
 
-            Driver driver   = DriverManager.getDriver(dMeta.getURL());
-            String userName = dMeta.getUserName();
-            int    index    = userName.indexOf("@localhost");
-
-            if (index > -1) {
-                userName = userName.substring(0, index);
-            }
-
-            ConnectionSetting newSetting =
-                new ConnectionSetting(dMeta.getDatabaseProductName(),
-                                      driver.getClass().getName(),
-                                      dMeta.getURL(), userName, "");
+            Driver driver = DriverManager.getDriver(dMeta.getURL());
+            ConnectionSetting newSetting = new ConnectionSetting(
+                dMeta.getDatabaseProductName(), driver.getClass().getName(),
+                dMeta.getURL(),
+                dMeta.getUserName().replaceAll("@localhost", ""), "");
             Hashtable settings =
                 ConnectionDialogCommon.loadRecentConnectionSettings();
 
@@ -683,6 +695,7 @@ implements ActionListener, WindowListener, KeyListener {
         System.out.println(
             "Usage: java DatabaseManagerSwing [--options]\n"
             + "where options include:\n"
+            + "    --help                show this message\n"
             + "    --driver <classname>  jdbc driver class\n"
             + "    --url <name>          jdbc url\n"
             + "    --user <name>         username used for connection\n"
@@ -691,8 +704,7 @@ implements ActionListener, WindowListener, KeyListener {
             + "    --rcfile <file>       (defaults to 'dbmanager.rc' in home dir)\n"
             + "    --dir <path>          default directory\n"
             + "    --script <file>       reads from script file\n"
-            + "    --noexit              do not call system.exit()\n"
-            + "(Single-hypen switches like '-driver' are also supported)");
+            + "    --noexit              do not call system.exit()");
     }
 
     private void insertTestData() {
@@ -1476,7 +1488,7 @@ implements ActionListener, WindowListener, KeyListener {
             txtCommand.setCursor(txtCommandCursor);
             txtResult.setCursor(txtResultCursor);
 
-            //TODO:  Enable actionButtons
+            /** @todo: Enable actionButtons */
         } else {
 
             // save the old cursors
@@ -1498,7 +1510,7 @@ implements ActionListener, WindowListener, KeyListener {
             txtCommand.setCursor(waitCursor);
             txtResult.setCursor(waitCursor);
 
-            //TODO:  Disable actionButtons
+            /** @todo: Disable actionButtons */
         }
 
         setStatusLine(busyText, ((busyText == null) ? gResult.getRowCount()
@@ -1610,7 +1622,8 @@ implements ActionListener, WindowListener, KeyListener {
                 updateResult();
                 displayResults();
                 updateAutoCommitBox();
-                System.gc();
+
+                // System.gc();
             } catch (RuntimeException re) {
                 CommonSwing.errorMessage(re);
 
@@ -1637,7 +1650,21 @@ implements ActionListener, WindowListener, KeyListener {
             int r = sStatement.getUpdateCount();
 
             if (r == -1) {
-                formatResultSet(sStatement.getResultSet());
+                ResultSet rs = sStatement.getResultSet();
+
+                try {
+                    formatResultSet(rs);
+                } catch (Throwable t) {
+                    g[0] = "Error displaying the ResultSet";
+
+                    gResult.setHead(g);
+
+                    String s = t.getMessage();
+
+                    g[0] = s;
+
+                    gResult.addRow(g);
+                }
             } else {
                 g[0] = "update count";
 
@@ -1861,10 +1888,6 @@ implements ActionListener, WindowListener, KeyListener {
         lTime = System.currentTimeMillis() - lTime;
     }
 
-    /**
-     * Method declaration
-     *
-     */
     private void showResultInText() {
 
         Object[] col   = gResult.getHead();

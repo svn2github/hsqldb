@@ -76,21 +76,19 @@ import java.io.UTFDataFormatException;
  * Collection of static methods for converting strings between different
  * formats and to and from byte arrays.<p>
  *
- * New class, with extensively enhanced and rewritten Hypersonic code.
+ * Includes some methods based on Hypersonic code as indicated.
  *
  * @author Thomas Mueller (Hypersonic SQL Group)
- * @author fredt@users
- * @version 1.8.0
+ * @author Fred Toussi (fredt@users dot sourceforge.net)
+ * @version 1.8.1
  * @since 1.7.2
  */
-
-// fredt@users 20020328 - patch 1.7.0 by fredt - error trapping
 public class StringConverter {
 
     private static final byte[] HEXBYTES = {
-        (byte) '0', (byte) '1', (byte) '2', (byte) '3', (byte) '4',
-        (byte) '5', (byte) '6', (byte) '7', (byte) '8', (byte) '9',
-        (byte) 'a', (byte) 'b', (byte) 'c', (byte) 'd', (byte) 'e', (byte) 'f'
+        (byte) '0', (byte) '1', (byte) '2', (byte) '3', (byte) '4', (byte) '5',
+        (byte) '6', (byte) '7', (byte) '8', (byte) '9', (byte) 'a', (byte) 'b',
+        (byte) 'c', (byte) 'd', (byte) 'e', (byte) 'f'
     };
     private static final String HEXINDEX = "0123456789abcdef0123456789ABCDEF";
 
@@ -114,7 +112,7 @@ public class StringConverter {
     }
 
     /**
-     * Compacts a hexadecimal string into a byte array
+     * Converts a hexadecimal string into a byte array
      *
      *
      * @param s hexadecimal string
@@ -244,6 +242,8 @@ public class StringConverter {
      * The escape sequence is backslash, letter u, xxxx, where xxxx
      * is the hex representation of the character code.
      * (fredt@users)
+     *
+     * Method based on Hypersonic Code
      *
      * @param b output stream to wite to
      * @param s Java Unicode string
@@ -463,8 +463,7 @@ public class StringConverter {
                     char2 = (int) bytearr[offset + count - 2];
                     char3 = (int) bytearr[offset + count - 1];
 
-                    if (((char2 & 0xC0) != 0x80)
-                            || ((char3 & 0xC0) != 0x80)) {
+                    if (((char2 & 0xC0) != 0x80) || ((char3 & 0xC0) != 0x80)) {
                         throw new UTFDataFormatException();
                     }
 
@@ -497,6 +496,10 @@ public class StringConverter {
         int strlen = str.length();
         int c,
             count  = 0;
+
+        if (out.count + strlen + 8 > out.buffer.length) {
+            out.ensureRoom(strlen + 8);
+        }
 
         for (int i = 0; i < strlen; i++) {
             c = str.charAt(i);
@@ -576,13 +579,16 @@ public class StringConverter {
 
     /**
      * Returns the quoted version of the string using the quotechar argument.
-     * doublequote argument indicates whether each instance of quotechar
-     * inside the string is doubled.<p>
+     * doublequote argument indicates whether each instance of quotechar inside
+     * the string is doubled.<p>
      *
      * null string argument returns null. If the caller needs the literal
-     * "NULL" it should created it itself <p>
+     * "NULL" it should created it itself<p>
      *
-     * The reverse conversion is handled in Tokenizer.java
+     * @param s Java string
+     * @param quoteChar character used for quoting
+     * @param extraQuote true if quoteChar itself should be repeated
+     * @return String
      */
     public static String toQuotedString(String s, char quoteChar,
                                         boolean extraQuote) {
@@ -618,8 +624,8 @@ public class StringConverter {
     /**
      * Counts Character c in String s
      *
-     * @param String s
-     *
+     * @param s Java string
+     * @param c character to count
      * @return int count
      */
     static int count(final String s, final char c) {
