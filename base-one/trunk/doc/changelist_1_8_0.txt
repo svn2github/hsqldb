@@ -7,25 +7,26 @@ Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
 
-2009.09.01  1.8.1.0
+2009.09.02  1.8.1.0
 
-Added support for SET FILES INCREMENT BACKUP { TRUE | FALSE } - the same as 
+Added support for SET FILES INCREMENT BACKUP { TRUE | FALSE } - the same as
 documented 1.9 functionality
 Fixed regression of get_column_names connection properties - now defaults to true
 Fixed lock file issue - reverted to default lock file creation
 Allowed mixed-case resource paths for res: databases
 Fixed issue with text table source
+Fixed support for text table source files in res: databases
 Fixed issue with LIKE statements not working in CHECK constraints
 Changed rounding of DECIMAL values in division to ROUND_DOWN for uniformity
 with other integer types. Now 7/4 and 7/5 both return 1, while the first one was
 previously rounded up to 2.
-Added optimisation for query conditions in the form of 
-T1.A = T2.A AND T1.B = T2.B where there is an index on (A,B).
+Added optimisation for query conditions in the form of
+T1.A = T2.A AND T1.B = T2.B where there is an index on (A,B, ...).
 
 
 2008.06.02  1.8.0.10
 
-Removed use of the lock file by default. 
+Removed use of the lock file by default.
 Connection property hsqldb.lock_file=true should now be specified for its use.
 Fixed deadlock in shutdown of Server
 Fixed bug that in some circumstances could result in corrupted .data file and
@@ -47,12 +48,12 @@ Internal changes to classloader for FileAccess classes for next OOo release.
 new optional Java system property hsqldb.method_class_names allows preventing
 access to classe other than org.hsqldb.Library and java.lang.Math or specifying
 a semicolumn-separated list of allowed classes. For example,
-java -Dhsqldb.method_class_names="org.me.MyClass;org.you.YourClass" 
+java -Dhsqldb.method_class_names="org.me.MyClass;org.you.YourClass"
 allows access to methods in the two specified classes.
 
 2007.09.06  1.8.0.8.1
 
-Fixed regression that impacted performance of system table selects and JDBC 
+Fixed regression that impacted performance of system table selects and JDBC
 DatabaseMetaData calls that use system tables.
 
 2007.08.28  1.8.0.8
@@ -62,7 +63,7 @@ Fixed issue caused after adding columns to tables used in certain view definitio
 Added sych call before closing .script files.
 Minor bug fixes
 
-New implementation of HsqlTimer to allow proper database shutdown while used 
+New implementation of HsqlTimer to allow proper database shutdown while used
 within an application server or similar.
 
 Improvements in TEXT TABLE source file handling. If source file is unavailable at
@@ -95,7 +96,7 @@ returning primitive types
 
 (3 fixed issues affecting durability)
 Fixed serious reported issue in some JVM's zip libraries by adding a workaround.
-Fixed serious issue when cache_scale and cache_size_scale are small but very 
+Fixed serious issue when cache_scale and cache_size_scale are small but very
 large rows are inserted in cached tables.
 Fixed bug where an automatic rollback of an UPDATE statement was not logged.
 
@@ -106,7 +107,7 @@ Fixed bug where DISTINCT together with some GROUP BY lists were not allowed.
 Fixed bug where Server.shutdown() threw spurious NPE.
 
 Improved .data file persistence classes with better errror logging.
- 
+
 Improved client/server retrieval speed of large result sets.
 Column declarations of TIME(0) are now accepted.
 Named parameter in the form of :name are allowed in prepared statements.
@@ -115,13 +116,13 @@ Named parameter in the form of :name are allowed in prepared statements.
 
 General improvements to all utilities, including SQLTool, DatabaseManager, etc.
 General improvements to build.xml.
-Improvement to fail-safe persistence by saving the .properties file first as a 
+Improvement to fail-safe persistence by saving the .properties file first as a
 new file, before renaming.
 Fixed bugs with text tables that use quoted source files and have a heading row.
 Fixed bug which prevented dropping a column before an indexed column.
 Fixed bug where DISTINCT was not allowed with SQL functions (BT 1400344)
 Fixed bug where PreparedStatement calls were allowed with some unbound variable
-(Bug Tracker 1399324) but commented out to allow compatibility with earlier 
+(Bug Tracker 1399324) but commented out to allow compatibility with earlier
 versions (see org.hsqldb.jdbc.jdbcPreparedStatement).
 VARCHAR_IGNORECASE size specification is now enforeced.
 Fixed bugs where ORDER BY did not work in some cases (BT 1383218, BT 1344895).
@@ -133,9 +134,9 @@ Fixed bug to allow running with JDK 1.1 when compiled for this target.
 Fixed bug with COALESCE, et containing an aggregate function (BT 1242448).
 
 Fixed bug with ResultSet.getTimestamp(int, Clandar).
-Fixed bug with access non-admin access to tables was allowed when using 
+Fixed bug with access non-admin access to tables was allowed when using
 PreparedStatement objects.
-Added org.hsqldb.Library function, getDatabaseFullProductVersion to return the 
+Added org.hsqldb.Library function, getDatabaseFullProductVersion to return the
 full version string, including the 4th digit (e.g 1.8.0.4).
 
 2006.01.08
@@ -167,9 +168,9 @@ Fixed bug with scripting of some TIMESTAMP values
 
 Bug fixes and enhancements:
 
-Fixed bugs with GLOBAL TEMPORARY tables with PRESERVE ROWS or 
+Fixed bugs with GLOBAL TEMPORARY tables with PRESERVE ROWS or
 DELETE ROWS options.
-Fixed bug with DESC ignored in ORDER BY when a correlation name was used to 
+Fixed bug with DESC ignored in ORDER BY when a correlation name was used to
 specify the column.
 Fixed ResultSet.getTimestamp() and PreparedStatement.setTimestam() bug with null
 timestamp parameters.
@@ -184,12 +185,12 @@ Fixed issue with ALTER SCHEMA <name> RENAME TO <name>
 
 New features
 
-Support for RIGHT OUTER JOIN and CROSS JOIN in select statements 
+Support for RIGHT OUTER JOIN and CROSS JOIN in select statements
 
 ALTER TABLE <name> ALTER COLUMN <name> SET [NOT] NULL
 
 Added DAY_OF_WEEK as an alternative for EXTRACT(XXX FROM <date time>)
- 
+
 
 2005.07.11 1.8.0.1
 
@@ -200,7 +201,7 @@ LEFT OUTER JOIN join statement can contain NOT expressions.
 Set functions, SOME() and EVERY() implementation corrected.
 Quoted empty strings in TEXT table sources are no-longer interpreted as null.
 CHECKPOINT DEFRAG issued while there are uncommitted transactions works correctly.
-build.xml updated to fix issue with JDK 1.3 build  
+build.xml updated to fix issue with JDK 1.3 build
 
 2005.07.01 1.8.0.0
 
@@ -208,11 +209,11 @@ First release.
 
 2005.06.16 1.8.0.RC12
 
-Introduced new connection property shutdown, which, if true on the first 
+Introduced new connection property shutdown, which, if true on the first
 connection, will cause the engine to perform a SHUTDOWN on the database when
 the last connection is closed.
 
-Enhancements to TEXT table implementation to maintain the commit status of rows 
+Enhancements to TEXT table implementation to maintain the commit status of rows
 during recovery from an abrupt shutdown. Uncommitted rows will not appear in
 TEXT tables.
 
@@ -220,7 +221,7 @@ TEXT tables.
 
 SCHEMAS
 
-Support for SQL schemas. Each database can contain multiple schemas. The 
+Support for SQL schemas. Each database can contain multiple schemas. The
 following commands have been introduced:
 
 CREATE SCHMEA <schemaname> AUTHORIZATION DBA
@@ -228,19 +229,19 @@ DROP SCHEMA <schemaname> {CASCADE | RESTRICT}
 ALTER SCHEMA <schemaname> RENAME TO <newname>
 SET SCHEMA <schemaname>
 
-Initially, the default user schema will be created with the name PUBLIC. This 
-schema can be renamed or dropped. When the last user schema has been dropped, 
+Initially, the default user schema will be created with the name PUBLIC. This
+schema can be renamed or dropped. When the last user schema has been dropped,
 an empty default schema with the name PUBLIC is created.
 
 System tables all belong to INFORMATION_SCHEMA. To access system tables, either
 SET SCHEMA INFORMATION_SCHEMA should be used once or they should be referred to
-by fully specified names, e.g. 
+by fully specified names, e.g.
 INFORMATION_SCHEMA.SYSTEM_TABLES
 
 Similarly all database objects apart from columns can be referenced with fully
 qualified schema names.
 
-The CREATE SCHEMA command can be followed by other CREATE and GRANT commands 
+The CREATE SCHEMA command can be followed by other CREATE and GRANT commands
 without an intervening semicolon. All such commands are executed in the context
 of the newly created schema. A semicolon terminates an extended CREATE SCHEMA
 command.
@@ -255,7 +256,7 @@ REVOKE ... FROM <role name>
 GRANT <role name> TO <user name>
 DROP ROLE <role name>
 
-The GRANT and REVOKE commands are similar to those used for granting 
+The GRANT and REVOKE commands are similar to those used for granting
 permissions on different objects to USER objects. A role can then be granted to
 or revoked from different users, simplifying permission management.
 
@@ -263,30 +264,30 @@ GLOBAL TEMPORARY TABLES
 
 The implementation of temporary tables has changed to conform to SQL standards.
 
-The definition of a GLOBAL TEMPORARY table persists with the database. When a 
+The definition of a GLOBAL TEMPORARY table persists with the database. When a
 session (JDBC Connection) is started, an empty instance of the table is created.
-Temporary tables can be created with (the default) ON COMMIT DELETE ROWS or 
-ON COMMIT PRESERVE ROWS added to the end of table definition. 
-With ON COMMIT PRESERVE ROWS, the table contents are not cleared when the 
+Temporary tables can be created with (the default) ON COMMIT DELETE ROWS or
+ON COMMIT PRESERVE ROWS added to the end of table definition.
+With ON COMMIT PRESERVE ROWS, the table contents are not cleared when the
 session commits. In both cases, the contents are cleared when the session is
 closed.
 
 
 SCHEMA MANIPULATION COMMANDS
 
-Several schema manipulation commands have been enhanced. 
+Several schema manipulation commands have been enhanced.
 
-Tables, views and sequences can be dropped with the CASCADE option. This 
+Tables, views and sequences can be dropped with the CASCADE option. This
 silently drops all tables and views that reference the given database object.
 
 DROP TABLE <table name> [IF EXISTS] [CASCADE];
 DROP VIEW <view name> [IF EXISTS] [CASCADE];
 DROP SEQUENCE <sequence name> [IF EXISTS] [CASCADE];
 
-ALTER TABLE <table name> DROP COLUMN now silently drops any primary key or 
+ALTER TABLE <table name> DROP COLUMN now silently drops any primary key or
 unique constraint declared on the column (excluding multi-column constraints).
 
-ALTER TABLE <table name> ADD [COLUMN] now accepts primary key and identity 
+ALTER TABLE <table name> ADD [COLUMN] now accepts primary key and identity
 attributes.
 
 COLUMN MANIPULATION
@@ -295,15 +296,15 @@ Support for converting type, nullability and identity attributes of a column
 
 ALTER TABLE <table name> ALTER COLUMN <column name> <column definition>
 
-<column definition> has the same syntax as normal column definition. The new 
-column definition replaces the old one, so it is possible to add/remove a 
-DEFAULT expression, a NOT NULL constraint, or an IDENTITY definition. 
-No change to the primary key is allowed with this command. 
+<column definition> has the same syntax as normal column definition. The new
+column definition replaces the old one, so it is possible to add/remove a
+DEFAULT expression, a NOT NULL constraint, or an IDENTITY definition.
+No change to the primary key is allowed with this command.
 
 - The column must be already be a PK column to accept an IDENTITY definition.
-- If the column is already an IDENTITY column and there is no IDENTITY 
+- If the column is already an IDENTITY column and there is no IDENTITY
 definition, the existing IDENTITY attribute is removed.
-- The default expression will be that of the new definition, meaning an 
+- The default expression will be that of the new definition, meaning an
 existing default can be dropped by ommission, or a new default added.
 - The NOT NULL attribute will be that of the new definition, similar to above.
 - Depending on the conversion type, the table may have to be empty for the
@@ -332,15 +333,15 @@ LIMIT L [OFFSET O]
 It is now possible to use LIMIT combined with ORDER BY in subqueries and SELECT
 statements in brackets that are terms of UNION or other set operations.
 
-An ORDER BY or LIMIT clause applies to the complete result of the UNION and 
-other set operations or alternatively to one of its components depending on how 
-parentheses are used. In the first example the scope is the second SELECT, 
+An ORDER BY or LIMIT clause applies to the complete result of the UNION and
+other set operations or alternatively to one of its components depending on how
+parentheses are used. In the first example the scope is the second SELECT,
 while in the second query, the scope is the result of the UNION.
 
-SELECT ... FROM ... UNION 
+SELECT ... FROM ... UNION
 (SELECT ... FROM ... ORDER BY .. LIMIT)
 
-SELECT ... FROM ... UNION 
+SELECT ... FROM ... UNION
 SELECT ... FROM ... ORDER BY .. LIMIT
 
 Support for ORDER BY, LIMIT and OFFSET in CREATE VIEW statements
@@ -348,42 +349,42 @@ Support for ORDER BY, LIMIT and OFFSET in CREATE VIEW statements
 
 COLLATIONS
 
-Added support for collations. Each database can have its own collation. The SQL 
-command below sets the collation from the set of collations in the source 
+Added support for collations. Each database can have its own collation. The SQL
+command below sets the collation from the set of collations in the source
 for org.hsqldb.Collation:
 
 SET DATABASE COLLATION <double quoted collation name>
 
-Once this command has been issued, the database can be opened in any JVM and 
+Once this command has been issued, the database can be opened in any JVM and
 will retain its collation.
 
-The property sql.compare_in_locale=true is no longer supported. If the line 
-exists in a .properties file, it will switch the database to the collation for 
-the current default.  
+The property sql.compare_in_locale=true is no longer supported. If the line
+exists in a .properties file, it will switch the database to the collation for
+the current default.
 
 ENHANCEMENTS
 
 Support for the res: connection protocol (database files in a jar) has been
 extended to allow CACHED tables.
 
-Support for correct casting of TIME into TIMESTAMP, using CURRENT_DATE 
+Support for correct casting of TIME into TIMESTAMP, using CURRENT_DATE
 
 Symmetrical handling of setTimestamp() and getTimestamp() with Calendar
 parameters.
 
 BUG FIX
 
-Fixed bug where two indexes where switched, causing wrong results in some 
+Fixed bug where two indexes where switched, causing wrong results in some
 queries in the following circumstances:
 
 CREATE TABLE is executed.
-ALTER TABLE ADD FORIEGN KEY is used to create an FK on a different table that 
+ALTER TABLE ADD FORIEGN KEY is used to create an FK on a different table that
 was already present when the first command was issued.
 CREATE INDEX is used to add an index.
 Data is added to the table.
 Database is shutdown.
 Database is restarted.
-At this point the indexes are switched and queries that use either of the 
+At this point the indexes are switched and queries that use either of the
 indexes will not return the correct set of rows.
 
 BUG FIXES
@@ -394,26 +395,26 @@ Fixed bug with OR conditions in OUTER JOIN
 
 Fixed bug with duplicated closing of prepared statements
 
-Fixed bug with scalar subqueries. If the result of a scalar subquery is empty 
+Fixed bug with scalar subqueries. If the result of a scalar subquery is empty
 (no rows returned), the value is NULL.
 
-Fixed various parsing anomalies where SQL commands were accepted when quoted, 
-double-quoted or prefixed with an identifier, or identifiers were accepted in 
-single quotes. Example of a command that is no-longer tolerated: 
+Fixed various parsing anomalies where SQL commands were accepted when quoted,
+double-quoted or prefixed with an identifier, or identifiers were accepted in
+single quotes. Example of a command that is no-longer tolerated:
 
-Malformed query: MY. "SELECT" ID FROM 'CUSTOMER' IF.WHERE ID=0;   
+Malformed query: MY. "SELECT" ID FROM 'CUSTOMER' IF.WHERE ID=0;
 Actual query: SELECT ID FROM CUSTOMER WHERE ID=0;
 
 Fixed bug that prevented adding a primary key with no name to a table.
 
-Fixed bug that resulted in an error when the type of a column was changed to 
-the same type as before. E.g. 
+Fixed bug that resulted in an error when the type of a column was changed to
+the same type as before. E.g.
 ALTER TABLE <table name> ALTER COLUMN <column name> INTEGER
 
 BUG FIX
 
-Fixed bug in ROLLBACK. If several updates were made to a row of a table that 
-has no primary key, then ROLLBACK was issued, there would remain multiple 
+Fixed bug in ROLLBACK. If several updates were made to a row of a table that
+has no primary key, then ROLLBACK was issued, there would remain multiple
 versions of the row. E.g.
 
 CREATE TABLE T (I INT);
@@ -442,19 +443,19 @@ Applied submitted patch for setting the default table type when CREATE TABLE is
 used. The connection property, hsqldb.default_table_type=cached will set the
 default to CACHED tables, or the SET PROPERTY command can be used. Values,
 "cached" and "memory" are allowed.
- 
+
 The database property sql.enforce_strict_size=true has now a wider effect
-Previously CHAR /VARCHAR lengths could be checked and padding performed only 
-when inserting / updating rows. Added support for CHAR(n), VARCHAR(n), 
-NUMERIC(p,s) and DECIMAL(p,s) including SQL standard cast and convert semantics.  
-Explicit CAST(c AS VARCHAR(2)) will always truncate the string. Explicit 
+Previously CHAR /VARCHAR lengths could be checked and padding performed only
+when inserting / updating rows. Added support for CHAR(n), VARCHAR(n),
+NUMERIC(p,s) and DECIMAL(p,s) including SQL standard cast and convert semantics.
+Explicit CAST(c AS VARCHAR(2)) will always truncate the string. Explicit
 CAST(n AS NUMERIC(p,s)) will always perform the conversion or throw if n is out
-of bounds. All other implicit and explicit conversions to CHAR(n) and VARCHAR(n) 
+of bounds. All other implicit and explicit conversions to CHAR(n) and VARCHAR(n)
 are subject to SQL standard rules.
- 
+
 Bob has improved support for text tables. Newline support in quoted fields is
 now complete. It is now possible to save and restore the first line header of a
-CSV file when ignore_first=true is specified. When a text table is created with 
+CSV file when ignore_first=true is specified. When a text table is created with
 a new source (CSV) file, and ignore_first=true has been specified the following
 command can be used to set a user defined string as the first line:
 SET TABLE <tablename> SOURCE HEADER <double quoted string>.
@@ -477,17 +478,17 @@ Fixed minor bugs
 Added public shutdown() method to Server.
 
 A new application log has been introduced as an optional feature. The
-property/value pair "hsqldb.applog=1" can be used in the first connection string 
+property/value pair "hsqldb.applog=1" can be used in the first connection string
 to log some important messages. The default is "hsqldb.applog=0", meaning no
 logging. A file with the ending ".app.log" is generated alongside the rest of
-the database files for this purpose. 
+the database files for this purpose.
 
 In the current version only the classes used for file persistence (different in
 OpenOffice.org), plus any error encountered while processing the .log file after
 an abnormal end is logged.
 
 Bob Preston has updated the text table support to accept new line characters
-inside quoted strings. It is still not possible to create / modify a row 
+inside quoted strings. It is still not possible to create / modify a row
 containing a new line inside the engine. This will be a simple upgrade and will
 be included in the next RC.
 
@@ -505,12 +506,12 @@ Fixed minor bugs
 Issues with SET CHECKPOINT DEFRAG fixed
 
 New property for larger data file limits is introduced. Once set, the limit will
-go up to 8GB. The property can be set with the following SQL command only when 
+go up to 8GB. The property can be set with the following SQL command only when
 the database has no tables (new database).
 
 SET PROPERTY "hsqldb.cache_file_scale" 8
 
-To apply the change to an existing database, SHUTDOWN SCRIPT should be performed 
+To apply the change to an existing database, SHUTDOWN SCRIPT should be performed
 first, then the property=value line below should be added to the .properties
 file before reopening the database:
 
@@ -519,12 +520,12 @@ hsqldb.cache_file_scale=8
 It is now possible to add or drop a primary key.
 
 An existing primary key that is to be removed should not be referenced in a
-FOREIGN KEY constraint. If a table has an IDENTITY column, removing a primary 
+FOREIGN KEY constraint. If a table has an IDENTITY column, removing a primary
 key will remove the identity attribute of the column but leave the actual data.
 
-When adding a primary key, a NOT NULL constraint is automatically added to the 
+When adding a primary key, a NOT NULL constraint is automatically added to the
 column definitions. The table data for the columns of a newly declared primary
-key should not contain null values. 
+key should not contain null values.
 
 ALTER TABLE <name> ADD CONSTRAINT <cname> PRIMARY KEY(collist);
 ALTER TABLE <name> DROP CONSTRAINT <cname>;
@@ -533,7 +534,7 @@ ALTER TABLE <name> DROP PRIMARY KEY; // alternative syntax
 2005.01.20 1.8.0.RC4
 
 More minor bug fixes
-ResultSetMetaData reports identical precision/scale in embedded and 
+ResultSetMetaData reports identical precision/scale in embedded and
 client/server modes
 
 2005.01.16 1.8.0.RC3
@@ -545,9 +546,9 @@ CHECKPOINT is performed internally or via a user command.
 SET CHECKPOINT DEFRAG n
 
 The parameter n is the megabytes of abandoned space in the .data file. When
-a CHECKPOINT is performed either as a result of the .log file reaching the 
+a CHECKPOINT is performed either as a result of the .log file reaching the
 limit set by "SET LOGSIZE m", or by the user issuing a CHECKPOINT command, the
-amount of space abandoned during the session is checked and if it is larger 
+amount of space abandoned during the session is checked and if it is larger
 than n, a CHECKPOINT DEFRAG is performed instead of a checkpoint.
 
 2005.01.14 1.8.0.RC2
@@ -566,7 +567,7 @@ Better recovery when maximum data file size is reached.
 
 Changes to row access to use iterators. More code clarity.
 
-Various refactorings and new package for improved modularity. 
+Various refactorings and new package for improved modularity.
 
 Enhancements to DatabaseManagerSwing
 
