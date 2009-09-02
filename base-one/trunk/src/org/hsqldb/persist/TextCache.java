@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 import org.hsqldb.Database;
+import org.hsqldb.DatabaseURL;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Table;
 import org.hsqldb.Trace;
@@ -60,8 +61,8 @@ import org.hsqldb.store.ObjectCacheHashMap;
  * compatible pair of org.hsqldb.rowio input/output class instances.
  *
  *
- * @author sqlbob@users (RMP)
- * @version 1.8.0
+ * @author Bob Preston (sqlbob@users dot sourceforge.net)
+ * @version 1.8.1
  * @since 1.7.0
  */
 public class TextCache extends DataFileCache {
@@ -300,8 +301,12 @@ public class TextCache extends DataFileCache {
         fileFreePosition = 0;
 
         try {
+            int type = database.getType() == DatabaseURL.S_RES
+                       ? ScaledRAFile.DATA_FILE_JAR
+                       : ScaledRAFile.DATA_FILE_RAF;
+
             dataFile = ScaledRAFile.newScaledRAFile(database, fileName,
-                    readonly, ScaledRAFile.DATA_FILE_RAF, null, null);
+                    readonly, type, null, null);
             fileFreePosition = dataFile.length();
 
             if (fileFreePosition > Integer.MAX_VALUE) {
