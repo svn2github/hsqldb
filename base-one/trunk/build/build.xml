@@ -14,10 +14,10 @@
         Do not address questions about property file(s) to the
         hsqldb community. -->
    <property file='build/build.properties'/>
-   <property name="hsqldb.version" value="1.8.0.10"/>
+   <property name="hsqldb.version" value="1.8.1.0"/>
 
    <tstamp>
-       <format property="_tmpstamp" pattern="yyyy/MM/dd-hh:mm:ss"
+       <format property="_tmpstamp" pattern="yyyy/MM/dd-HH:mm:ss"
                locale="en"/>
    </tstamp>
 
@@ -26,7 +26,7 @@
    <property name="hsqldb.title" value="HSQLDB"/>
    <property name="hsqldb.vendor" value="The HSQLDB Development Group"/>
    <property name="src" value="${basedir}/src"/>
-   <property name="build.debug" value="off"/>
+   <property name="build.debug" value="false"/>
 
    <target name="init">
    </target>
@@ -213,7 +213,7 @@ examples:
        </java>
     </target>
 
-    <target name="switchtojdk14" depends="switches"
+    <target name="switchtojdk14" depends="switchtojdk13"
             description="self explanatory" if="ant.java.iscjava14">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath="classes" >
         <arg file="${src}/org/hsqldb/lib/java/JavaSystem.java"/>
