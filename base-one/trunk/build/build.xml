@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<!-- author fredt@users.sourceforge.net 2001 - 2008 -->
-<!-- additional targets by unsaved@users.sourceforge.net 2004 - 2008 -->
+<!-- author fredt@users.sourceforge.net 2001 - 2009 -->
+<!-- additional targets by unsaved@users.sourceforge.net 2004 - 2009 -->
 
 <project name="hsqldb" default="help" basedir="../">
    <!-- This loads properties in the same exact way as if you ran
