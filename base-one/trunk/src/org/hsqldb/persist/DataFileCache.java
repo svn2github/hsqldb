@@ -42,6 +42,7 @@ import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.SimpleLog;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.Storage;
+import org.hsqldb.lib.StringUtil;
 import org.hsqldb.lib.ZipUnzipFile;
 import org.hsqldb.rowio.RowInputBinary;
 import org.hsqldb.rowio.RowInputInterface;
@@ -67,8 +68,8 @@ public class DataFileCache {
 
     // flags
     public static final int FLAG_ISSHADOWED = 1;
-    public static final int FLAG_ISSAVED = 2;
-    public static final int FLAG_ROWINFO = 3;
+    public static final int FLAG_ISSAVED    = 2;
+    public static final int FLAG_ROWINFO    = 3;
 
     // file format fields
     static final int LONG_EMPTY_SIZE      = 4;     // empty space size
@@ -757,13 +758,44 @@ public class DataFileCache {
         if (fa.isStreamElement(fileName)) {
             if (wasNio) {
                 System.gc();
-                fa.removeElement(fileName);
             }
 
-            if (fa.isStreamElement(fileName)) {
-                fa.renameElement(fileName, fileName + ".old");
+            fa.removeElement(fileName);
 
-                File oldfile = new File(fileName + ".old");
+            if (fa.isStreamElement(fileName)) {
+
+//#ifdef JAVA2FULL
+                File   file = new File(fileName);
+                File[] list = file.getParentFile().listFiles();
+
+                for (int i = 0; i < list.length; i++) {
+                    if (list[i].getName().endsWith(".old")
+                            && list[i].getName().startsWith(file.getName())) {
+                        list[i].delete();
+                    }
+                }
+
+//#endif JAVA2FULL
+                String oldName = fileName + ".old";
+
+                fa.removeElement(oldName);
+
+                if (fa.isStreamElement(oldName)) {
+                    String timestamp = StringUtil.toPaddedString(
+                        Integer.toHexString((int) System.currentTimeMillis()),
+                        8, '0', true);
+                    String discardName = fileName + "." + timestamp + ".old";
+
+                    fa.renameElement(oldName, discardName);
+
+                    File discardFile = new File(discardName);
+
+                    FileUtil.getDefaultInstance().deleteOnExit(discardFile);
+                }
+
+                fa.renameElement(fileName, oldName);
+
+                File oldfile = new File(oldName);
 
                 FileUtil.getDefaultInstance().deleteOnExit(oldfile);
             }
