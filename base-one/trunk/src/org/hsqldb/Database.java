@@ -181,20 +181,20 @@ public class Database {
      *
      * @param type is the type of the database: "mem", "file", "res"
      * @param path is the fiven path to the database files
-     * @param name is the combination of type and canonical path
+     * @param cname is the canonical path
      * @param props property overrides placed on the connect URL
      * @exception  HsqlException if the specified name and path
      *      combination is illegal or unavailable, or the database files the
      *      name and path resolves to are in use by another process
      */
-    Database(String type, String path, String name,
+    Database(String type, String path, String cname,
              HsqlProperties props) throws HsqlException {
 
         urlProperties = props;
 
         setState(Database.DATABASE_SHUTDOWN);
 
-        sName = name;
+        sName = cname;
         sType = type;
         sPath = path;
 
@@ -679,6 +679,10 @@ public class Database {
      * @return the uri portion of this object's in-process JDBC url
      */
     public String getURI() {
+        return sType + sName;
+    }
+
+    public String getCanonicalPath() {
         return sName;
     }
 
