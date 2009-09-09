@@ -7,7 +7,7 @@ Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
 
-2009.09.02  1.8.1.0
+2009.09.02  1.8.1.1
 
 Added support for SET FILES INCREMENT BACKUP { TRUE | FALSE } - the same as
 documented 1.9 functionality
