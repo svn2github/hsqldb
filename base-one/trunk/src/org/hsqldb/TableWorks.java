@@ -207,8 +207,8 @@ class TableWorks {
         }
 
         table.database.schemaManager.clearTempTables(session, table);
-        table.database.schemaManager.registerIndexName(
-            newindex.getName().name, table.getName());
+        table.database.schemaManager.registerIndexName(newindex.getName().name,
+                table.getName());
         table.database.schemaManager.recompileViews(table);
 
         return newindex;
@@ -345,7 +345,7 @@ class TableWorks {
             table.dropIndex(session, indexname);
         } else {
             int[] removeIndex = new int[]{ table.getIndexIndex(indexname) };
-            Table tn = table.moveDefinition(removeIndex, null, -1, 0);
+            Table tn          = table.moveDefinition(removeIndex, null, -1, 0);
 
             tn.moveData(session, table, -1, 0);
             tn.updateConstraintsTables(session, table, -1, 0);
@@ -370,7 +370,7 @@ class TableWorks {
      */
     void retypeColumn(Column column, int colindex) throws HsqlException {
 
-        if (table.isText() &&!table.isEmpty(session)) {
+        if (table.isText() && !table.isEmpty(session)) {
             throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
         }
 
@@ -403,7 +403,7 @@ class TableWorks {
 
         HsqlName constNameRemove = null;
 
-        if (table.isText() &&!table.isEmpty(session)) {
+        if (table.isText() && !table.isEmpty(session)) {
             throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
         }
 
@@ -420,15 +420,13 @@ class TableWorks {
 
         if (table.getPrimaryKey().length == 1
                 && table.getPrimaryKey()[0] == colIndex) {
-            table.checkDropIndex(table.getIndex(0).getName().name, null,
-                                 true);
+            table.checkDropIndex(table.getIndex(0).getName().name, null, true);
 
             constNameRemove = table.constraintList[0].getName();
             tn              = table.moveDefinitionPK(null, false);
         }
 
-        Constraint c = tn.getUniqueConstraintForColumns(new int[]{
-            colIndex });
+        Constraint c = tn.getUniqueConstraintForColumns(new int[]{ colIndex });
 
         if (c != null) {
             Index idx = c.getMainIndex();
@@ -465,7 +463,7 @@ class TableWorks {
      */
     void addColumn(Column column, int colIndex) throws HsqlException {
 
-        if (table.isText() &&!table.isEmpty(session)) {
+        if (table.isText() && !table.isEmpty(session)) {
             throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
         }
 
@@ -494,8 +492,8 @@ class TableWorks {
                 table.getPrimaryIndex(), Constraint.PRIMARY_KEY);
 
             table.addConstraint(newconstraint);
-            table.database.schemaManager.registerConstraintName(
-                pkNameAdd.name, table.getName());
+            table.database.schemaManager.registerConstraintName(pkNameAdd.name,
+                    table.getName());
         }
     }
 
@@ -532,8 +530,7 @@ class TableWorks {
             cset.add(c);
 
             // throw if the index for unique constraint is shared
-            table.checkDropIndex(c.getMainIndex().getName().name, cset,
-                                 false);
+            table.checkDropIndex(c.getMainIndex().getName().name, cset, false);
 
             // all is well if dropIndex throws for lack of resources
             dropIndex(c.getMainIndex().getName().name);
@@ -670,7 +667,10 @@ class TableWorks {
             // default expressions can change
             oldCol.setType(newCol);
             oldCol.setDefaultExpression(newCol.getDefaultExpression());
-            table.setColumnTypeVars(colIndex);
+
+            table.colSizes[colIndex]    = oldCol.getSize();
+            table.colDefaults[colIndex] = oldCol.getDefaultExpression();
+
             table.resetDefaultsFlag();
 
             return;
