@@ -1957,7 +1957,7 @@ public class Library {
         functionMap.put("bitand", bitand);
         functionMap.put("bitlength", bitLength);
         functionMap.put("bitor", bitor);
-        functionMap.put("bitxor", bitor);
+        functionMap.put("bitxor", bitxor);
         functionMap.put("character", character);
         functionMap.put("concat", concat);
         functionMap.put("cot", cot);

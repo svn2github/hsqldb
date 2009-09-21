@@ -107,11 +107,11 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows = 256000;
+    int bigrows = 1024000;
 
     // number of ops
-    int bigops    = 256000;
-    int smallops  = 8000;
+    int bigops    = 1024000;
+    int smallops  = 256000;
     int smallrows = 0xfff;
 
     // if the extra table needs to be created and filled up
