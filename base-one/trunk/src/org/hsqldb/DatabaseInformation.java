@@ -269,10 +269,12 @@ class DatabaseInformation {
     protected static final IntValueHashMap sysTableNamesMap;
 
     static {
-        sysTableNamesMap = new IntValueHashMap(47);
+        synchronized (DatabaseInformation.class) {
+            sysTableNamesMap = new IntValueHashMap(47);
 
-        for (int i = 0; i < sysTableNames.length; i++) {
-            sysTableNamesMap.put(sysTableNames[i], i);
+            for (int i = 0; i < sysTableNames.length; i++) {
+                sysTableNamesMap.put(sysTableNames[i], i);
+            }
         }
     }
 
@@ -310,23 +312,27 @@ class DatabaseInformation {
     static final DatabaseInformation newDatabaseInformation(Database db)
     throws HsqlException {
 
-        Class clazz = null;
+        Class c = null;
 
         try {
-            clazz = Class.forName("org.hsqldb.DatabaseInformationFull");
+            c = Class.forName("org.hsqldb.DatabaseInformationFull");
         } catch (Exception e) {
             try {
-                clazz = Class.forName("org.hsqldb.DatabaseInformationMain");
-            } catch (Exception e2) {}
+                c = Class.forName("org.hsqldb.DatabaseInformationMain");
+            } catch (Exception e2) {
+                c = DatabaseInformation.class;
+            }
         }
 
         try {
             Class[]     ctorParmTypes = new Class[]{ Database.class };
             Object[]    ctorParms     = new Object[]{ db };
-            Constructor ctor = clazz.getDeclaredConstructor(ctorParmTypes);
+            Constructor ctor = c.getDeclaredConstructor(ctorParmTypes);
 
             return (DatabaseInformation) ctor.newInstance(ctorParms);
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         return new DatabaseInformation(db);
     }
@@ -364,7 +370,8 @@ class DatabaseInformation {
      * @return a table corresponding to the name and session arguments, or
      *      <code>null</code> if there is no such table to be produced
      */
-    Table getSystemTable(Session session, String name) throws HsqlException {
+    synchronized Table getSystemTable(Session session,
+                                      String name) throws HsqlException {
         return null;
     }
 
@@ -384,7 +391,7 @@ class DatabaseInformation {
      * semantics similar to getSystemTable() and act accordingly (e.g.
      * clearing earlier than next invocation of getSystemTable()).
      */
-    final void setDirty() {
+    synchronized final void setDirty() {
         isDirty = true;
     }
 
@@ -395,7 +402,7 @@ class DatabaseInformation {
      * @param withContent if true, then produce contentful tables, else
      *        produce emtpy (surrogate) tables
      */
-    final void setWithContent(boolean withContent) {
+    synchronized final void setWithContent(boolean withContent) {
         this.withContent = withContent;
     }
 }

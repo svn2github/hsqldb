@@ -154,23 +154,25 @@ class DatabaseInformationMain extends DatabaseInformation {
     protected DINameSpace ns;
 
     static {
-        columnNameMap      = new HashMap();
-        nonCachedTablesSet = new HashSet();
-        sysTableHsqlNames  = new HsqlName[sysTableNames.length];
+        synchronized (DatabaseInformationMain.class) {
+            columnNameMap      = new HashMap();
+            nonCachedTablesSet = new HashSet();
+            sysTableHsqlNames  = new HsqlName[sysTableNames.length];
 
-        for (int i = 0; i < sysTableNames.length; i++) {
-            sysTableHsqlNames[i] =
-                HsqlNameManager.newHsqlSystemObjectName(sysTableNames[i]);
-            sysTableHsqlNames[i].schema =
-                SchemaManager.INFORMATION_SCHEMA_HSQLNAME;
+            for (int i = 0; i < sysTableNames.length; i++) {
+                sysTableHsqlNames[i] =
+                    HsqlNameManager.newHsqlSystemObjectName(sysTableNames[i]);
+                sysTableHsqlNames[i].schema =
+                    SchemaManager.INFORMATION_SCHEMA_HSQLNAME;
+            }
+
+            // build the set of non-cached tables
+            nonCachedTablesSet.add("SYSTEM_CACHEINFO");
+            nonCachedTablesSet.add("SYSTEM_SESSIONINFO");
+            nonCachedTablesSet.add("SYSTEM_SESSIONS");
+            nonCachedTablesSet.add("SYSTEM_PROPERTIES");
+            nonCachedTablesSet.add("SYSTEM_SEQUENCES");
         }
-
-        // build the set of non-cached tables
-        nonCachedTablesSet.add("SYSTEM_CACHEINFO");
-        nonCachedTablesSet.add("SYSTEM_SESSIONINFO");
-        nonCachedTablesSet.add("SYSTEM_SESSIONS");
-        nonCachedTablesSet.add("SYSTEM_PROPERTIES");
-        nonCachedTablesSet.add("SYSTEM_SEQUENCES");
     }
 
     /**
@@ -794,7 +796,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         while (tables.hasNext()) {
             table = (Table) tables.next();
 
-            if (table.isView() ||!isAccessibleTable(table)) {
+            if (table.isView() || !isAccessibleTable(table)) {
                 continue;
             }
 
@@ -1452,7 +1454,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         while (tables.hasNext()) {
             table = (Table) tables.next();
 
-            if (table.isView() ||!isAccessibleTable(table)) {
+            if (table.isView() || !isAccessibleTable(table)) {
                 continue;
             }
 
@@ -1594,8 +1596,8 @@ class DatabaseInformationMain extends DatabaseInformation {
         while (tables.hasNext()) {
             table = (Table) tables.next();
 
-            if (table.isView() ||!isAccessibleTable(table)
-                    ||!table.hasPrimaryKey()) {
+            if (table.isView() || !isAccessibleTable(table)
+                    || !table.hasPrimaryKey()) {
                 continue;
             }
 
