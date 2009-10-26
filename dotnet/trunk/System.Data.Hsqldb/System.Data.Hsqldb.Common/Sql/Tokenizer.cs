@@ -59,6 +59,7 @@ using HsqlValuePool = org.hsqldb.store.ValuePool;
 
 using SqlTokenType = System.Data.Hsqldb.Common.Enumeration.SqlTokenType;
 using Regex = System.Text.RegularExpressions.Regex;
+using System.Text;
 #endregion
 
 namespace System.Data.Hsqldb.Common.Sql
@@ -1575,7 +1576,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     throw Tokenizer.IllegalWaitState();
                 }
 
-                string token;
+                string token = null;
 
                 if (WasIdentifierChain)
                 {
@@ -1603,7 +1604,36 @@ namespace System.Data.Hsqldb.Common.Sql
                     }
                     else
                     {
+                        StringBuilder sb = new StringBuilder();
 
+                        for (int i = 0; i < m_identifierChain.Count; i++)
+                        {
+                            if (i > 0)
+                            {
+                                sb.Append('.');
+                            }
+                            
+                            Token t = m_identifierChain[i];
+                            String v;
+
+                            switch (t.Type)
+                            {
+                                case SqlTokenType.DelimitedIdentifier:
+                                    {
+                                        v = HsqlStringConverter.toQuotedString(t.Value, '"', true);
+                                        break;
+                                    }
+                                default:
+                                    {
+                                        v = t.Value;
+                                        break;
+                                    }
+                            }
+                            
+                            sb.Append(v);
+                        }
+
+                        token = sb.ToString();
                     }
                 }
                 else if (WasDelimitedIdentifier)
