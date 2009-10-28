@@ -152,10 +152,10 @@ public class Table extends BaseTable {
     int[]             colSizes;                       // fredt - copy of SIZE values for columns
     private int[]     colScales;                      // fredt - copy of SCALE values for columns
     private boolean[] colNullable;                    // fredt - modified copy of isNullable() values
-    private Expression[] colDefaults;                 // fredt - expressions of DEFAULT values
-    private int[]        defaultColumnMap;            // fred - holding 0,1,2,3,...
-    private boolean      hasDefaultValues;            //fredt - shortcut for above
-    boolean              sqlEnforceSize;              // inherited from the database -
+    Expression[]      colDefaults;                    // fredt - expressions of DEFAULT values
+    private int[]     defaultColumnMap;               // fred - holding 0,1,2,3,...
+    private boolean   hasDefaultValues;               // fredt - shortcut for above
+    boolean           sqlEnforceSize;                 // inherited from the database -
 
     // properties for subclasses
     protected int           columnCount;              // inclusive the hidden primary key
