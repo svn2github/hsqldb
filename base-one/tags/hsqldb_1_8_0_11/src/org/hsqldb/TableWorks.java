@@ -670,7 +670,10 @@ class TableWorks {
             // default expressions can change
             oldCol.setType(newCol);
             oldCol.setDefaultExpression(newCol.getDefaultExpression());
-            table.setColumnTypeVars(colIndex);
+
+            table.colSizes[colIndex]    = oldCol.getSize();
+            table.colDefaults[colIndex] = oldCol.getDefaultExpression();
+
             table.resetDefaultsFlag();
 
             return;

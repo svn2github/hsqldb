@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * This software consists of voluntary contributions made by many individuals 
+ * This software consists of voluntary contributions made by many individuals
  * on behalf of the Hypersonic SQL Group.
  *
  *
@@ -149,7 +149,7 @@ public class Table extends BaseTable {
     Constraint[]      constraintList;                 // constrainst for the table
     HsqlArrayList[]   triggerLists;                   // array of trigger lists
     private int[]     colTypes;                       // fredt - types of columns
-    private int[]     colSizes;                       // fredt - copy of SIZE values for columns
+    int[]             colSizes;                       // fredt - copy of SIZE values for columns
     private int[]     colScales;                      // fredt - copy of SCALE values for columns
     private boolean[] colNullable;                    // fredt - modified copy of isNullable() values
     private Expression[] colDefaults;                 // fredt - expressions of DEFAULT values
