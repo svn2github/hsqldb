@@ -1,20 +1,21 @@
-This is Subversion for Win32, version 1.5.5. Read the CHANGES file to
+This is Subversion for Win32, version 1.6.5. Read the CHANGES file to
 see what changed in this release:
 
-    http://svn.collab.net/repos/svn/branches/1.5.x/CHANGES
+    http://svn.collab.net/repos/svn/branches/1.6.x/CHANGES
 
 These binaries were built with:
 
-    Neon 0.28.3
+    Neon 0.28.4
     Berkeley DB 4.4.20
-    OpenSSL 0.9.8h
+    OpenSSL 0.9.8k
     ZLib 1.2.3
-    Apache 2.0.63
-    Python 2.5
+    Apache 2.2.11
+    Python 2.6
     libintl 0.14.1 (patched)
     Ruby 1.8.6
     Cyrus SASL 2.1.22
-    serf 0.2.0
+    serf 0.3.0
+    sqlite 3.6.15
 
 The BDB binaries are at
 
@@ -28,14 +29,14 @@ Please read the Subversion INSTALL file for more information:
 
     http://svn.collab.net/repos/svn/trunk/INSTALL
     
-Note for Python 2.5 users: Since Python 2.5 will no longer load modules with
+Note for Python 2.5+ users: Since Python 2.5+ will no longer load modules with
 .dll extensions, you will need to rename the libsvn/*.dll files to .pyd
 manually.
 
 
 Package contents:
 
-    svn-win32-1.5.5/
+    svn-win32-1.6.5/
        README.txt           -- This file
        bin/                 -- All Subversion binaries and supporting DLLs,
           *.exe                including APR DLLs
