@@ -85,7 +85,7 @@ namespace System.Data.Hsqldb.Common.Sql.Types
     /// runtime, which likely implies installing assemblies in the global
     /// assembly cache (GAC), co-locating them in the directory containing
     /// the executable with which the database instance is started, or registering
-    /// and alternative assemly resolution provider with the app domain hosting
+    /// and alternative assembly resolution provider with the app domain hosting
     /// the database instance.
     /// </para>
     /// </remarks>
