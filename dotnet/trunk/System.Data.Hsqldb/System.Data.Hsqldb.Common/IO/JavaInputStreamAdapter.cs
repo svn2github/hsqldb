@@ -39,7 +39,7 @@ using IDisposable = System.IDisposable;
 using Stream = System.IO.Stream;
 using InputStream = java.io.InputStream;
 using IOException = java.io.IOException;
-using System; 
+using System;
 #endregion
 
 namespace System.Data.Hsqldb.Common.IO
@@ -75,7 +75,59 @@ namespace System.Data.Hsqldb.Common.IO
         #endregion
 
         #region Method Overrides
-        
+
+        #region available()
+        /// <summary>
+        /// Returns an estimate of the number of bytes that can be read (or 
+        /// skipped over) from this input stream without blocking by the next
+        /// invocation of a method for this input stream. The next invocation
+        /// might be the same thread or another thread.  A single read or skip of this
+        /// many bytes will not block, but may read or skip fewer bytes.
+        /// </summary>
+        /// <remarks>
+        /// <para> Note that while some implementations of {@code InputStream} will return
+        /// the total number of bytes in the stream, many will not.  It is
+        /// never correct to use the return value of this method to allocate
+        /// a buffer intended to hold all data in this stream.
+        /// </para>
+        /// <para> A subclass' implementation of this method may choose to throw a
+        /// java.io.IOException if this input stream has been closed by
+        /// invoking the close() method.
+        /// </para>
+        /// <para> The <c>available</c> method of the java.io.InputStream class always
+        /// returns {@code 0}.
+        /// </para>
+        /// <para> This method should be overridden by subclasses.
+        /// </para>
+        /// </remarks>
+        /// <returns>
+        /// an estimate of the number of bytes that can be read (or skipped
+        /// over) from this input stream without blocking or {@code 0} when
+        /// it reaches the end of the input stream.
+        /// </returns>
+        /// <exception cref="java.io.IOException">if an I/O error occurs.</exception>
+        public override int available()
+        {
+            try
+            {
+                checked
+                {
+                    return (m_stream.CanRead && m_stream.CanSeek)
+                        ? (int)(m_stream.Length - m_stream.Position)
+                        : base.available();
+                }
+            }
+            catch (Exception ex)
+            {
+                IOException ioe = new IOException(ex.Message);
+
+                ioe.initCause(ex);
+
+                throw ioe;
+            }
+        } 
+        #endregion
+
         #region read()
         /// <summary>
         /// Reads the next byte of data from this input stream. 
@@ -193,9 +245,9 @@ namespace System.Data.Hsqldb.Common.IO
             catch (Exception ex)
             {
                 IOException ioe = new IOException(ex.Message);
-                
+
                 ioe.initCause(ex);
-                
+
                 throw ioe;
             }
         }
@@ -224,8 +276,8 @@ namespace System.Data.Hsqldb.Common.IO
                 throw ioe;
             }
         }
-        #endregion 
-        
+        #endregion
+
         #endregion
 
         #region IDisposable Members

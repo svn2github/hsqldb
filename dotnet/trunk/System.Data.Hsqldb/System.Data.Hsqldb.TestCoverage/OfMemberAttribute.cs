@@ -6,7 +6,8 @@ namespace System.Data.Hsqldb.TestCoverage
     /// <summary>
     /// Indicates the name of the test subject member being tested within the method of the test fixture.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method, AllowMultiple=false, Inherited=true)]
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple=true, Inherited=true)]
+    [NoCoverage]
     public class OfMemberAttribute : Attribute
     {
         private string m_memberName;

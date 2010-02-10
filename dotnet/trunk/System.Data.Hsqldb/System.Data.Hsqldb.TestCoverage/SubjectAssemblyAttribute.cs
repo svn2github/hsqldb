@@ -7,6 +7,7 @@ namespace System.Data.Hsqldb.TestCoverage
     /// Indicates the assembly containing the subject type being tested within the test fixture.
     /// </summary>
     [AttributeUsage(AttributeTargets.Assembly, AllowMultiple=false, Inherited=true)]
+    [NoCoverage]
     public class SubjectAssemblyAttribute : Attribute
     {
         private string m_fullName;

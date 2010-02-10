@@ -6,6 +6,7 @@ namespace System.Data.Hsqldb.TestCoverage
     /// Indicates the subject type being tested within the test fixture.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple=false, Inherited=true)]
+    [NoCoverage]
     public class ForSubjectAttribute : Attribute
     {
         private Type m_testSubject;

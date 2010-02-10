@@ -28,9 +28,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="IKVM.OpenJDK.ClassLibrary, Version=0.38.0.4, Culture=neutral, PublicKeyToken=13235d27fcbfff58, processorArchitecture=MSIL">
+    <Reference Include="IKVM.OpenJDK.Core, Version=0.42.0.4, Culture=neutral, PublicKeyToken=13235d27fcbfff58, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Lib\IKVM.OpenJDK.ClassLibrary.dll</HintPath>
+      <HintPath>..\Lib\IKVM.OpenJDK.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="IKVM.OpenJDK.Jdbc, Version=0.42.0.4, Culture=neutral, PublicKeyToken=13235d27fcbfff58, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Lib\IKVM.OpenJDK.Jdbc.dll</HintPath>
     </Reference>
     <Reference Include="nunit.framework, Version=2.4.8.0, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -47,6 +51,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Converter.UnitTests\TestLexographicEnumConverter.cs" />
+    <Compile Include="IO.UnitTests\BaseJavaInputStream.cs" />
+    <Compile Include="IO.UnitTests\BaseNonClosableStream.cs" />
+    <Compile Include="IO.UnitTests\BaseStreamAdapter.cs" />
     <Compile Include="IO.UnitTests\IOTest.cs" />
     <Compile Include="IO.UnitTests\TestJavaInputStreamAdapter.cs" />
     <Compile Include="IO.UnitTests\TestJavaInputStreamWrapper.cs" />

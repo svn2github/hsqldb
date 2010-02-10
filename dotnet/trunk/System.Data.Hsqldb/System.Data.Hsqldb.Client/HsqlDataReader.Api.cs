@@ -933,7 +933,6 @@ namespace System.Data.Hsqldb.Client
             org.hsqldb.types.JavaObject javaObjectValue
                 = value as org.hsqldb.types.JavaObject;
 
-
             if (javaObjectValue != null)
             {
                 bool isJavaObject;

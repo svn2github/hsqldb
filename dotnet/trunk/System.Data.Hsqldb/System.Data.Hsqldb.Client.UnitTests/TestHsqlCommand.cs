@@ -151,9 +151,19 @@ namespace System.Data.Hsqldb.Client.UnitTests
 
                 using (HsqlDataReader reader = testSubject.ExecuteReader())
                 {
+                    object[] values = new object[reader.FieldCount];
+
                     while (reader.Read())
                     {
-                        int fieldCount = reader.GetValues(new object[reader.FieldCount]);
+                        int fieldCount = reader.GetValues(values);
+
+                        for (int i = 0; i < fieldCount; i++)
+                        {
+                            object value = values[i];
+                            Console.Write(value);
+                            Console.Write(" : ");
+                        }
+                        Console.WriteLine();
                     }
                 }
             }
@@ -168,6 +178,13 @@ namespace System.Data.Hsqldb.Client.UnitTests
                 foreach (DataRow row in schemaTable.Rows)
                 {
                     object[] values = row.ItemArray;
+
+                    foreach (object value in values)
+                    {
+                        Console.Write(value);
+                        Console.Write(" : ");
+                    }
+                    Console.WriteLine();
                 }
             }
         }
