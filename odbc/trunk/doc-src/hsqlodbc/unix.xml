@@ -66,15 +66,18 @@
       If the same applies to you, you will need to edit the files
       <itemizedlist>
         <listitem><simpara>
-          <filename>/etc/odbc.ini</filename>      Driver definitions
+          <filename>/etc/unixODBC/odbc.ini</filename>      Driver definitions
         </simpara></listitem>
         <listitem><simpara>
-          <filename>/etc/odbcinst.ini</filename>  Global DSN definitions
+          <filename>/etc/unixODBC/odbcinst.ini</filename>  Global DSN definitions
         </simpara></listitem>
         <listitem><simpara>
           <filename>$HOME/.odbc.ini</filename>    Personal DSN definitions
         </simpara></listitem>
       </itemizedlist>
+      Depending on your UNIX or unixODBC distribution, your etc config files
+      may be directly in <filename>/etc/</filename> instead of in the
+      <filename>unixODBC</filename> subdirectory.
     </para>
   </section>
 </chapter>
