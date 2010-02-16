@@ -1,0 +1,139 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Chapter&nbsp;1.&nbsp;Driver configuration on UNIX</title>
+<link href="../docbook.css" rel="stylesheet" type="text/css">
+<meta content="DocBook XSL-NS Stylesheets V1.75.2" name="generator">
+<meta name="keywords" content="HSQLDB, HyperSQL, UNIX, Linux, ODBC">
+<meta name="keywords" content="Hsqldb, HyperSQL, Hypersonic, Database, ODBC">
+<link rel="home" href="index.html" title="HyperSQL ODBC Driver">
+<link rel="up" href="index.html" title="HyperSQL ODBC Driver">
+<link rel="prev" href="book-pref.html" title="Preface">
+<link rel="next" href="windows-chapt.html" title="Chapter&nbsp;2.&nbsp;Driver configuration on Windows">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table summary="Navigation header" width="100%">
+<tr>
+<th align="center" colspan="3">Chapter&nbsp;1.&nbsp;Driver configuration on UNIX</th>
+</tr>
+<tr>
+<td align="left" width="20%"><a accesskey="p" href="book-pref.html"><img src="../images/db/prev.gif" alt="Prev"></a>&nbsp;</td><th align="center" width="60%">&nbsp;</th><td align="right" width="20%">&nbsp;<a accesskey="n" href="windows-chapt.html"><img src="../images/db/next.gif" alt="Next"></a></td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="chapter" title="Chapter&nbsp;1.&nbsp;Driver configuration on UNIX">
+<div class="titlepage">
+<div>
+<div>
+<h1 class="title">
+<a name="unix-chapt"></a>Driver configuration on UNIX</h1>
+</div>
+<div>
+<div class="author">
+<h3 class="author">
+<span class="firstname">Blaine</span> <span class="surname">Simpson</span>
+</h3>
+<div class="affiliation">
+<span class="orgname">The HSQL Development Group<br>
+</span>
+</div>
+</div>
+</div>
+<div>
+<p class="releaseinfo">$Revision$</p>
+</div>
+<div>
+<p class="pubdate">$Date$</p>
+</div>
+</div>
+</div>
+<div class="toc">
+<p>
+<b>Table of Contents</b>
+</p>
+<dl>
+<dt>
+<span class="section"><a href="unix-chapt.html#unix_install-sect">Installation</a></span>
+</dt>
+<dt>
+<span class="section"><a href="unix-chapt.html#unix_config-sect">Configuration</a></span>
+</dt>
+</dl>
+</div>
+<div class="section" title="Installation">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both">
+<a name="unix_install-sect"></a>Installation</h2>
+</div>
+</div>
+</div>
+<p>Install the RPM or package, or extract the zip or tar file as
+      root user from the root directory.</p>
+</div>
+<div class="section" title="Configuration">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both">
+<a name="unix_config-sect"></a>Configuration</h2>
+</div>
+</div>
+</div>
+<p>
+      See the <a class="link" href="settings-chapt.html" title="Chapter&nbsp;3.&nbsp;Driver Settings">Driver Settings</a>
+      chapter about individual driver runtime settings.
+    </p>
+<p>
+      Our binary distributions contain drivers that work with unixODBC, and
+      that is what this page assumes you are using.
+      You can build drivers that work with iodbc instead.  If you do that,
+      see the iodbc docs about how to manage installed drivers and DSN
+      definitions.
+    </p>
+<p>
+      The unixODBC graphical program "ODBCConfig" just does not work for any
+      driver I have ever tried to add.
+      If the same applies to you, you will need to edit the files
+      </p>
+<div class="itemizedlist">
+<ul class="itemizedlist" type="disc">
+<li class="listitem">
+          
+<code class="filename">/etc/unixODBC/odbc.ini</code>      Driver definitions
+        </li>
+<li class="listitem">
+          
+<code class="filename">/etc/unixODBC/odbcinst.ini</code>  Global DSN definitions
+        </li>
+<li class="listitem">
+          
+<code class="filename">$HOME/.odbc.ini</code>    Personal DSN definitions
+        </li>
+</ul>
+</div>
+<p>
+      Depending on your UNIX or unixODBC distribution, your etc config files
+      may be directly in <code class="filename">/etc/</code> instead of in the
+      <code class="filename">unixODBC</code> subdirectory.
+    </p>
+</div>
+</div>
+<HR xmlns:xi="http://www.w3.org/2001/XInclude">
+<P xmlns:xi="http://www.w3.org/2001/XInclude" class="svnrev">$Revision$</P>
+<div class="navfooter">
+<hr>
+<table summary="Navigation footer" width="100%">
+<tr>
+<td align="left" width="40%"><a accesskey="p" href="book-pref.html"><img src="../images/db/prev.gif" alt="Prev"></a>&nbsp;</td><td align="center" width="20%">&nbsp;</td><td align="right" width="40%">&nbsp;<a accesskey="n" href="windows-chapt.html"><img src="../images/db/next.gif" alt="Next"></a></td>
+</tr>
+<tr>
+<td valign="top" align="left" width="40%">Preface&nbsp;</td><td align="center" width="20%"><a accesskey="h" href="index.html"><img src="../images/db/home.gif" alt="Home"></a></td><td valign="top" align="right" width="40%">&nbsp;Chapter&nbsp;2.&nbsp;Driver configuration on Windows</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

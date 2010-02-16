@@ -1,0 +1,1250 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>HyperSQL ODBC Driver</title>
+<link href="../docbook.css" rel="stylesheet" type="text/css">
+<meta content="DocBook XSL-NS Stylesheets V1.75.2" name="generator">
+<meta name="keywords" content="Hsqldb, HyperSQL, Hypersonic, Database, ODBC">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="book" title="HyperSQL ODBC Driver">
+<div class="titlepage">
+<div>
+<div>
+<h1 class="title">
+<a name="guide"></a>HyperSQL ODBC Driver</h1>
+</div>
+<div>
+<h2 class="subtitle">User Guide for the HyperSQL ODBC Driver, hsqlodbc</h2>
+</div>
+<div>
+<div class="authorgroup">
+<div class="editor">
+<h4 class="editedby">Edited by</h4>
+<h3 class="editor">
+<span class="orgname">The HSQL Development Group</span>
+</h3>
+</div>
+<div class="editor">
+<h4 class="editedby">Edited by</h4>
+<h3 class="editor">
+<span class="firstname">Blaine</span> <span class="surname">Simpson</span>
+</h3>
+<div class="affiliation">
+<span class="orgname">The HSQL Development Group<br>
+</span>
+</div>
+</div>
+</div>
+</div>
+<div>
+<p class="releaseinfo">$Revision$</p>
+</div>
+<div>
+<div class="legalnotice" title="Legal Notice">
+<a name="N1002C"></a>
+<p>Copyright 2009 The HSQL Development Group. Permission is
+      granted to distribute this document without any alteration under the
+      terms of the HSQLDB license.</p>
+</div>
+</div>
+<div>
+<p class="pubdate">$Dat$</p>
+</div>
+</div>
+<hr>
+</div>
+<div class="toc">
+<p>
+<b>Table of Contents</b>
+</p>
+<dl>
+<dt>
+<span class="preface"><a href="#book-pref">Preface</a></span>
+</dt>
+<dd>
+<dl>
+<dt>
+<span class="section"><a href="#altformats-sect">Available formats for this document</a></span>
+</dt>
+<dt>
+<span class="section"><a href="#N10096">Purpose</a></span>
+</dt>
+<dt>
+<span class="section"><a href="#N1009E">License</a></span>
+</dt>
+<dt>
+<span class="section"><a href="#N100A7">Credits</a></span>
+</dt>
+</dl>
+</dd>
+<dt>
+<span class="chapter"><a href="#unix-chapt">1. Driver configuration on UNIX</a></span>
+</dt>
+<dd>
+<dl>
+<dt>
+<span class="section"><a href="#unix_install-sect">Installation</a></span>
+</dt>
+<dt>
+<span class="section"><a href="#unix_config-sect">Configuration</a></span>
+</dt>
+</dl>
+</dd>
+<dt>
+<span class="chapter"><a href="#windows-chapt">2. Driver configuration on Windows</a></span>
+</dt>
+<dd>
+<dl>
+<dt>
+<span class="section"><a href="#windows_install-sect">Installation</a></span>
+</dt>
+<dt>
+<span class="section"><a href="#windows_config-sect">Configuration</a></span>
+</dt>
+<dt>
+<span class="section"><a href="#windows_replace-sect">Replacing Installed Driver</a></span>
+</dt>
+</dl>
+</dd>
+<dt>
+<span class="chapter"><a href="#settings-chapt">3. Driver Settings</a></span>
+</dt>
+<dt>
+<span class="appendix"><a href="#settings-app">A. Settings List</a></span>
+</dt>
+<dt>
+<span class="appendix"><a href="#codesample-app">B. Code Samples</a></span>
+</dt>
+<dt>
+<span class="index"><a href="#book-ind">General Index</a></span>
+</dt>
+</dl>
+</div>
+<div class="list-of-tables">
+<p>
+<b>List of Tables</b>
+</p>
+<dl>
+<dt>1. <a href="#altformats-tbl">Available formats of this document</a>
+</dt>
+<dt>A.1. <a href="#N102DA">Settings List</a>
+</dt>
+</dl>
+</div>
+<div class="preface" title="Preface">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title">
+<a name="book-pref"></a>Preface</h2>
+</div>
+</div>
+</div>
+<div class="toc">
+<p>
+<b>Table of Contents</b>
+</p>
+<dl>
+<dt>
+<span class="section"><a href="#altformats-sect">Available formats for this document</a></span>
+</dt>
+<dt>
+<span class="section"><a href="#N10096">Purpose</a></span>
+</dt>
+<dt>
+<span class="section"><a href="#N1009E">License</a></span>
+</dt>
+<dt>
+<span class="section"><a href="#N100A7">Credits</a></span>
+</dt>
+</dl>
+</div>
+<p>ALPHA DOCUMENTATION</p>
+<p>This documentation is not complete and is released to accompany an
+    ALPHA version of HSQLDB 1.9 or 2.0. The latest, updated version of this
+    documentation can be found at http://hsqldb.org/doc/2.0/</p>
+<p>If you notice any mistakes in this document, please email the author
+    listed at the beginning of the chapter. You can find the emails in the
+    list of developers on the SourceForge project site via http://hsqldb.org.
+    If you have problems with the procedures themselves, please use the HSQLDB
+    support facilities which are listed at http://hsqldb.org/support</p>
+<div class="section" title="Available formats for this document">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both">
+<a name="altformats-sect"></a>Available formats for this document</h2>
+</div>
+</div>
+</div>
+<p>This document is available in several formats.</p>
+<p>
+      You may be reading this document right now at http://hsqldb.org/doc/2.0, or in
+      a distribution somewhere else.
+      I hereby call the document distribution from which you are reading 
+      this, your <span class="emphasis"><em>current distro</em></span>.
+  </p>
+<p>
+      http://hsqldb.org/doc/2.0 hosts the latest production versions of all available formats.
+      If you want a different format of the same <span class="emphasis"><em>version</em></span>
+      of the document you are reading now, then you should try your
+      current distro.
+      If you want the latest production version, you should try http://hsqldb.org/doc/2.0.
+  </p>
+<p>
+      Sometimes, distributions other than http://hsqldb.org/doc/2.0 do not host all
+      available formats.
+      So, if you can't access the format that you want in your current
+      distro, you have no choice but to use the newest production version at 
+      http://hsqldb.org/doc/2.0.
+  </p>
+<p>
+    
+</p>
+<div class="table">
+<a name="altformats-tbl"></a>
+<p class="title">
+<b>Table&nbsp;1.&nbsp;Available formats of this document</b>
+</p>
+<div class="table-contents">
+<table summary="Available formats of this document" cellspacing="0" style="border-collapse: collapse;border-top: 0.5pt solid ; border-bottom: 0.5pt solid ; border-left: 0.5pt solid ; border-right: 0.5pt solid ; ">
+<colgroup>
+<col width="3cm" align="left">
+<col width="4cm" align="left">
+<col align="left">
+</colgroup>
+<thead>
+<tr>
+<th style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; " align="left">format</th><th style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; " align="left">your distro</th><th style="border-bottom: 0.5pt solid ; " align="left">at http://hsqldb.org/doc/2.0</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; " align="left">
+              Chunked HTML
+          </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; " align="left">
+              <a class="link" href="index.html" target="_top">index.html</a>
+          </td><td style="border-bottom: 0.5pt solid ; " align="left">
+          <a class="link" href="http://hsqldb.org/doc/2.0/hsqlodbc/" target="_top">http://hsqldb.org/doc/2.0/hsqlodbc/</a>
+          </td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; " align="left">
+              All-in-one HTML
+          </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; " align="left">
+              <a class="link" href="hsqlodbc.html" target="_top">hsqlodbc.html</a>
+          </td><td style="border-bottom: 0.5pt solid ; " align="left">
+        <a class="link" href="http://hsqldb.org/doc/2.0/hsqlodbc/hsqlodbc.html" target="_top">http://hsqldb.org/doc/2.0/hsqlodbc/hsqlodbc.html</a>
+          </td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; " align="left">
+              PDF
+          </td><td style="border-right: 0.5pt solid ; " align="left">
+              <a class="link" href="hsqlodbc.pdf" target="_top">hsqlodbc.pdf</a>
+          </td><td style="" align="left">
+          <a class="link" href="http://hsqldb.org/doc/2.0/hsqlodbc/hsqlodbc.pdf" target="_top">http://hsqldb.org/doc/2.0/hsqlodbc/hsqlodbc.pdf</a>
+          </td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>
+<br class="table-break">
+    If you are reading this document now with a standalone PDF reader, the
+    <span class="guilabel">your distro</span> links may not work.
+  </p>
+</div>
+<div class="section" title="Purpose">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both">
+<a name="N10096"></a>Purpose</h2>
+</div>
+</div>
+</div>
+<p>
+        This document is directed to users of a production ODBC Driver,
+        not to those who wish to either modify the driver itself or make a
+        custom driver build.
+      </p>
+<p>
+        Those who wish to make custom driver builds should attend to the
+        *.txt files in the doc directory of a source distribution or of a
+        Subversion export or checkout.
+      </p>
+</div>
+<div class="section" title="License">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both">
+<a name="N1009E"></a>License</h2>
+</div>
+</div>
+</div>
+<p>
+        The HyperSQL ODBC Driver, hsqlodbc, is licensed under LGPL v2.
+        The file <code class="filename">license.txt</code>, included with all of our
+        distributions, includes the full text of the license.
+      </p>
+</div>
+<div class="section" title="Credits">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both">
+<a name="N100A7"></a>Credits</h2>
+</div>
+</div>
+</div>
+<p>
+        This software is the product of the work of many individuals and
+        organizations, and also benefits from the use of several open
+        source libraries and utilities.
+        I will here just list the significant contributors to the current
+        HyperSQL ODBC Driver as well as its predecessors.
+        Please see the file <code class="filename">notice.txt</code> which we supply
+        with all of our distributions, for more details about these
+        contributors.
+      </p>
+</div>
+</div>
+<div class="chapter" title="Chapter&nbsp;1.&nbsp;Driver configuration on UNIX">
+<div class="titlepage">
+<div>
+<div>
+<h1 class="title">
+<a name="unix-chapt"></a>Driver configuration on UNIX</h1>
+</div>
+<div>
+<div class="author">
+<h3 class="author">
+<span class="firstname">Blaine</span> <span class="surname">Simpson</span>
+</h3>
+<div class="affiliation">
+<span class="orgname">The HSQL Development Group<br>
+</span>
+</div>
+</div>
+</div>
+<div>
+<p class="releaseinfo">$Revision$</p>
+</div>
+<div>
+<p class="pubdate">$Date$</p>
+</div>
+</div>
+</div>
+<div class="toc">
+<p>
+<b>Table of Contents</b>
+</p>
+<dl>
+<dt>
+<span class="section"><a href="#unix_install-sect">Installation</a></span>
+</dt>
+<dt>
+<span class="section"><a href="#unix_config-sect">Configuration</a></span>
+</dt>
+</dl>
+</div>
+<div class="section" title="Installation">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both">
+<a name="unix_install-sect"></a>Installation</h2>
+</div>
+</div>
+</div>
+<p>Install the RPM or package, or extract the zip or tar file as
+      root user from the root directory.</p>
+</div>
+<div class="section" title="Configuration">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both">
+<a name="unix_config-sect"></a>Configuration</h2>
+</div>
+</div>
+</div>
+<p>
+      See the <a class="link" href="#settings-chapt" title="Chapter&nbsp;3.&nbsp;Driver Settings">Driver Settings</a>
+      chapter about individual driver runtime settings.
+    </p>
+<p>
+      Our binary distributions contain drivers that work with unixODBC, and
+      that is what this page assumes you are using.
+      You can build drivers that work with iodbc instead.  If you do that,
+      see the iodbc docs about how to manage installed drivers and DSN
+      definitions.
+    </p>
+<p>
+      The unixODBC graphical program "ODBCConfig" just does not work for any
+      driver I have ever tried to add.
+      If the same applies to you, you will need to edit the files
+      </p>
+<div class="itemizedlist">
+<ul class="itemizedlist" type="disc">
+<li class="listitem">
+          
+<code class="filename">/etc/unixODBC/odbc.ini</code>      Driver definitions
+        </li>
+<li class="listitem">
+          
+<code class="filename">/etc/unixODBC/odbcinst.ini</code>  Global DSN definitions
+        </li>
+<li class="listitem">
+          
+<code class="filename">$HOME/.odbc.ini</code>    Personal DSN definitions
+        </li>
+</ul>
+</div>
+<p>
+      Depending on your UNIX or unixODBC distribution, your etc config files
+      may be directly in <code class="filename">/etc/</code> instead of in the
+      <code class="filename">unixODBC</code> subdirectory.
+    </p>
+</div>
+</div>
+<div class="chapter" title="Chapter&nbsp;2.&nbsp;Driver configuration on Windows">
+<div class="titlepage">
+<div>
+<div>
+<h1 class="title">
+<a name="windows-chapt"></a>Driver configuration on Windows</h1>
+</div>
+<div>
+<div class="author">
+<h3 class="author">
+<span class="firstname">Blaine</span> <span class="surname">Simpson</span>
+</h3>
+<div class="affiliation">
+<span class="orgname">The HSQL Development Group<br>
+</span>
+</div>
+</div>
+</div>
+<div>
+<p class="releaseinfo">$Revision$</p>
+</div>
+<div>
+<p class="pubdate">$Date$</p>
+</div>
+</div>
+</div>
+<div class="toc">
+<p>
+<b>Table of Contents</b>
+</p>
+<dl>
+<dt>
+<span class="section"><a href="#windows_install-sect">Installation</a></span>
+</dt>
+<dt>
+<span class="section"><a href="#windows_config-sect">Configuration</a></span>
+</dt>
+<dt>
+<span class="section"><a href="#windows_replace-sect">Replacing Installed Driver</a></span>
+</dt>
+</dl>
+</div>
+<div class="section" title="Installation">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both">
+<a name="windows_install-sect"></a>Installation</h2>
+</div>
+</div>
+</div>
+<div class="procedure" title="Procedure&nbsp;2.1.&nbsp;Windows Installer">
+<a name="N1012C"></a>
+<p class="title">
+<b>Procedure&nbsp;2.1.&nbsp;Windows Installer</b>
+</p>
+<ol class="procedure" type="1">
+<li class="step" title="Step 1">
+<p>Execute the provided *.msi file</p>
+</li>
+<li class="step" title="Step 2">
+<p>
+        Click Next.
+        </p>
+<div class="mediaobject">
+<table cellpadding="0" cellspacing="0" summary="manufactured viewport for HTML img" border="0">
+<tr>
+<td valign="top"><img src="images/odbcsetup1.png"></td>
+</tr>
+</table>
+</div>
+<p>
+      
+</p>
+</li>
+<li class="step" title="Step 3">
+<p>
+        Accept the license agreement, then click Next.
+        </p>
+<div class="mediaobject">
+<table cellpadding="0" cellspacing="0" summary="manufactured viewport for HTML img" border="0">
+<tr>
+<td valign="top"><img src="images/odbcsetup2.png"></td>
+</tr>
+</table>
+</div>
+<p>
+      
+</p>
+</li>
+<li class="step" title="Step 4">
+<p>
+        De-select the Documentation if you don't want it.
+        Select a different installation directory if you don't like the default.
+        Click Next.
+        </p>
+<div class="mediaobject">
+<table cellpadding="0" cellspacing="0" summary="manufactured viewport for HTML img" border="0">
+<tr>
+<td valign="top"><img src="images/odbcsetup3.png"></td>
+</tr>
+</table>
+</div>
+<p>
+      
+</p>
+</li>
+<li class="step" title="Step 5">
+<p>
+        Click Install.
+        </p>
+<div class="mediaobject">
+<table cellpadding="0" cellspacing="0" summary="manufactured viewport for HTML img" border="0">
+<tr>
+<td valign="top"><img src="images/odbcsetup4.png"></td>
+</tr>
+</table>
+</div>
+<p>
+      
+</p>
+</li>
+<li class="step" title="Step 6">
+<p>
+        Click Finish.
+        </p>
+<div class="mediaobject">
+<table cellpadding="0" cellspacing="0" summary="manufactured viewport for HTML img" border="0">
+<tr>
+<td valign="top"><img src="images/odbcsetup5.png"></td>
+</tr>
+</table>
+</div>
+<p>
+      
+</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" title="Configuration">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both">
+<a name="windows_config-sect"></a>Configuration</h2>
+</div>
+</div>
+</div>
+<p>
+      See the <a class="link" href="#settings-chapt" title="Chapter&nbsp;3.&nbsp;Driver Settings">Driver Settings</a>
+      chapter about individual driver runtime settings.
+    </p>
+<p>
+      Here are the DSN definition screens captured from a Vista PC.
+      First, the DSN definition screen.
+      </p>
+<div class="mediaobject">
+<table cellpadding="0" cellspacing="0" summary="manufactured viewport for HTML img" border="0">
+<tr>
+<td valign="top"><img src="images/dsndef.png"></td>
+</tr>
+</table>
+</div>
+<p>
+      Then option screen 1 of 2.
+      </p>
+<div class="mediaobject">
+<table cellpadding="0" cellspacing="0" summary="manufactured viewport for HTML img" border="0">
+<tr>
+<td valign="top"><img src="images/dsnoptions1.png"></td>
+</tr>
+</table>
+</div>
+<p>
+      ... and 2 of 2.
+      </p>
+<div class="mediaobject">
+<table cellpadding="0" cellspacing="0" summary="manufactured viewport for HTML img" border="0">
+<tr>
+<td valign="top"><img src="images/dsnoptions2.png"></td>
+</tr>
+</table>
+</div>
+<p>
+    
+</p>
+<p>
+      Our Windows binary distributions include MSI installers.
+      This page assumes that you are installing with our MSI installer.
+      If you get your HyperSQL ODBC driver with another application, much of
+      what is written here may apply to your distribution.
+    </p>
+<p>
+      Our driver is designed to facilitate incorporation into installers for
+      other products as a <span class="emphasis"><em>Merge Module</em></span>.
+    </p>
+</div>
+<div class="section" title="Replacing Installed Driver">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both">
+<a name="windows_replace-sect"></a>Replacing Installed Driver</h2>
+</div>
+</div>
+</div>
+<p>
+      The "Date" column in the ODBC Data Source Administrator shows the driver
+       install date.
+    </p>
+<p>
+      Can uninstall by rerunning the same *.msi used to install; or run
+      <span class="guilabel">Control Panel</span> /
+      <span class="guilabel">Programs and Features</span> (Vista)
+      <span class="guilabel">Control Panel</span> /
+      <span class="guilabel">Add/Remove Programs</span> (other)
+    </p>
+<p>
+      Fortunately, DSNs for removed drivers are retained!
+      Uh... unfortunately, DSNs can only be removed or edited if a compatible
+      driver is not currently installed.  Therefore if you are not replacing
+      a driver with a compatible one, you have better remove your DSNs first.
+    </p>
+<p>
+      I see no benefit to using our upgrade batch script, which just passes
+      params to "msiexec".
+    </p>
+<p>
+      Just make sure no "running" programs are using the driver, and you do not
+       need to reboot in order to pick up a newly installed driver.
+      Use Control Panel / Administrative Tools / Data Sources (ODBC) to
+      configure your DSNs.  (This is the Windows ODBC Data Source
+      Administrator).
+    </p>
+<p>
+      ODBC does not allow an empty string for a DSM database name.  Therefore,
+      you must specify "/" (without the quotes) to indicate the default
+      database.  This setting is on the main Configure page for the DSN.
+    </p>
+<p>
+      You may want to turn on one or more of the log files at the Datasource
+      or Global level of the DSN Configure screen.
+    </p>
+<p>
+      The logging destination files shown in the Data Source Administrator are
+      wrong, at least in some common cases.  The MyLog file gets written in
+      your home directory, if you have one.
+    </p>
+</div>
+</div>
+<div class="chapter" title="Chapter&nbsp;3.&nbsp;Driver Settings">
+<div class="titlepage">
+<div>
+<div>
+<h1 class="title">
+<a name="settings-chapt"></a>Driver Settings</h1>
+</div>
+<div>
+<div class="author">
+<h3 class="author">
+<span class="firstname">Blaine</span> <span class="surname">Simpson</span>
+</h3>
+<div class="affiliation">
+<span class="orgname">The HSQL Development Group<br>
+</span>
+</div>
+</div>
+</div>
+<div>
+<p class="releaseinfo">$Revision$</p>
+</div>
+<div>
+<p class="pubdate">$Date$</p>
+</div>
+</div>
+</div>
+<p>
+<em><span class="remark">For some reason, attempts to screen-shot the DSN config
+    screens fail with a Windows system error on Vista.
+    Perhaps security-related.
+    TODO:  Try on XP.
+  </span></em>
+</p>
+<p>
+    This chapter applies to both UNIX and Windows.
+    The setting heading includes the descriptive name as shown by the
+    Windows ODBC DS Administrator, as well as the real keyword names that UNIX
+    users will use.
+  </p>
+<p>
+    The HyperSQL ODBC Driver product consists of two driver variants.
+    You should try to use the <span class="emphasis"><em>Unicode</em></span> variant first, since
+    it supports the later and better ODBC protocol.
+    Use the <span class="emphasis"><em>ANSI</em></span> variant if the Unicode variant won't
+    work for your application.
+    The way you select the driver variant for a DSN is platform-specific.
+    For UNIX, set the DSN setting <code class="literal">Driver</code> to the key as
+    defined in the uniXODBC config file
+    <code class="filename">/etc/unixODBC/odbcinst.ini</code>.
+    For UNIX, select the driver after you click <span class="guilabel">Add</span> on
+    the <span class="guilabel">User DSN</span> screen, or switch it afterwards with the
+    DSN's <span class="guilabel">Manage DSN</span> button.
+  </p>
+<p>
+    Driver settings can also be made at connection time by just appending
+    keyword abbreviation/value assignment pairs to the ODBC connection string,
+    delimiting each such pair with a semicolon.  Base connection Strings are
+    language-dependent, but you always append a String in this form
+    </p>
+<div class="informalexample">
+<pre class="programlisting">;A0=0;B9=1</pre>
+</div>
+<p>
+    See the <a class="link" href="#settings-app" title="Appendix&nbsp;A.&nbsp;Settings List">Settings List</a>
+    appendix for a concise list of the abbreviations you may use.
+    The appendix also shows the default values for settings (this is really
+    only necessary for UNIX users, since the Winodws DSN manager always shows
+    the current effective value).
+  </p>
+<div class="variablelist" title="Runtime Driver Settings">
+<p class="title">
+<b>Runtime Driver Settings</b>
+</p>
+<table border="0">
+<col valign="top" align="left">
+<tbody>
+<tr>
+<td>
+<p>
+<span class="term">Database</span>
+</p>
+</td><td>
+      ODBC does not allow an empty string for a DSM database name.  Therefore,
+      you must specify DSN database name of "/" (without the quotes) to
+      indicate the default database
+    </td>
+</tr>
+<tr>
+<td>
+<p>
+<span class="term">Recognize Unique Indexes</span>
+</p>
+</td><td>
+    </td>
+</tr>
+<tr>
+<td>
+<p>
+<span class="term">Cancel as FreeeStmt</span>
+</p>
+</td><td>
+      <em><span class="remark">Find out what this experimental feature is for.</span></em>
+    </td>
+</tr>
+<tr>
+<td>
+<p>
+<span class="term">MyLog</span>
+</p>
+</td><td>
+      Enables fairly verbose runtime logging to the indicated file.
+      With value 1 will write coded mylog() messages to the MyLog file.
+      With value 2 will write both mylog() and inolog() messages to MyLog file.
+    </td>
+</tr>
+<tr>
+<td>
+<p>
+<span class="term">CommLog</span>
+</p>
+</td><td>
+      Enables runtime communiction logging to the indicated file.
+      With value 1, will write coded qlog() messages to the CommLog.
+    </td>
+</tr>
+<tr>
+<td>
+<p>
+<span class="term">Unknown Sizes</span>
+</p>
+</td><td>
+<p>
+      This controls what SQLDescribeCol and SQLColAttributes will return as to
+      precision for the <span class="emphasis"><em>variable</em></span> data types when the
+      precision (for example for a column) is unspecified.
+      For the recommended <code class="literal">sql_enforce_strict_size mode</code>, this
+      stting will have no effect.
+      </p>
+<div class="itemizedlist">
+<ul class="itemizedlist" type="disc">
+<li class="listitem">
+          Maximum: Always return the maximum precision of the data type.
+        </li>
+<li class="listitem">
+          Dont Know: Return "Don't Know" value and let application decide.
+        </li>
+<li class="listitem">
+          Longest: Return the longest string length of the column of any row. Beware of this setting when using cursors because the cache size may not be a good representation of the longest column in the cache.
+        </li>
+</ul>
+</div>
+<p>
+      MS Access: Seems to handle Maximum setting ok, as well as all the others.
+      Borland: If sizes are large and lots of columns, Borland may crash badly
+      (it doesn't seem to handle memory allocation well) if using Maximum size. 
+      </p>
+</td>
+</tr>
+<tr>
+<td>
+<p>
+<span class="term">Max Varchar</span>
+</p>
+</td><td>
+<p class="simpara">
+      Use this setting only as a work-around for client app idiocy.
+      Generally, the database should enforce your data constraints.
+      </p>
+<p class="simpara">
+      The maximum precision of the VARCHAR and CHAR types (perhaps others).
+      Set to 1 larger than the value you need, to allow for null terminator
+      characters.
+      <em><span class="remark">
+        The default is 255 right now.
+        0 really means max of 0, and we need to change this ASAP so that 0
+        will mean unlimited.
+      </span></em>
+      
+</p>
+<p class="simpara">
+        If you set this value higher than 254, Access will not let you index
+        on varchar columns!
+    </p>
+</td>
+</tr>
+<tr>
+<td>
+<p>
+<span class="term">Cache Size</span>
+</p>
+</td><td>
+      When using cursors, this is the row size of the tuple cache. If not using cursors, this is how many tuples to allocate memory for at any given time. The default is 100 rows for either case.
+    </td>
+</tr>
+<tr>
+<td>
+<p>
+<span class="term">Max LongVarChar</span>
+</p>
+</td><td>
+       The maximum precision of the LongVarChar type. The default is 4094 which actually means 4095 with the null terminator. You can even specify (-4) for this size, which is the odbc SQL_NO_TOTAL value.
+     </td>
+</tr>
+<tr>
+<td>
+<p>
+<span class="term">ReadOnly</span>
+</p>
+</td><td>
+       Whether the datasource will allow updates.
+    </td>
+</tr>
+<tr>
+<td>
+<p>
+<span class="term">Show System Tables</span>
+</p>
+</td><td>
+      The driver will treat system tables as regular tables in SQLTables. This is good for Access so you can see system tables.
+    </td>
+</tr>
+<tr>
+<td>
+<p>
+<span class="term">LF &lt;-&gt; CR/LF conversion</span>
+</p>
+</td><td>
+      Convert Unix style line endings to DOS style.
+    </td>
+</tr>
+<tr>
+<td>
+<p>
+<span class="term">Updatable Cursors</span>
+</p>
+</td><td>
+      Enable updateable cursor emulation in the driver.
+      <em><span class="remark">Fred will be implementing real Updatable ResultSets</span></em>.
+    </td>
+</tr>
+<tr>
+<td>
+<p>
+<span class="term">Row Versioning</span>
+</p>
+</td><td>
+      <em><span class="remark">
+        Will turn on MVRCC currency control mode, once we implement this.
+      </span></em>
+    </td>
+</tr>
+<tr>
+<td>
+<p>
+<span class="term">True is -1</span>
+</p>
+</td><td>
+      Represent TRUE as -1 for compatibility with some applications.
+    </td>
+</tr>
+<tr>
+<td>
+<p>
+<span class="term">Int8 As</span>
+</p>
+</td><td>
+      Define what datatype to report int8 columns as.
+    </td>
+</tr>
+<tr>
+<td>
+<p>
+<span class="term">Extra Opts</span>
+</p>
+</td><td>
+<p>
+      Extra Opts: combination of the following bits.
+      </p>
+<div class="itemizedlist">
+<ul class="itemizedlist" type="disc">
+<li class="listitem">
+          0x1: Force the output of short-length formatted connection string. Check this bit when you use MFC CDatabase class.
+        </li>
+<li class="listitem">
+          0x2: Fake MS SQL Server so that MS Access recognizes PostgreSQL's serial type as AutoNumber type.
+        </li>
+<li class="listitem">
+          0x4: Reply ANSI (not Unicode) char types for the inquiries from applications. Try to check this bit when your applications don't seem to be good at handling Unicode data.
+        </li>
+</ul>
+</div>
+<p>
+    
+</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>
+<span class="term">OID Options</span>
+</p>
+</td><td>
+<p>
+      
+</p>
+<div class="itemizedlist">
+<ul class="itemizedlist" type="disc">
+<li class="listitem">
+          Show Column: Includes the OID in SQLColumns. This is good for using as a unique identifier to update records if no good key exists OR if the key has many parts, which blows up the backend.
+        </li>
+<li class="listitem">
+          Fake Index: This option fakes a unique index on OID. This is useful when there is not a real unique index on OID and for apps which can't ask what the unique identifier should be (i.e, Access 2.0).
+        </li>
+</ul>
+</div>
+<p>
+    
+</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>
+<span class="term">OID Options</span>
+</p>
+</td><td>
+<p>
+      Level of rollback on errors: Specifies what to rollback should an error occur.
+      </p>
+<div class="itemizedlist">
+<ul class="itemizedlist" type="disc">
+<li class="listitem">
+       
+          Nop(0): Don't rollback anything and let the application handle the error.
+        </li>
+<li class="listitem">
+          Transaction(1): Rollback the entire transaction.
+        </li>
+<li class="listitem">
+          Statement(2): Rollback the statement.
+        </li>
+</ul>
+</div>
+<p>
+      default value is a sentence unit (it is a transaction unit before 8.0).
+    </p>
+</td>
+</tr>
+<tr>
+<td>
+<p>
+<span class="term">Connection Settings</span>
+</p>
+</td><td>
+      The driver sends these commands to the backend upon a successful connection.  It sends these settings AFTER it sends the driver "Connect Settings". Use a semi-colon (;) to separate commands. This can now handle any query, even if it returns results. The results will be thrown away however!
+    </td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="appendix" title="Appendix&nbsp;A.&nbsp;Settings List">
+<div class="titlepage">
+<div>
+<div>
+<h1 class="title">
+<a name="settings-app"></a>Settings List</h1>
+</div>
+<div>
+<div class="author">
+<h3 class="author">
+<span class="firstname">Blaine</span> <span class="surname">Simpson</span>
+</h3>
+<div class="affiliation">
+<span class="orgname">The HSQL Development Group<br>
+</span>
+</div>
+</div>
+</div>
+<div>
+<p class="releaseinfo">$Revision$</p>
+</div>
+<div>
+<p class="pubdate">$Date$</p>
+</div>
+</div>
+</div>
+<p>
+    See the <a class="link" href="#settings-chapt" title="Chapter&nbsp;3.&nbsp;Driver Settings">Driver Settings</a>
+    chapter for descriptions and usage details.
+    This appendix just contains a list of the available settings.
+  </p>
+<div class="table">
+<a name="N102DA"></a>
+<p class="title">
+<b>Table&nbsp;A.1.&nbsp;Settings List</b>
+</p>
+<div class="table-contents">
+<table summary="Settings List" cellspacing="0" style="border-collapse: collapse;border-top: 0.5pt solid ; border-bottom: 0.5pt solid ; border-left: 0.5pt solid ; border-right: 0.5pt solid ; ">
+<colgroup>
+<col>
+<col>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">Keyword</th><th style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">Abbrev.</th><th style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">Default Val.</th><th style="border-bottom: 0.5pt solid ; ">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">Description</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">N/A</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">&nbsp;</td><td style="border-bottom: 0.5pt solid ; ">Data source description</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">Servername</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">N/A</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">[required]</td><td style="border-bottom: 0.5pt solid ; ">Name of Server</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">Port</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">N/A</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">9001</td><td style="border-bottom: 0.5pt solid ; ">HyperSQL Server Listen Port</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">Username</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">N/A</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">[required]</td><td style="border-bottom: 0.5pt solid ; ">User Name</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">Password</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">N/A</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">[required]</td><td style="border-bottom: 0.5pt solid ; ">Password</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">Debug</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">B2</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">0</td><td style="border-bottom: 0.5pt solid ; ">MyLog logging level</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">Fetch</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">A7</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">100</td><td style="border-bottom: 0.5pt solid ; ">Fetch Max Count
+            <em><span class="remark">Test to test if this applies to EXECDIRECT
+              and/or prepared queries</span></em>
+          </td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">Socket</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">A8</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">4096</td><td style="border-bottom: 0.5pt solid ; ">Socket buffer size</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">ReadOnly</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">A0</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">No/0</td><td style="border-bottom: 0.5pt solid ; ">Read Only</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">CommLog</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">B3</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">0</td><td style="border-bottom: 0.5pt solid ; ">Log communications to log file</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">UniqueIndex</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">N/A</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">1</td><td style="border-bottom: 0.5pt solid ; ">Recognize unique indexes</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">UnknownSizes</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">A9</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">0 [= max prec. for type]</td><td style="border-bottom: 0.5pt solid ; ">Unknown result set sizes</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">CancelAsFreeStmt</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">C1</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">0</td><td style="border-bottom: 0.5pt solid ; ">Cancel as FreeStmt</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">UnknownsAsLongVarchar</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">B8</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">0</td><td style="border-bottom: 0.5pt solid ; ">Unknowns as LongVarchar</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">BoolsAsChar</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">B9</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">0</td><td style="border-bottom: 0.5pt solid ; ">Bools as Char</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">MaxVarcharSize</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">B0</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">255</td><td style="border-bottom: 0.5pt solid ; ">Max Varchar size.
+            Value of 0 will break everything.
+            We will be changing 0 to mean <span class="emphasis"><em>unlimited</em></span> and
+            will then change the default to 0.
+          </td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">MaxLongVarcharSize</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">B1</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">8190</td><td style="border-bottom: 0.5pt solid ; ">Max LongVarchar size</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">RowVersioning</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">A4</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">0</td><td style="border-bottom: 0.5pt solid ; ">Row Versioning</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">ShowSystemTables</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">A5</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">0</td><td style="border-bottom: 0.5pt solid ; ">Show System Tables</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">DisallowPremature</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">C3</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">0</td><td style="border-bottom: 0.5pt solid ; ">Disallow Premature</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">UpdatableCursors</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">C4</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">0</td><td style="border-bottom: 0.5pt solid ; ">Updatable Cursors</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">LFConversion</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">C5</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">1 Windows, 0 UNIX</td><td style="border-bottom: 0.5pt solid ; ">LF &lt;-&gt; CR/LF conversion</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">TrueIsMinus1</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">C6</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">0</td><td style="border-bottom: 0.5pt solid ; ">True is -1</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">BI</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">N/A</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">0</td><td style="border-bottom: 0.5pt solid ; ">Datatype to report BIGINT columns as</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">LowerCaseIdentifier</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">C9</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">0</td><td style="border-bottom: 0.5pt solid ; ">Lower case identifier</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">SSLmode</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">CA</td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; ">disable</td><td style="border-bottom: 0.5pt solid ; ">SSL mode</td>
+</tr>
+<tr>
+<td style="border-right: 0.5pt solid ; ">AB</td><td style="border-right: 0.5pt solid ; ">N/A</td><td style="border-right: 0.5pt solid ; ">&nbsp;</td><td style="">Connection string suffix options</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<br class="table-break">
+<p>
+    Abbreviations are for use in connection strings.
+  </p>
+</div>
+<div class="appendix" title="Appendix&nbsp;B.&nbsp;Code Samples">
+<div class="titlepage">
+<div>
+<div>
+<h1 class="title">
+<a name="codesample-app"></a>Code Samples</h1>
+</div>
+<div>
+<h3 class="subtitle">
+<i>Code examples of ODBC clients which access a HyperSQL
+      database</i>
+</h3>
+</div>
+<div>
+<div class="author">
+<h3 class="author">
+<span class="firstname">Blaine</span> <span class="surname">Simpson</span>
+</h3>
+<div class="affiliation">
+<span class="orgname">The HSQL Development Group<br>
+</span>
+</div>
+</div>
+</div>
+<div>
+<p class="releaseinfo">$Revision$</p>
+</div>
+<div>
+<p class="pubdate">$Date$</p>
+</div>
+</div>
+</div>
+<p>
+    The HyperSQL Engine distribution contains these same ODBC client code
+    examples in the <code class="filename">sample</code> subdirectory.
+  </p>
+<div class="itemizedlist">
+<ul class="itemizedlist" type="disc">
+<li class="listitem">
+     
+<a class="link" href="../verbatim/sample/sample.py" target="_top">Python pyodbc sample</a>
+    
+</li>
+<li class="listitem">
+      
+<a class="link" href="../verbatim/sample/sample.php" target="_top">PHP ODBC sample</a>
+    
+</li>
+<li class="listitem">
+      
+<a class="link" href="../verbatim/sample/sample.pl" target="_top">Perl DBI/DBD sample</a>
+    
+</li>
+<li class="listitem">
+      
+<a class="link" href="../verbatim/sample/sample.c" target="_top">C client sample</a>
+    
+</li>
+</ul>
+</div>
+</div>
+<div class="index" title="General Index">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title">
+<a name="book-ind"></a>General Index</h2>
+</div>
+</div>
+</div>
+<div class="index"></div>
+</div>
+</div>
+<HR xmlns:xi="http://www.w3.org/2001/XInclude">
+<P class="svnrev">$Revision$</P>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Chapter&nbsp;2.&nbsp;Driver configuration on Windows</title>
+<link href="../docbook.css" rel="stylesheet" type="text/css">
+<meta content="DocBook XSL-NS Stylesheets V1.75.2" name="generator">
+<meta name="keywords" content="HSQLDB, HyperSQL, Windows, ODBC">
+<meta name="keywords" content="Hsqldb, HyperSQL, Hypersonic, Database, ODBC">
+<link rel="home" href="index.html" title="HyperSQL ODBC Driver">
+<link rel="up" href="index.html" title="HyperSQL ODBC Driver">
+<link rel="prev" href="unix-chapt.html" title="Chapter&nbsp;1.&nbsp;Driver configuration on UNIX">
+<link rel="next" href="settings-chapt.html" title="Chapter&nbsp;3.&nbsp;Driver Settings">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table summary="Navigation header" width="100%">
+<tr>
+<th align="center" colspan="3">Chapter&nbsp;2.&nbsp;Driver configuration on Windows</th>
+</tr>
+<tr>
+<td align="left" width="20%"><a accesskey="p" href="unix-chapt.html"><img src="../images/db/prev.gif" alt="Prev"></a>&nbsp;</td><th align="center" width="60%">&nbsp;</th><td align="right" width="20%">&nbsp;<a accesskey="n" href="settings-chapt.html"><img src="../images/db/next.gif" alt="Next"></a></td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="chapter" title="Chapter&nbsp;2.&nbsp;Driver configuration on Windows">
+<div class="titlepage">
+<div>
+<div>
+<h1 class="title">
+<a name="windows-chapt"></a>Driver configuration on Windows</h1>
+</div>
+<div>
+<div class="author">
+<h3 class="author">
+<span class="firstname">Blaine</span> <span class="surname">Simpson</span>
+</h3>
+<div class="affiliation">
+<span class="orgname">The HSQL Development Group<br>
+</span>
+</div>
+</div>
+</div>
+<div>
+<p class="releaseinfo">$Revision$</p>
+</div>
+<div>
+<p class="pubdate">$Date$</p>
+</div>
+</div>
+</div>
+<div class="toc">
+<p>
+<b>Table of Contents</b>
+</p>
+<dl>
+<dt>
+<span class="section"><a href="windows-chapt.html#windows_install-sect">Installation</a></span>
+</dt>
+<dt>
+<span class="section"><a href="windows-chapt.html#windows_config-sect">Configuration</a></span>
+</dt>
+<dt>
+<span class="section"><a href="windows-chapt.html#windows_replace-sect">Replacing Installed Driver</a></span>
+</dt>
+</dl>
+</div>
+<div class="section" title="Installation">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both">
+<a name="windows_install-sect"></a>Installation</h2>
+</div>
+</div>
+</div>
+<div class="procedure" title="Procedure&nbsp;2.1.&nbsp;Windows Installer">
+<a name="N1012C"></a>
+<p class="title">
+<b>Procedure&nbsp;2.1.&nbsp;Windows Installer</b>
+</p>
+<ol class="procedure" type="1">
+<li class="step" title="Step 1">
+<p>Execute the provided *.msi file</p>
+</li>
+<li class="step" title="Step 2">
+<p>
+        Click Next.
+        </p>
+<div class="mediaobject">
+<table cellpadding="0" cellspacing="0" summary="manufactured viewport for HTML img" border="0">
+<tr>
+<td valign="top"><img src="images/odbcsetup1.png"></td>
+</tr>
+</table>
+</div>
+<p>
+      
+</p>
+</li>
+<li class="step" title="Step 3">
+<p>
+        Accept the license agreement, then click Next.
+        </p>
+<div class="mediaobject">
+<table cellpadding="0" cellspacing="0" summary="manufactured viewport for HTML img" border="0">
+<tr>
+<td valign="top"><img src="images/odbcsetup2.png"></td>
+</tr>
+</table>
+</div>
+<p>
+      
+</p>
+</li>
+<li class="step" title="Step 4">
+<p>
+        De-select the Documentation if you don't want it.
+        Select a different installation directory if you don't like the default.
+        Click Next.
+        </p>
+<div class="mediaobject">
+<table cellpadding="0" cellspacing="0" summary="manufactured viewport for HTML img" border="0">
+<tr>
+<td valign="top"><img src="images/odbcsetup3.png"></td>
+</tr>
+</table>
+</div>
+<p>
+      
+</p>
+</li>
+<li class="step" title="Step 5">
+<p>
+        Click Install.
+        </p>
+<div class="mediaobject">
+<table cellpadding="0" cellspacing="0" summary="manufactured viewport for HTML img" border="0">
+<tr>
+<td valign="top"><img src="images/odbcsetup4.png"></td>
+</tr>
+</table>
+</div>
+<p>
+      
+</p>
+</li>
+<li class="step" title="Step 6">
+<p>
+        Click Finish.
+        </p>
+<div class="mediaobject">
+<table cellpadding="0" cellspacing="0" summary="manufactured viewport for HTML img" border="0">
+<tr>
+<td valign="top"><img src="images/odbcsetup5.png"></td>
+</tr>
+</table>
+</div>
+<p>
+      
+</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" title="Configuration">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both">
+<a name="windows_config-sect"></a>Configuration</h2>
+</div>
+</div>
+</div>
+<p>
+      See the <a class="link" href="settings-chapt.html" title="Chapter&nbsp;3.&nbsp;Driver Settings">Driver Settings</a>
+      chapter about individual driver runtime settings.
+    </p>
+<p>
+      Here are the DSN definition screens captured from a Vista PC.
+      First, the DSN definition screen.
+      </p>
+<div class="mediaobject">
+<table cellpadding="0" cellspacing="0" summary="manufactured viewport for HTML img" border="0">
+<tr>
+<td valign="top"><img src="images/dsndef.png"></td>
+</tr>
+</table>
+</div>
+<p>
+      Then option screen 1 of 2.
+      </p>
+<div class="mediaobject">
+<table cellpadding="0" cellspacing="0" summary="manufactured viewport for HTML img" border="0">
+<tr>
+<td valign="top"><img src="images/dsnoptions1.png"></td>
+</tr>
+</table>
+</div>
+<p>
+      ... and 2 of 2.
+      </p>
+<div class="mediaobject">
+<table cellpadding="0" cellspacing="0" summary="manufactured viewport for HTML img" border="0">
+<tr>
+<td valign="top"><img src="images/dsnoptions2.png"></td>
+</tr>
+</table>
+</div>
+<p>
+    
+</p>
+<p>
+      Our Windows binary distributions include MSI installers.
+      This page assumes that you are installing with our MSI installer.
+      If you get your HyperSQL ODBC driver with another application, much of
+      what is written here may apply to your distribution.
+    </p>
+<p>
+      Our driver is designed to facilitate incorporation into installers for
+      other products as a <span class="emphasis"><em>Merge Module</em></span>.
+    </p>
+</div>
+<div class="section" title="Replacing Installed Driver">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both">
+<a name="windows_replace-sect"></a>Replacing Installed Driver</h2>
+</div>
+</div>
+</div>
+<p>
+      The "Date" column in the ODBC Data Source Administrator shows the driver
+       install date.
+    </p>
+<p>
+      Can uninstall by rerunning the same *.msi used to install; or run
+      <span class="guilabel">Control Panel</span> /
+      <span class="guilabel">Programs and Features</span> (Vista)
+      <span class="guilabel">Control Panel</span> /
+      <span class="guilabel">Add/Remove Programs</span> (other)
+    </p>
+<p>
+      Fortunately, DSNs for removed drivers are retained!
+      Uh... unfortunately, DSNs can only be removed or edited if a compatible
+      driver is not currently installed.  Therefore if you are not replacing
+      a driver with a compatible one, you have better remove your DSNs first.
+    </p>
+<p>
+      I see no benefit to using our upgrade batch script, which just passes
+      params to "msiexec".
+    </p>
+<p>
+      Just make sure no "running" programs are using the driver, and you do not
+       need to reboot in order to pick up a newly installed driver.
+      Use Control Panel / Administrative Tools / Data Sources (ODBC) to
+      configure your DSNs.  (This is the Windows ODBC Data Source
+      Administrator).
+    </p>
+<p>
+      ODBC does not allow an empty string for a DSM database name.  Therefore,
+      you must specify "/" (without the quotes) to indicate the default
+      database.  This setting is on the main Configure page for the DSN.
+    </p>
+<p>
+      You may want to turn on one or more of the log files at the Datasource
+      or Global level of the DSN Configure screen.
+    </p>
+<p>
+      The logging destination files shown in the Data Source Administrator are
+      wrong, at least in some common cases.  The MyLog file gets written in
+      your home directory, if you have one.
+    </p>
+</div>
+</div>
+<HR xmlns:xi="http://www.w3.org/2001/XInclude">
+<P xmlns:xi="http://www.w3.org/2001/XInclude" class="svnrev">$Revision$</P>
+<div class="navfooter">
+<hr>
+<table summary="Navigation footer" width="100%">
+<tr>
+<td align="left" width="40%"><a accesskey="p" href="unix-chapt.html"><img src="../images/db/prev.gif" alt="Prev"></a>&nbsp;</td><td align="center" width="20%">&nbsp;</td><td align="right" width="40%">&nbsp;<a accesskey="n" href="settings-chapt.html"><img src="../images/db/next.gif" alt="Next"></a></td>
+</tr>
+<tr>
+<td valign="top" align="left" width="40%">Chapter&nbsp;1.&nbsp;Driver configuration on UNIX&nbsp;</td><td align="center" width="20%"><a accesskey="h" href="index.html"><img src="../images/db/home.gif" alt="Home"></a></td><td valign="top" align="right" width="40%">&nbsp;Chapter&nbsp;3.&nbsp;Driver Settings</td>
+</tr>
+</table>
+</div>
+</body>
+</html>
