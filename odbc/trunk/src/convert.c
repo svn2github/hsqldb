@@ -84,7 +84,7 @@ CSTR    MINFINITY_STRING = "-Infinity";
  *  This is just a simple substitution.  List augmented from:
  *  http://www.merant.com/datadirect/download/docs/odbc16/Odbcref/rappc.htm
  *  - thomas 2000-04-03
- * HSQLDB supports all but one of the functions - rand(int ..) will be supported
+ * HSQLDB supports all of the functions - rand(int ..) will be supported
  */
 char       *mapFuncs[][2] = {
 /*  { "ASCII",       "ascii"      }, built_in */
@@ -124,8 +124,8 @@ char       *mapFuncs[][2] = {
 /*  { "PI",          "pi"         }, built_in */
 /*    {"POWER", "pow($*)" },
 /*  { "RADIANS",         "radians"    }, built_in */
-/*    {"%0RAND", "random()" },    /* 0 parameters */
-    {"%1RAND", "random()" },   /* 1 parameters -- this is not supported by HSQLDB - translating to no agrument */
+/*    {"%0RAND", "random()" },       0 parameters */
+/*    {"%1RAND", "random($*)" },   1 parameters -- check this 100117 */
 /*    {"%1RAND", "(setseed($1) * .0 + random())" },   /* 1 parameters */
 /*  { "ROUND",       "round"      }, built_in */
 /*  { "SIGN",        "sign"       }, built_in */

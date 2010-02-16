@@ -185,7 +185,7 @@ static void FreeEnv()
 #define DTCLOGDIR   "c:\\pgdtclog"
 #include <direct.h>
 
-static const char * const DBMSNAME = "PostgreSQL";
+static const char * const DBMSNAME = "HyperSQL";
 static const char * const KEY_NAME = "MsdtcLog";
 static const char * const ODBCINST_INI = "ODBCINST.INI";
 INT_PTR FAR WINAPI GetMsdtclog()

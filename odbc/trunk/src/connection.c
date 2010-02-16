@@ -988,10 +988,10 @@ inolog("parameter name=%s\n", nambuffer);
         if (PG_VERSION_GE(conn, 7.3))
             conn->schema_support = 1;
 
-        mylog("Got the PostgreSQL version string: '%s'\n", conn->pg_version);
-        mylog("Extracted PostgreSQL version number: '%1.1f'\n", conn->pg_version_number);
-        qlog("    [ PostgreSQL version string = '%s' ]\n", conn->pg_version);
-        qlog("    [ PostgreSQL version number = '%1.1f' ]\n", conn->pg_version_number);
+        mylog("Got the HyperSQL version string: '%s'\n", conn->pg_version);
+        mylog("Extracted HyperSQL version number: '%1.1f'\n", conn->pg_version_number);
+        qlog("    [ HyperSQL version string = '%s' ]\n", conn->pg_version);
+        qlog("    [ HyperSQL version number = '%1.1f' ]\n", conn->pg_version_number);
     }
 
 inolog("parameter value=%s\n", valbuffer);
@@ -2736,7 +2736,7 @@ CC_lookup_lo(ConnectionClass *self)
 
 
 /*
- *  This function initializes the version of PostgreSQL from
+ *  This function initializes the version of HyperSQL from
  *  connInfo.protocol that we're connected to.
  *  h-inoue 01-2-2001
  */
@@ -2751,7 +2751,7 @@ CC_initialize_pg_version(ConnectionClass *self)
 
 
 /*
- *  This function gets the version of PostgreSQL that we're connected to.
+ *  This function gets the version of HyperSQL that we're connected to.
  *  This is used to return the correct info in SQLGetInfo
  *  DJP - 25-1-2001
  */
@@ -2884,7 +2884,7 @@ CC_get_current_schema(ConnectionClass *conn)
     {
         QResultClass    *res;
 
-        if (res = CC_send_query(conn, "select current_schema()", NULL, IGNORE_ABORT_ON_CONN | ROLLBACK_ON_ERROR, NULL), QR_command_maybe_successful(res))
+        if (res = CC_send_query(conn, "values current_schema", NULL, IGNORE_ABORT_ON_CONN | ROLLBACK_ON_ERROR, NULL), QR_command_maybe_successful(res))
         {
             if (QR_get_num_total_tuples(res) == 1)
                 conn->current_schema = strdup(QR_get_value_backend_text(res, 0, 0));

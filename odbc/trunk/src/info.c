@@ -249,7 +249,7 @@ mylog("CONVERT_FUNCTIONS=" FORMAT_ULEN "\n", value);
             if (CC_fake_mss(conn))
                 p = "Microsoft SQL Server";
             else
-                p = "PostgreSQL";
+                p = "HSQL Database Server";
             break;
 
         case SQL_DBMS_VER:      /* ODBC 1.0 */
