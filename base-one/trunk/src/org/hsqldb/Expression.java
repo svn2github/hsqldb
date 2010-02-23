@@ -71,6 +71,7 @@ import org.hsqldb.index.RowIterator;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.store.ValuePool;
+import org.hsqldb.lib.ArrayUtil;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
 // to preserve column size etc. when SELECT INTO TABLE is used
@@ -1889,13 +1890,19 @@ public class Expression {
                 return;
             }
 
+            int[] cols = filter.filterIndex.getColumns();
+
             // an elist element may be set more than once - OK
             if (eArg.tableFilter == filter) {
                 if (eArg2.exprType == COLUMN || eArg2.exprType == VALUE) {
-                    columns[eArg.columnIndex] = true;
-                    elist[eArg.columnIndex]   = eArg2;
+                    int index = ArrayUtil.find(cols, eArg.columnIndex);
 
-                    indexConditions.add(this);
+                    if (index >= 0) {
+                        columns[eArg.columnIndex] = true;
+                        elist[eArg.columnIndex]   = eArg2;
+
+                        indexConditions.set(index, this);
+                    }
                 }
 
                 return;
@@ -1903,10 +1910,14 @@ public class Expression {
 
             if (eArg2.tableFilter == filter) {
                 if (eArg.exprType == COLUMN || eArg.exprType == VALUE) {
-                    columns[eArg2.columnIndex] = true;
-                    elist[eArg2.columnIndex]   = eArg;
+                    int index = ArrayUtil.find(cols, eArg2.columnIndex);
 
-                    indexConditions.add(this);
+                    if (index >= 0) {
+                        columns[eArg2.columnIndex] = true;
+                        elist[eArg2.columnIndex]   = eArg;
+
+                        indexConditions.set(index, this);
+                    }
                 }
             }
         }

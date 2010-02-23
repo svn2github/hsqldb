@@ -323,6 +323,10 @@ final class TableFilter {
         int           colindex        = eStart.getArg().getColumnNr();
         HsqlArrayList indexConditions = new HsqlArrayList();
 
+        for (int i = 0; i < filterIndex.colIndex.length; i++) {
+            indexConditions.add(null);
+        }
+
         check[colindex] = true;
         expr[colindex]  = eStart.getArg2();
 
@@ -339,11 +343,13 @@ final class TableFilter {
             expr[filterIndex.colIndex[i]] = null;
         }
 
+        indexConditions.setSize(count);
+
         isMultiFindFirst     = true;
         findFirstExpressions = expr;
         multiFindCount       = count;
 
-        for (int i = 0; i < indexConditions.size(); i++) {
+        for (int i = 1; i < indexConditions.size(); i++) {
             eEnd = new Expression(Expression.AND, eEnd,
                                   (Expression) indexConditions.get(i));
         }
