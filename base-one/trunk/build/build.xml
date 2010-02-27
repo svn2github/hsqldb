@@ -14,7 +14,7 @@
         Do not address questions about property file(s) to the
         hsqldb community. -->
    <property file='build/build.properties'/>
-   <property name="hsqldb.version" value="1.8.1.0"/>
+   <property name="hsqldb.version" value="1.8.1.2"/>
 
    <tstamp>
        <format property="_tmpstamp" pattern="yyyy/MM/dd-HH:mm:ss"
