@@ -7,6 +7,10 @@ Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
 
+2010.02.27  1.8.1.2
+
+Fixed regression in the optimisation added in 1.8.1.1
+
 2009.09.02  1.8.1.1
 
 Added support for SET FILES INCREMENT BACKUP { TRUE | FALSE } - the same as
