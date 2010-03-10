@@ -50,7 +50,7 @@ namespace System.Data.Hsqldb.Client
     /// <summary>
     /// Represents the method that will handle the 
     /// <see cref="E:HsqlDataAdapter.RowUpdating"/> event of
-    /// a <see cref="HsqlDataAdapter" </see>.
+    /// a <see cref="HsqlDataAdapter"/>.
     /// </summary>
     public delegate void HsqlRowUpdatingEventHandler(object sender,
         HsqlRowUpdatingEventArgs e); 

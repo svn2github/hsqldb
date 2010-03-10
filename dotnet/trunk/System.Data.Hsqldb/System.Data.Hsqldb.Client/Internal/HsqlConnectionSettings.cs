@@ -47,6 +47,7 @@ using HDP = org.hsqldb.persist.HsqlDatabaseProperties;
 using Key = System.Data.Hsqldb.Client.HsqlConnectionStringBuilder.ConnectionStringKey;
 using Keyword = System.Data.Hsqldb.Common.Enumeration.ConnectionStringKeyword;
 using Util = System.Data.Hsqldb.Client.HsqlConnectionStringBuilder.Util;
+using System.Data.Hsqldb.Common;
 
 #endregion
 
@@ -1979,7 +1980,7 @@ namespace System.Data.Hsqldb.Client.Internal
 
             if (m_protocol == ConnectionProtocol.File) {
                 parms = new object[][] {
-                    // TODO:  Currrently, this needs to be written using direct file access to
+                    // TODO:  Currently, this needs to be written using direct file access to
                     // the database properties file (its marked as a protected property
                     // in HDP).  Regardless, it needs to be set *before* opening the database
                     // or the database needs to be restarted for it to take effect.
@@ -2122,7 +2123,10 @@ namespace System.Data.Hsqldb.Client.Internal
                              .Append (ToResPath (m_path))
                              .ToString ();
                 }
-                default:
+                case ConnectionProtocol.Hsql:
+                case ConnectionProtocol.Hsqls:
+                case ConnectionProtocol.Http:
+                case ConnectionProtocol.Https:
                 {
                     sb.Append ("://").Append (m_host);
 
@@ -2142,6 +2146,13 @@ namespace System.Data.Hsqldb.Client.Internal
 
                     return sb.ToString ();
                 }
+            default:
+                {
+                    throw new HsqlDataSourceException(string.Format(
+                        "Unhandled Protocol Enumeration Value: {0}", 
+                        m_protocol));
+                }
+                    
             }
         }
 

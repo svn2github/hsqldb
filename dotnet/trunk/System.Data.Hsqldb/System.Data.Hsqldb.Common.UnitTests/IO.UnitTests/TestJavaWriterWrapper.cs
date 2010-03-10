@@ -5,7 +5,7 @@ using System.IO;
 
 namespace System.Data.Hsqldb.Common.IO.UnitTests
 {
-    [TestFixture, ForSubject(typeof(JavaWriterWrapper))]
+    [TestFixture, Category("IO"), ForSubject(typeof(JavaWriterWrapper))]
     public class TestJavaWriterWrapper
     {
         static JavaWriterWrapper NewTestSubject()

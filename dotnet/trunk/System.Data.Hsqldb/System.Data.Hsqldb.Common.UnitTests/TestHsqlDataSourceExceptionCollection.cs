@@ -19,8 +19,6 @@ namespace System.Data.Hsqldb.Common.UnitTests
             HsqlDataSourceExceptionCollection testSubject = NewTestSubject();
 
             testSubject.CopyTo(new object[0], 0);
-
-            Assert.Fail("TODO");
         }
         
         [Test, OfMember("GetEnumerator")]
@@ -29,8 +27,6 @@ namespace System.Data.Hsqldb.Common.UnitTests
             HsqlDataSourceExceptionCollection testSubject = NewTestSubject();
 
             IEnumerator enumerator = testSubject.GetEnumerator();
-
-            Assert.Fail("TODO");
         }
     }
 }

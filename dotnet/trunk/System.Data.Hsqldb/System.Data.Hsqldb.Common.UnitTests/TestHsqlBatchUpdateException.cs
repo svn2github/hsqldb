@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 
 namespace System.Data.Hsqldb.Common.UnitTests
 {
-    [TestFixture, ForSubject(typeof(HsqlBatchUpdateException))]
+    [TestFixture, Category("Batch Update"), ForSubject(typeof(HsqlBatchUpdateException))]
     public class TestHsqlBatchUpdateException
     {
         [Test, OfMember("ErrorCode")]

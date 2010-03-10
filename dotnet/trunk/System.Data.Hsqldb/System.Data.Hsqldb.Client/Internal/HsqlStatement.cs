@@ -174,7 +174,7 @@ namespace System.Data.Hsqldb.Client.Internal
         #region ExecuteScalar(HsqlSession)
         /// <summary>
         /// Executes this statement in the context of the given session,
-        /// returing a scalar values.
+        /// returning a single, scalar value.
         /// </summary>
         /// <param name="session">The session.</param>
         /// <returns>
@@ -188,6 +188,13 @@ namespace System.Data.Hsqldb.Client.Internal
 
         #region Free(HsqlSession)
 
+        /// <summary>
+        /// Notifies the given session that it
+        /// may release any resources dedicated
+        /// to maintaing the prepared form of
+        /// this statement.
+        /// </summary>
+        /// <param name="session">To notify</param>
         internal void Free(HsqlSession session)
         {
             session.FreeStatement(m_statementId);

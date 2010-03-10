@@ -3,10 +3,11 @@ using System.Data.Hsqldb.TestCoverage;
 using System.ComponentModel;
 using System.Collections;
 using NUnit.Framework;
+using TestCategory = NUnit.Framework.CategoryAttribute;
 
 namespace System.Data.Hsqldb.Common.Converter.UnitTests
 {
-    [TestFixture, ForSubject(typeof(LexographicEnumConverter))]
+    [TestFixture, TestCategory("Converter"), ForSubject(typeof(LexographicEnumConverter))]
     public class TestLexographicEnumConverter
     {
         [Test, OfMember("GetStandardValues")]        

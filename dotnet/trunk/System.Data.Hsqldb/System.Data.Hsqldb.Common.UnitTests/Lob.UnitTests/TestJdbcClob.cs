@@ -5,7 +5,7 @@ using System.IO;
 
 namespace System.Data.Hsqldb.Common.Lob.UnitTests
 {
-    [TestFixture, ForSubject(typeof(JdbcClob))]
+    [TestFixture, Category("LOB"), ForSubject(typeof(JdbcClob))]
     public class TestJdbcClob
     {
         static readonly string LobChars = "123456789";

@@ -36,6 +36,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Lib\IKVM.OpenJDK.Jdbc.dll</HintPath>
     </Reference>
+    <Reference Include="IKVM.OpenJDK.Util, Version=0.42.0.4, Culture=neutral, PublicKeyToken=13235d27fcbfff58, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Lib\IKVM.OpenJDK.Util.dll</HintPath>
+    </Reference>
     <Reference Include="nunit.framework, Version=2.4.8.0, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\NUnit\bin\nunit.framework.dll</HintPath>

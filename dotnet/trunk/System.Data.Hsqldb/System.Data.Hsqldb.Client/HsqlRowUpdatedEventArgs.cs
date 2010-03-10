@@ -82,7 +82,7 @@ namespace System.Data.Hsqldb.Client
         /// </summary>
         /// <returns>
         /// The <see cref="HsqlCommand"/> executed when 
-        /// <see cref="DbDataAdapter.Update(DataSet)" </see>
+        /// <see cref="DbDataAdapter.Update(DataSet)"/>
         /// is called.
         /// </returns>
         public new HsqlCommand Command

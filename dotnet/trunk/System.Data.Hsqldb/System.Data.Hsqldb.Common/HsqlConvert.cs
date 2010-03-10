@@ -1482,6 +1482,27 @@ namespace System.Data.Hsqldb.Common
 
         #region Exception Factory Methods
 
+        #region UnsupportedInputDataFormat(object)
+        /// <summary>
+        /// Creates a new "numeric value out of range" exception.
+        /// </summary>
+        /// <param name="n">
+        /// The number valued <c>object</c> that is out of range.
+        /// </param>
+        /// <returns><c>HsqlDataSourceException</c></returns>
+        public static HsqlDataSourceException UnsupportedInputDataFormat(object input, int targetType)
+        {
+            string message = string.Format(
+                "Conversion to {0} not supported for input data format: [{1}]", 
+                HsqlTypes.getTypeName(targetType), 
+                (input == null ? "Null" : input));
+
+            HsqlException hex = Trace.error(Trace.INVALID_CONVERSION, "");
+
+            return new HsqlDataSourceException(message, hex.getErrorCode(), hex.getSQLState());
+        }
+        #endregion
+
         #region NumericValueOutOfRange(object)
         /// <summary>
         /// Creates a new "numeric value out of range" exception.

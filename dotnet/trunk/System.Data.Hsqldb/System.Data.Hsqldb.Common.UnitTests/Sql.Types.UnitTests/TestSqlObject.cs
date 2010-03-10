@@ -6,7 +6,7 @@ using System.IO;
 
 namespace System.Data.Hsqldb.Common.Sql.Types.UnitTests
 {
-    [TestFixture, ForSubject(typeof(SqlObject))]
+    [TestFixture, Category("Sql Type"), ForSubject(typeof(SqlObject))]
     public class TestSqlObject
     {
         

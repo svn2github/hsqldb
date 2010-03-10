@@ -1141,7 +1141,7 @@ namespace System.Data.Hsqldb.Common.Sql
             m_tokenType = SqlTokenType.None;
             m_identifierChainPredecessorType = SqlTokenType.None;
             m_token = null;
-            m_parameterName = null;
+            m_parameterName = string.Empty;
             m_parameterNamePrefix = ' ';
             m_identifierChainPredecessor = null;
             m_wait = false;
@@ -1182,7 +1182,7 @@ namespace System.Data.Hsqldb.Common.Sql
         /// the token literal value, as an object representing the SQL literal
         /// numeric, temporal, boolean or character value.
         /// </returns>
-        internal static object ToLiteralValue(ref SqlTokenType tokenType,
+        public static object ToLiteralValue(ref SqlTokenType tokenType,
             string tokenValue)
         {
             switch (tokenType)
@@ -1670,7 +1670,7 @@ namespace System.Data.Hsqldb.Common.Sql
         /// <remarks>
         /// Note: no token type check is performed; if the last
         /// read token is not an SQL named parameter, the value is
-        /// <c>null</c>.
+        /// <c>string.Empty</c>.
         /// </remarks>
         /// <value>
         /// The parameter name, excluding its leading marker character.

@@ -6,7 +6,7 @@ using System.IO;
 
 namespace System.Data.Hsqldb.Common.IO.UnitTests
 {
-    [TestFixture, ForSubject(typeof(JavaOutputStreamWrapper))]
+    [TestFixture, Category("IO"), ForSubject(typeof(JavaOutputStreamWrapper))]
     public class TestJavaOutputStreamWrapper
     {
         static JavaOutputStreamWrapper NewTestSubject()

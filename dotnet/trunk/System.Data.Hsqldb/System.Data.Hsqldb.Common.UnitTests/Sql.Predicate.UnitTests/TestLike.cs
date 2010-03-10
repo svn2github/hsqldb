@@ -4,7 +4,7 @@ using System.Data.Hsqldb.TestCoverage;
 
 namespace System.Data.Hsqldb.Common.Sql.Predicate.UnitTests
 {
-    [TestFixture, ForSubject(typeof(Like))]
+    [TestFixture, Category("Predicate"), ForSubject(typeof(Like))]
     public class TestLike
     {
         [Test, OfMember("Matches")]

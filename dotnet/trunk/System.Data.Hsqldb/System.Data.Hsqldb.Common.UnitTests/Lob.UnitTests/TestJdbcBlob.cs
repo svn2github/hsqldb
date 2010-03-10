@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace System.Data.Hsqldb.Common.Lob.UnitTests
 {
-    [TestFixture, ForSubject(typeof(JdbcBlob))]
+    [TestFixture, Category("LOB"), ForSubject(typeof(JdbcBlob))]
     public class TestJdbcBlob
     {
         static readonly byte[] LobBytes = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 };

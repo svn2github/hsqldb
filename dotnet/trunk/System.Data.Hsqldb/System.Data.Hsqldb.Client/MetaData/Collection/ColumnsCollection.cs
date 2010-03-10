@@ -441,7 +441,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
                     int? charMaxLength = (int?)values[icharmaxlen];
                     int? charOctetLength = (int?)values[icharoctlen];
                     //
-                    int? ni;
+                    //int? ni;
                     int? numPrecision = (int?)values[inumprec];
                     short? numPrecRadix = (short?)(int?)values[inumprecrad];
                     int? numScale = (int?)values[inumscale];

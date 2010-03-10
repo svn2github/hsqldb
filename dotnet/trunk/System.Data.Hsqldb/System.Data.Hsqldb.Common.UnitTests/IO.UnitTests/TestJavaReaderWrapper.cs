@@ -5,7 +5,7 @@ using NUnit.Framework;
 
 namespace System.Data.Hsqldb.Common.IO.UnitTests
 {   
-    [TestFixture, ForSubject(typeof(JavaReaderWrapper))]
+    [TestFixture, Category("IO"), ForSubject(typeof(JavaReaderWrapper))]
     public class TestJavaReaderWrapper
     {
         static JavaReaderWrapper NewTestSubject(string s)

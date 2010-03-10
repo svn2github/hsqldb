@@ -288,90 +288,189 @@ namespace System.Data.Hsqldb.Client
             internal static ConnectionProtocol ConvertToConnectionProtocol(
                 object value)
             {
+                if (value == null)
+                {
+                    return DefaultValueOf.Protocol;
+                }
+                else if (value is ConnectionProtocol 
+                    && Enum.IsDefined(typeof(ConnectionProtocol), value))
+                {
+                    return (ConnectionProtocol)value;
+                }
+                else if (value is string)
+                {
+                    try
+                    {
+                        return ConvertToConnectionProtocol((string)value);
+                    }
+                    catch (FormatException)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new FormatException(string.Format(
+                            "{0} value has an unsupported format: {1}",
+                            value.GetType().FullName,
+                            Convert.ToString(value)),ex);
+                    }
+                }
+                else if (value is IConvertible)
+                {
+                    try
+                    {
+                        return ConvertToConnectionProtocol((IConvertible)value);
+                    }
+                    catch (FormatException)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new FormatException(string.Format(
+                            "{0} value has an unsupported format: {1}",
+                            value.GetType().FullName,
+                            Convert.ToString(value)),
+                            ex);
+                    }
+                }
+                else
+                {
+                    throw new FormatException(string.Format(
+                        "{0} value has an unsupported format: {1}",
+                        value.GetType().FullName,
+                        Convert.ToString(value)));
+                }
+            }
+
+            #endregion
+
+            #region ConvertToConnectionProtocol(IConvertible)
+
+            /// <summary>
+            /// Converts the given value object to a <c>ConnectionProtocol</c>.
+            /// </summary>
+            /// <param name="value">The value object to convert.</param>
+            /// <returns>The result of the conversion.</returns>
+            /// <exception cref="FormatException">
+            /// When <c>value</c> has an unsupported format.
+            /// </exception>
+            internal static ConnectionProtocol ConvertToConnectionProtocol(IConvertible value)
+            {
+                if (value == null)
+                {
+                    return DefaultValueOf.Protocol;
+                }
+
+                byte b = ((IConvertible)value).ToByte(CultureInfo.InvariantCulture);
+                Type t = typeof(ConnectionProtocol);
+
+                if (!Enum.IsDefined(t, b))
+                {
+                    throw new FormatException(string.Format(
+                        "{0} value has an unsupported format: {1}",
+                        value.GetType().FullName,
+                        Convert.ToString(value)));                   
+                }
+
                 try
                 {
-                    if (value == null)
-                    {
-                        return DefaultValueOf.Protocol;
-                    }
-                    else if (value is ConnectionProtocol)
-                    {
-                        return (ConnectionProtocol)value;
-                    }
-                    else if (value is string)
-                    {
-                        return (ConnectionProtocol)Enum.Parse(
-                            typeof(ConnectionProtocol), value.ToString(), true);                                                               
-                    }
-                    else if (value is IConvertible)
-                    {
-                        byte b = ((IConvertible)value).ToByte(CultureInfo.InvariantCulture);
-                        Type t = typeof(ConnectionProtocol);
-
-                        return (ConnectionProtocol)Enum.ToObject(t, b);
-                    }
+                    return (ConnectionProtocol)Enum.ToObject(t, b);
                 }
                 catch (Exception ex)
                 {
-                    if (value is string)
-                    {
-                        string lowerString = (value as string).Trim().ToLower();
+                    throw new FormatException(string.Format(
+                        "{0} value has an unsupported format: {1}",
+                        value.GetType().FullName,
+                        Convert.ToString(value)),
+                        ex);
+                }
+            }
+            #endregion
 
-                        if (lowerString.StartsWith("jdbc:"))
-                        {
-                            lowerString = lowerString.Substring("jdbc:".Length);
-                        }
-                        if (lowerString.StartsWith("hsqldb:"))
-                        {
-                            lowerString = lowerString.Substring("hsqldb:".Length);
-                        }
+            #region ConvertToConnectionProtocol(string)
 
-                        if (lowerString == String.Empty
-                            || lowerString == "file:"
-                            || lowerString == "file://")
-                        {
-                            return ConnectionProtocol.File;
-                        }
-                        else if (lowerString == "mem:"
-                                 || lowerString == "mem://")
-                        {
-                            return ConnectionProtocol.Mem;
-                        }
-                        else if (lowerString == "res:"
-                                 || lowerString == "res://")
-                        {
-                            return ConnectionProtocol.Res;
-                        }
-                        else if (lowerString == "http:"
-                                 || lowerString == "http://")
-                        {
-                            return ConnectionProtocol.Http;
-                        }
-                        else if (lowerString == "https:"
-                                 || lowerString == "https://")
-                        {
-                            return ConnectionProtocol.Https;
-                        }
-                        else if (lowerString == "hsql:"
-                                 || lowerString == "hsql://")
-                        {
-                            return ConnectionProtocol.Hsql;
-                        }
-                        else if (lowerString == "hsqls:"
-                                 || lowerString == "hsqls://")
-                        {
-                            return ConnectionProtocol.Hsqls;
-                        }
-                    }
-
-                    throw new FormatException(
-                        "Value has an unsupported format: "
-                        + Convert.ToString(value), ex);
+            /// <summary>
+            /// Converts the given character string to a <c>ConnectionProtocol</c>.
+            /// </summary>
+            /// <param name="value">The character string to convert.</param>
+            /// <returns>The result of the conversion.</returns>
+            /// <exception cref="FormatException">
+            /// When <c>value</c> has an unsupported format.
+            /// </exception>
+            internal static ConnectionProtocol ConvertToConnectionProtocol(string value)
+            {
+                if (value == null)
+                {
+                    return DefaultValueOf.Protocol;
                 }
 
-                throw new FormatException(
-                    "Value has an unsupported format :"
-                    + Convert.ToString(value));
+                string lowerString = value.Trim().ToLower();
+
+                if (lowerString.StartsWith("jdbc:"))
+                {
+                    lowerString = lowerString.Substring("jdbc:".Length);
+                }
+
+                if (lowerString.StartsWith("hsqldb:"))
+                {
+                    lowerString = lowerString.Substring("hsqldb:".Length);
+                }
+
+                if (lowerString == String.Empty
+                    || lowerString == "file:"
+                    || lowerString == "file://")
+                {
+                    return ConnectionProtocol.File;
+                }
+                else if (lowerString == "mem:"
+                         || lowerString == "mem://")
+                {
+                    return ConnectionProtocol.Mem;
+                }
+                else if (lowerString == "res:"
+                         || lowerString == "res://")
+                {
+                    return ConnectionProtocol.Res;
+                }
+                else if (lowerString == "http:"
+                         || lowerString == "http://")
+                {
+                    return ConnectionProtocol.Http;
+                }
+                else if (lowerString == "https:"
+                         || lowerString == "https://")
+                {
+                    return ConnectionProtocol.Https;
+                }
+                else if (lowerString == "hsql:"
+                         || lowerString == "hsql://")
+                {
+                    return ConnectionProtocol.Hsql;
+                }
+                else if (lowerString == "hsqls:"
+                    || lowerString == "hsqls://")
+                {
+                    return ConnectionProtocol.Hsqls;
+                }
+                else
+                {
+                    try
+                    {
+                        return (ConnectionProtocol)Enum.Parse(
+                            typeof(ConnectionProtocol),
+                            lowerString,
+                            true);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new FormatException(string.Format(
+                            "{0} value has an unsupported format: {1}",
+                            value.GetType().FullName,
+                            Convert.ToString(value)),
+                            ex);
+                    }
+                }
             }
 
             #endregion
@@ -394,7 +493,8 @@ namespace System.Data.Hsqldb.Client
                     {
                         return DefaultValueOf.DatabaseAppLogLevel;
                     }
-                    else if (value is DatabaseAppLogLevel)
+                    else if (value is DatabaseAppLogLevel
+                        && Enum.IsDefined(typeof(DatabaseAppLogLevel),value))
                     {
                         return (DatabaseAppLogLevel)value;
                     }
@@ -416,14 +516,17 @@ namespace System.Data.Hsqldb.Client
                 }
                 catch (Exception ex)
                 {
-                    throw new FormatException(
-                        "Value has an unsupported format: "
-                        + Convert.ToString(value), ex);
+                    throw new FormatException(string.Format(
+                        "{0} value has an unsupported format: {1}",
+                        value.GetType().FullName,
+                        Convert.ToString(value)),
+                        ex);
                 }
 
-                throw new FormatException(
-                    "Value has an unsupported format: "
-                    + Convert.ToString(value));
+                throw new FormatException(string.Format(
+                    "{0} value has an unsupported format: {1}",
+                    value.GetType().FullName,
+                    Convert.ToString(value)));
             }
 
             #endregion
@@ -446,7 +549,8 @@ namespace System.Data.Hsqldb.Client
                     {
                         return DefaultValueOf.DatabaseScriptFormat;
                     }
-                    else if (value is DatabaseScriptFormat)
+                    else if (value is DatabaseScriptFormat 
+                        && Enum.IsDefined(typeof(DatabaseScriptFormat),value))
                     {
                         return (DatabaseScriptFormat)value;
                     }
@@ -467,14 +571,17 @@ namespace System.Data.Hsqldb.Client
                 }
                 catch (Exception ex)
                 {
-                    throw new FormatException(
-                        "Value has an unsupported format: "
-                        + Convert.ToString(value), ex);
+                    throw new FormatException(string.Format(
+                        "{0} value has an unsupported format: {1}",
+                        value.GetType().FullName,
+                        Convert.ToString(value)),
+                        ex);
                 }
 
-                throw new FormatException(
-                    "Value has an unsupported format: "
-                    + Convert.ToString(value));
+                throw new FormatException(string.Format(
+                    "{0} value has an unsupported format: {1}",
+                    value.GetType().FullName,
+                    Convert.ToString(value)));
             }
 
             #endregion

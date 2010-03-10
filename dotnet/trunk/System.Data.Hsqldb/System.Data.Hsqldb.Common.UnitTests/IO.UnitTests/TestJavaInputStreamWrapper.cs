@@ -8,7 +8,7 @@ using System.Text;
 
 namespace System.Data.Hsqldb.Common.IO.UnitTests
 {
-    [TestFixture, ForSubject(typeof(JavaInputStreamWrapper))]
+    [TestFixture, Category("IO"), ForSubject(typeof(JavaInputStreamWrapper))]
     public class TestJavaInputStreamWrapper
     {
         static JavaInputStreamWrapper NewTestSubject(string s, Encoding e)

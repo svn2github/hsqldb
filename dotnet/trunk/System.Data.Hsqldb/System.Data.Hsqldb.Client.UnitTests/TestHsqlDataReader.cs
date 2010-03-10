@@ -6,10 +6,26 @@ using System.Data.Hsqldb.Common;
 using System.Collections;
 using System.Data.SqlTypes;
 using System.IO;
+using TestCategory = NUnit.Framework.CategoryAttribute;
+using HsqlBinary = org.hsqldb.types.Binary;
+using HsqlObject = org.hsqldb.types.JavaObject;
+using HsqlResult = org.hsqldb.Result;
+using HsqlTypes = org.hsqldb.Types;
+using JavaByte = java.lang.Byte;
+using JavaBoolean = java.lang.Boolean;
+using JavaDate = java.sql.Date;
+using JavaDecimal = java.math.BigDecimal;
+using JavaDouble = java.lang.Double;
+using JavaInteger = java.lang.Integer;
+using JavaBigInteger = java.math.BigInteger;
+using JavaShort = java.lang.Short;
+using JavaTime = java.sql.Time;
+using JavaTimestamp = java.sql.Timestamp;
+using JavaLong = java.lang.Long;
 
 namespace System.Data.Hsqldb.Client.UnitTests
 {
-    [TestFixture, ForSubject(typeof(HsqlDataReader))]
+    [TestFixture, TestCategory("DbDataDreader"),ForSubject(typeof(HsqlDataReader))]
     public class TestHsqlDataReader
     {
         static class ColumnOrdinalFor
@@ -49,42 +65,42 @@ namespace System.Data.Hsqldb.Client.UnitTests
 
         static readonly object[][] columns = new object[][] {
             new object[]{HsqlProviderType.Array, null},
-            new object[]{HsqlProviderType.BigInt, new java.lang.Long(java.lang.Long.MIN_VALUE)},
-            new object[]{HsqlProviderType.Binary, new org.hsqldb.types.Binary(new byte[]{1,2,3,4}, false)},
+            new object[]{HsqlProviderType.BigInt, new JavaLong(JavaLong.MIN_VALUE)},
+            new object[]{HsqlProviderType.Binary, new HsqlBinary(new byte[]{1,2,3,4}, false)},
             new object[]{HsqlProviderType.Blob, null},
-            new object[]{HsqlProviderType.Boolean, java.lang.Boolean.TRUE},
+            new object[]{HsqlProviderType.Boolean, JavaBoolean.TRUE},
             new object[]{HsqlProviderType.Char, "Y"},
             new object[]{HsqlProviderType.Clob, null},
             new object[]{HsqlProviderType.DataLink, null},
-            new object[]{HsqlProviderType.Date, java.sql.Date.valueOf("2009-02-03")},
-            new object[]{HsqlProviderType.Decimal, new java.math.BigDecimal("1.0000")},
+            new object[]{HsqlProviderType.Date, JavaDate.valueOf("2009-02-03")},
+            new object[]{HsqlProviderType.Decimal, new JavaDecimal("1.0000")},
             new object[]{HsqlProviderType.Distinct, null},
-            new object[]{HsqlProviderType.Double, new java.lang.Double(java.lang.Double.MIN_VALUE)},
-            new object[]{HsqlProviderType.Float, new java.lang.Double(java.lang.Double.MAX_VALUE)},
-            new object[]{HsqlProviderType.Integer, new java.lang.Integer(java.lang.Integer.MIN_VALUE)},
-            new object[]{HsqlProviderType.JavaObject, null},
-            new object[]{HsqlProviderType.LongVarBinary, new org.hsqldb.types.Binary(new byte[]{1,2,3,4}, false)},
+            new object[]{HsqlProviderType.Double, new JavaDouble(JavaDouble.MIN_VALUE)},
+            new object[]{HsqlProviderType.Float, new JavaDouble(JavaDouble.MAX_VALUE)},
+            new object[]{HsqlProviderType.Integer, new JavaInteger(JavaInteger.MIN_VALUE)},
+            new object[]{HsqlProviderType.JavaObject, null}, 
+            new object[]{HsqlProviderType.LongVarBinary, new HsqlBinary(new byte[]{1,2,3,4}, false)},
             new object[]{HsqlProviderType.LongVarChar, "longvarchar"},
             new object[]{HsqlProviderType.Null, null},
-            new object[]{HsqlProviderType.Numeric, new java.math.BigDecimal("1.0000")},
-            new object[]{HsqlProviderType.Object, new org.hsqldb.types.JavaObject(new java.math.BigInteger("1234"))},
-            new object[]{HsqlProviderType.Real, new java.lang.Double(1D)},
+            new object[]{HsqlProviderType.Numeric, new JavaDecimal("1.0000")},
+            new object[]{HsqlProviderType.Object, new HsqlObject(new JavaBigInteger("1234"))},
+            new object[]{HsqlProviderType.Real, new JavaDouble(1D)},
             new object[]{HsqlProviderType.Ref, null},
-            new object[]{HsqlProviderType.SmallInt, new java.lang.Integer(java.lang.Short.MIN_VALUE)},
+            new object[]{HsqlProviderType.SmallInt, new JavaInteger(JavaShort.MIN_VALUE)},
             new object[]{HsqlProviderType.Struct, null},
-            new object[]{HsqlProviderType.Time, java.sql.Time.valueOf("12:00:00")},
-            new object[]{HsqlProviderType.TimeStamp, java.sql.Timestamp.valueOf("2009-02-03 20:41:45.546729")},
-            new object[]{HsqlProviderType.TinyInt, new java.lang.Integer(java.lang.Byte.MIN_VALUE)},
-            new object[]{HsqlProviderType.VarBinary, new org.hsqldb.types.Binary(new byte[]{1,2,3,4}, false)},
+            new object[]{HsqlProviderType.Time, JavaTime.valueOf("12:00:00")},
+            new object[]{HsqlProviderType.TimeStamp, JavaTimestamp.valueOf("2009-02-03 20:41:45.546729")},
+            new object[]{HsqlProviderType.TinyInt, new JavaInteger(JavaByte.MIN_VALUE)},
+            new object[]{HsqlProviderType.VarBinary, new HsqlBinary(new byte[]{1,2,3,4}, false)},
             new object[]{HsqlProviderType.VarChar, "varchar"},
             new object[]{HsqlProviderType.Xml, null},
             new object[]{HsqlProviderType.Binary, Guid.Empty.ToByteArray()}
         };
 
-        static org.hsqldb.Result NewResult()
+        static HsqlResult NewResult()
         {
             int columnCount = columns.GetUpperBound(1);
-            org.hsqldb.Result result = new org.hsqldb.Result(columnCount);
+            HsqlResult result = new HsqlResult(columnCount);
             object[] row = new object[columnCount];
             int i = 0;
             const int TypeOrdinal = 0;
@@ -107,10 +123,10 @@ namespace System.Data.Hsqldb.Client.UnitTests
                     }
                 }
 
-                int size = org.hsqldb.Types.getPrecision((int)dataType);
+                int size = HsqlTypes.getPrecision((int)dataType);
 
                 result.metaData.catalogNames[i] = "mem:test";
-                result.metaData.classNames[i] = org.hsqldb.Types.getTypeName((int)dataType);
+                result.metaData.classNames[i] = HsqlTypes.getTypeName((int)dataType);
                 result.metaData.colLabels[i] = "COLUMN_" + i;
                 result.metaData.colNames[i] = "C" + i;
                 result.metaData.colNullable[i] = (int) BaseColumnNullability.Nullable;
@@ -128,7 +144,7 @@ namespace System.Data.Hsqldb.Client.UnitTests
             return result;
         }
 
-        static readonly org.hsqldb.Result ResultInstance = NewResult();
+        static readonly HsqlResult ResultInstance = NewResult();
 
         static HsqlDataReader NewTestSubject()
         {

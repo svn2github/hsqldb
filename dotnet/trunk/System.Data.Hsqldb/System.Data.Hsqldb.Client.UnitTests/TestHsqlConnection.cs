@@ -4,10 +4,11 @@ using System.Data.Hsqldb.Client;
 using System.Data.Hsqldb.TestCoverage;
 using System.Transactions;
 using NUnit.Framework;
+using TestCategory = NUnit.Framework.CategoryAttribute;
 
 namespace System.Data.Hsqldb.Client.UnitTests
 {    
-    [TestFixture, ForSubject(typeof(HsqlConnection))]
+    [TestFixture, TestCategory("DbCommand"), ForSubject(typeof(HsqlConnection))]
     public class TestHsqlConnection
     {
         void TestBeginTransaction(IsolationLevel isolationLevel, bool isolationLevelIsSupported)
@@ -28,7 +29,7 @@ namespace System.Data.Hsqldb.Client.UnitTests
                     "System.Data.IsolationLevel: " + Enum.GetName(typeof(IsolationLevel), 
                     isolationLevel));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 Assert.That(!isolationLevelIsSupported,
                     "System.Data.IsolationLevel: " + Enum.GetName(typeof(IsolationLevel),
@@ -95,7 +96,7 @@ namespace System.Data.Hsqldb.Client.UnitTests
 
                     Assert.Fail("it is not expected that it is legal to change database while a connection is open.");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
 
                 }
@@ -170,7 +171,7 @@ namespace System.Data.Hsqldb.Client.UnitTests
                     Assert.Fail("The test subject allowed a local transaction to be started "
                         + "explicitly while participating in a system transaction");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                 }
 
@@ -183,7 +184,7 @@ namespace System.Data.Hsqldb.Client.UnitTests
                     Assert.Fail("The test subject allowed a local transaction to be started "
                         + "explicitly while participating in a system transaction");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     
                 }
@@ -235,7 +236,7 @@ namespace System.Data.Hsqldb.Client.UnitTests
 
                     Assert.Fail("A second Open() invocation should not succeed when a connection is already open.");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {                    
                     
                 }

@@ -21,7 +21,28 @@ namespace System.Data.Hsqldb.Common.UnitTests
 
             testSubject.GetObjectData(info, context);
 
-            Assert.Fail("TODO");
+            Console.WriteLine("Member Count: {0}", info.MemberCount);
+            
+            foreach(SerializationEntry item in info)
+            {
+                Console.WriteLine("Name: {0},  Type: {1},  Value: {2}", item.Name, item.ObjectType, item.Value);
+
+                if (item.Name == "m_code")
+                {
+                    Assert.AreEqual(-1, item.Value);
+                }
+                else if (item.Name == "m_state")
+                {
+                    Assert.AreEqual("42001", item.Value);
+                }
+                else if (item.Name == "Message")
+                {
+                    Assert.AreEqual("foo", item.Value);
+                }
+            }
+
+
+            //Assert.Fail("TODO");
         }
     }
 }

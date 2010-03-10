@@ -975,7 +975,14 @@ namespace System.Data.Hsqldb.Client
         /// The text of the command to execute.
         /// </value>
         /// <remarks>
+        /// <para>
         /// The default value is an empty string ("").
+        /// </para>
+        /// <para>
+        /// Note that setting a new value has a side effect
+        /// equivalent to invoking <see cref="ClearBatch()"/>
+        /// and <see cref="UnPrepare()"/>.
+        /// </para>
         /// </remarks>
         /// <exception cref="HsqlDataSourceException">
         /// If assignment of a new value invalidates the prepared
@@ -999,7 +1006,6 @@ namespace System.Data.Hsqldb.Client
 
                 if (m_commandText != value)
                 {
-
                     InvalidateStatement();
 
                     m_commandText = value;
@@ -1010,7 +1016,7 @@ namespace System.Data.Hsqldb.Client
                     // of introducing an optimization in the first
                     // place.
                     m_commandTextHasParameters = 
-                        (value.IndexOfAny(m_ParmeterChars) >= 0);
+                        (value.IndexOfAny(m_ParameterChars) >= 0);
                 }
             }
         }
@@ -1327,21 +1333,51 @@ namespace System.Data.Hsqldb.Client
 
         #region AddBatch()
         /// <summary>
-        /// Adds an element to be executed as part of a batch update in
-        /// response to invoking <see cref="ExecuteBatch()"/>
+        /// Internally creates and adds an item to be executed as part of a
+        /// batch update in response to invoking <see cref="ExecuteBatch()"/>
         /// </summary>
         /// <remarks>
         /// <para>
-        /// When this command <see cref="IsPrepared"/>, invoking this method has
-        /// the effect of first checking the present <see cref="Parameters"/>
-        /// against the parameter metdata of the prepared form of the command
-        /// to assure there are no unbound parameters and, if successful, 
-        /// converting the present <see cref="Parameters"/> into an array of
-        /// object values coerced to , which are then added to an internal list for batch
-        /// execution against the prepared form of the command.
+        /// While this command <see cref="IsPrepared"/>, the assumption and
+        /// current constraint (imposed by the 1.8.0 engine protocol) is that
+        /// the command text must be held constant across all calls to this
+        /// method that are intented to participate together in a future
+        /// invocation of <see cref="ExecuteBatch()"/>.
+        /// </para>
+        /// <para> 
+        /// In this case it is a precondition that for each elligible
+        /// parameter described in the parameter metadata of the prepared
+        /// form of this command, there exists a bindable element in the
+        /// current <see cref="Parameters"/> collection.
         /// </para>
         /// <para>
-        /// Otherwise, invoking this method has the effect
+        /// If the precondition holds, then the Input and InputOutput elements
+        /// of the <see cref="Parameters"/>  collection are converted into an
+        /// array of object values which is added to an internal list for
+        /// subsequent transmission as part of a prepared SQL batch execution.
+        /// </para>
+        /// <para>
+        /// While this command is *not* prepared, it is not longer a
+        /// constraint that the command text must be held constant
+        /// across all calls to this method that are intented to participate
+        /// together in a future invocation of <see cref="ExecuteBatch()"/>.
+        /// In this case, however, there is an alternative constraint (again,
+        /// imposed by the 1.8.0 engine protocol) which is that batch items
+        /// consist of statically bound SQL registered for direct SQL batch
+        /// exection.  That is, parameter tokens in the current command text
+        /// must be replaced with SQL literal values derived from the
+        /// corresponding elements of the current <see cref="Parameters"/>
+        /// collection and it is the SQL text that is added to the batch.
+        /// </para>
+        /// <para> 
+        /// In this case it is a precondition that for each parameter token
+        /// in the current command text, there exists a bindable Input or
+        /// InputOutput element in the current <see cref="Parameters"/>
+        /// collection.
+        /// </para>         
+        /// <para>
+        /// Note carefully that preparing or unpreparing an HsqlCommand has
+        /// a side effect equivalent to invoking <see cref="ClearBatch()"/>
         /// </para>
         /// </remarks>
         public void AddBatch()
@@ -1349,6 +1385,19 @@ namespace System.Data.Hsqldb.Client
             lock (SyncRoot)
             {
                 AddBatchInternal();
+            }
+        } 
+        #endregion
+
+        #region ClearBatch()
+        /// <summary>
+        /// Undoes the effect of any preceeding calls to <see cref="AddBatch()"/>.
+        /// </summary>
+        public void ClearBatch()
+        {
+            lock (SyncRoot)
+            {
+                ClearBatchInternal();
             }
         } 
         #endregion
@@ -1387,87 +1436,9 @@ namespace System.Data.Hsqldb.Client
         /// </exception>
         public void DeriveParameters()
         {
-            if (CommandType != CommandType.StoredProcedure)
-            {
-                throw new InvalidOperationException(string.Format(
-                   "Operation not supported for CommandType: " 
-                   + CommandType.ToString()));
-            }
-
-            Prepare();
-
-            HsqlStatement l_statement = m_statement;
-            ParameterMetaData pmd = l_statement.ParameterDescriptor.metaData;
-
-            string[] parameterNames = pmd.colNames;
-            int count = parameterNames.Length;
-
-            HsqlParameter[] parameters = new HsqlParameter[count];
-
-            for (int i = 0; i < count; i++)
-            {
-                string name = parameterNames[i];
-                ParameterMode mode = (ParameterMode)pmd.paramMode[i];
-                int type = pmd.colTypes[i];
-                int precision = pmd.colSizes[i];
-                int scale = pmd.colScales[i];
-                int nullability = pmd.colNullable[i];
-
-                HsqlProviderType providerType = (HsqlProviderType)type;
-                DbType dbType = HsqlConvert.ToDbType(providerType);
-                ParameterDirection? direction = HsqlConvert.ToParameterDirection(mode);
-                bool? isNullable = IsNullable(nullability);
-                bool isCharacter = IsCharacterType(type);
-                bool isNumber = (!isCharacter) && IsNumberType(type);
-                bool isTemporal = !(isCharacter || isNumber) && IsTemporalType(type);
-                int size = (precision == 0) ? ToDefaultSize(type) : precision;
-
-                if (isCharacter)
-                {
-                    precision = 0;
-                    scale = 0;
-                }
-                else if (isNumber || isTemporal)
-                {
-                    if (precision == 0)
-                    {
-                        precision = ToDefaultPrecision(type);
-                    }
-                }
-
-                HsqlParameter parameter = new HsqlParameter();
-
-                parameter.DbType = dbType;
-
-                if (direction != null)
-                {
-                    parameter.Direction = direction.Value;
-                }
-
-                if (isNullable != null)
-                {
-                    parameter.IsNullable = isNullable.Value;
-                }
-
-                parameter.ParameterName = name;
-                parameter.Precision = (byte)Math.Min(byte.MaxValue, precision);
-                parameter.ProviderType = providerType;
-                parameter.Scale = (byte)Math.Min(byte.MaxValue, scale);
-                parameter.Size = size;
-                parameter.SourceVersion = DataRowVersion.Default;
-
-                parameters[i] = parameter;
-            }
-
-            HsqlParameterCollection pc = Parameters;
-
-            pc.Clear();
-
-            foreach (HsqlParameter parameter in parameters)
-            {
-                pc.Add(parameter);
-            }
+            DeriveParametersInternal();
         }
+
         #endregion
 
         #region ExecuteBatch()

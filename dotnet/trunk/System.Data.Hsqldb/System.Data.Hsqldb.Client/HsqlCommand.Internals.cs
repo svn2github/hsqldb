@@ -70,7 +70,7 @@ namespace System.Data.Hsqldb.Client
         #region Fields
 
         // Facilitates a quick test for named parameters.
-        private static readonly char[] m_ParmeterChars = new char[] { '@', ':' };
+        private static readonly char[] m_ParameterChars = new char[] { '@', ':' };
         // Optimization to avoid burning through empty object[] instances
         private static readonly object[] m_NoParameters = new object[0];
         //
@@ -302,6 +302,107 @@ namespace System.Data.Hsqldb.Client
         } 
         #endregion
 
+
+        #region ClearBatchInternal()
+        internal void ClearBatchInternal()
+        {                        
+            HsqlStatement statement = m_statement;
+
+            if (statement != null)
+            {
+                statement.ClearBatch();
+            }
+            
+            m_commandTextBatch = null;            
+        } 
+        #endregion
+
+        #region DeriveParametersInternal
+        internal void DeriveParametersInternal()
+        {
+            if (CommandType != CommandType.StoredProcedure)
+            {
+                throw new InvalidOperationException(string.Format(
+                   "Operation not supported for CommandType: "
+                   + CommandType.ToString()));
+            }
+
+            Prepare();
+
+            HsqlStatement l_statement = m_statement;
+            ParameterMetaData pmd = l_statement.ParameterDescriptor.metaData;
+
+            string[] parameterNames = pmd.colNames;
+            int count = parameterNames.Length;
+
+            HsqlParameter[] parameters = new HsqlParameter[count];
+
+            for (int i = 0; i < count; i++)
+            {
+                string name = parameterNames[i];
+                ParameterMode mode = (ParameterMode)pmd.paramMode[i];
+                int type = pmd.colTypes[i];
+                int precision = pmd.colSizes[i];
+                int scale = pmd.colScales[i];
+                int nullability = pmd.colNullable[i];
+
+                HsqlProviderType providerType = (HsqlProviderType)type;
+                DbType dbType = HsqlConvert.ToDbType(providerType);
+                ParameterDirection? direction = HsqlConvert.ToParameterDirection(mode);
+                bool? isNullable = IsNullable(nullability);
+                bool isCharacter = IsCharacterType(type);
+                bool isNumber = (!isCharacter) && IsNumberType(type);
+                bool isTemporal = !(isCharacter || isNumber) && IsTemporalType(type);
+                int size = ToBufferSize(type, precision);
+
+                if (isCharacter)
+                {
+                    precision = 0;
+                    scale = 0;
+                }
+                else if (isNumber || isTemporal)
+                {
+                    if (precision == 0)
+                    {
+                        precision = ToDefaultPrecision(type);
+                    }
+                }
+
+                HsqlParameter parameter = new HsqlParameter();
+
+                parameter.DbType = dbType;
+
+                if (direction != null)
+                {
+                    parameter.Direction = direction.Value;
+                }
+
+                if (isNullable != null)
+                {
+                    parameter.IsNullable = isNullable.Value;
+                }
+
+                parameter.ParameterName = name;
+                parameter.Precision = (byte)Math.Min(byte.MaxValue, precision);
+                parameter.ProviderType = providerType;
+                parameter.Scale = (byte)Math.Min(byte.MaxValue, scale);
+                parameter.Size = size;
+                parameter.SourceVersion = DataRowVersion.Default;
+
+                parameters[i] = parameter;
+            }
+
+            HsqlParameterCollection pc = Parameters;
+
+            pc.Clear();
+
+            foreach (HsqlParameter parameter in parameters)
+            {
+                pc.Add(parameter);
+            }
+        }
+        #endregion
+
         #region ExecuteBatchInternal()
         /// <summary>
         /// Provides the core logic for the <see cref="ExecuteBatch()"/> method.
@@ -466,7 +567,8 @@ namespace System.Data.Hsqldb.Client
             try
             {
                 // localize member references to minimize
-                // potential race conditions.
+                // potential race conditions regarding
+                // null status of instance variables.
                 HsqlConnection connection = m_dbConnection;
                 HsqlStatement statement = m_statement;
 
@@ -598,6 +700,7 @@ namespace System.Data.Hsqldb.Client
                 }
 
                 m_statement = session.PrepareStatement(sql);
+                // no longer valid
                 m_commandTextBatch = null;
             }
         }
@@ -738,20 +841,20 @@ namespace System.Data.Hsqldb.Client
 
                 if (tokenList.Count > 1)
                 {
-                    // Assume the full call syntax was
+                    // Assumes the full call syntax was
                     // provided in CommandText.
                     return commandText;
                 }
 
                 Token token = tokenList[0];
-                string schema;
+                string spSchema;
                 string spName;
 
                 switch (token.Type)
                 {
                     case SqlTokenType.IdentifierChain:
                         {
-                            schema = token.QualifierPart;
+                            spSchema = token.QualifierPart;
                             spName = token.SubjectPart;
                             break;
 
@@ -759,7 +862,7 @@ namespace System.Data.Hsqldb.Client
                     case SqlTokenType.DelimitedIdentifier:
                     case SqlTokenType.Name:
                         {
-                            schema = Connection.DefaultSchema;
+                            spSchema = Connection.DefaultSchema;
                             spName = token.Value;
                             break;
                         }
@@ -770,7 +873,9 @@ namespace System.Data.Hsqldb.Client
                                 commandText)); // NOI18N
                         }
                 }
-
+            //TODO:  Optimally, this could be prepared once lazily at the
+            //       session level and left prepared for the duration
+            //       of the session.
                 string query =
 @"-- System.Data.Hsqldb.Client.HsqlCommand.StoredProcedureCommandText:
 SELECT DISTINCT p.specific_name
@@ -787,7 +892,7 @@ SELECT DISTINCT p.specific_name
                 {
                     stmt = session.PrepareStatement(query);
                     
-                    stmt.SetParameterValues(schema, spName, spName);
+                    stmt.SetParameterValues(spSchema, spName, spName);
                     
                     result = stmt.Execute(session);
                     reader = new HsqlDataReader(result);
@@ -823,7 +928,7 @@ SELECT DISTINCT p.specific_name
 
                 DataTable table = Connection.MetaData.GetSchema(
                     HsqlMetaDataCollectionNames.ProcedureParameters,
-                    new string[] { null, schema, specificName, null });
+                    new string[] { null, spSchema, specificName, null });
 
                 int parameterCount = table.Rows.Count;
 
@@ -1106,8 +1211,8 @@ SELECT DISTINCT p.specific_name
         //} 
         #endregion
 
-        #region ToDefaultSize(int)
-        private static int ToDefaultSize(int type)
+        #region ToDefaultDisplaySize(int)
+        private static int ToDefaultDisplaySize(int type)
         {
             return HsqlTypes.getMaxDisplaySize(type);
         }
@@ -1120,7 +1225,107 @@ SELECT DISTINCT p.specific_name
         }
         #endregion 
 
-        static CommandType ToSupportedCommandType(CommandType commandType, HsqlCommand command)
+        #region ToBufferSize(int,int)
+        /// <summary>
+        /// Computes and returns the maximum size of byte 
+        /// buffer required to store values of the given type.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <param name="dataSizeOrPrecision">
+        /// The size or precision in units native to 
+        /// the data type (e.g. characters, digits, etc.).
+        /// </param>
+        /// <returns></returns>
+        private static int ToBufferSize(int type, int dataSizeOrPrecision)
+        {
+            int bufferSize;
+
+            switch (type)
+            {
+                case HsqlTypes.CHAR:
+                case HsqlTypes.CLOB:
+                case HsqlTypes.LONGVARCHAR:
+                case HsqlTypes.VARCHAR:
+                    {
+                        if (dataSizeOrPrecision > (int.MaxValue >> 1))
+                        {
+                            bufferSize = 0;
+                        }
+                        else if (dataSizeOrPrecision > 0)
+                        {
+                            bufferSize = 2 * dataSizeOrPrecision;
+                        }
+                        else
+                        {
+                            bufferSize = 0;
+                        }
+
+                        break;
+                    }
+                case HsqlTypes.BINARY:
+                case HsqlTypes.BLOB:
+                case HsqlTypes.LONGVARBINARY:
+                case HsqlTypes.VARBINARY:
+                    {
+                        bufferSize = dataSizeOrPrecision;
+
+                        break;
+                    }
+                case HsqlTypes.BIGINT:
+                case HsqlTypes.DOUBLE:
+                case HsqlTypes.FLOAT:
+                case HsqlTypes.DATE:
+                case HsqlTypes.REAL:
+                case HsqlTypes.TIME:
+                    {
+                        bufferSize = 8;
+
+                        break;
+                    }
+                case HsqlTypes.TIMESTAMP:
+                    {
+                        bufferSize = 12;
+
+                        break;
+                    }
+                case HsqlTypes.INTEGER:
+                case HsqlTypes.SMALLINT:
+                case HsqlTypes.TINYINT:
+                    {
+                        bufferSize = 4;
+
+                        break;
+                    }
+                case HsqlTypes.BOOLEAN:
+                    {
+                        bufferSize = 1;
+
+                        break;
+                    }
+                default:
+                    {
+                        bufferSize = 0;
+
+                        break;
+                    }
+            }
+
+            return bufferSize;
+        } 
+        #endregion
+
+        #region ToSupportedCommandType(CommandType,HsqlCommand)
+        /// <summary>
+        /// Computes and returns the supported command type given a stipulated command type and command object.
+        /// </summary>
+        /// <remarks>
+        /// If the returned type does not match the stipulated type,
+        /// a warning event is raised on the given command object. 
+        /// </remarks>
+        /// <param name="commandType">Type of the command.</param>
+        /// <param name="command">The command.</param>
+        /// <returns>the supported command type</returns>
+        private static CommandType ToSupportedCommandType(CommandType commandType, HsqlCommand command)
         {
             switch (commandType)
             {
@@ -1134,15 +1339,16 @@ SELECT DISTINCT p.specific_name
                     {
                         ArgumentException ex = new ArgumentException(
                             "commandType", string.Format(
-                            "[{0}] is not a valid command type",commandType));
-                        HsqlDataSourceException hex = new HsqlDataSourceException("Warning.",ex);
+                            "[{0}] is not a valid command type", commandType));
+                        HsqlDataSourceException hex = new HsqlDataSourceException("Warning.", ex);
 
                         command.OnWarning(new HsqlWarningEventArgs(hex));
 
                         return CommandType.Text;
                     }
             }
-        }
+        } 
+        #endregion
 
         #endregion
 

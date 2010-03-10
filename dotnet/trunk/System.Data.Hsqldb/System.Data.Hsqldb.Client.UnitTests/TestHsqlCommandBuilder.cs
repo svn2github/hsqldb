@@ -2,10 +2,11 @@ using System;
 using NUnit.Framework;
 using System.Data.Hsqldb.TestCoverage;
 using System.Data.Hsqldb.Client;
+using TestCategory = NUnit.Framework.CategoryAttribute;
 
 namespace System.Data.Hsqldb.Client.UnitTests
 {
-    [TestFixture, ForSubject(typeof(HsqlCommandBuilder))]
+    [TestFixture, TestCategory("DbCommand"), ForSubject(typeof(HsqlCommandBuilder))]
     public class TestHsqlCommandBuilder
     {
         [Test, OfMember("DeriveParameters")]

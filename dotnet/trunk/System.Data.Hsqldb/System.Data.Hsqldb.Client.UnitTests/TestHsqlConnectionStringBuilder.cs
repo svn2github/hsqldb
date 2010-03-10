@@ -2,10 +2,11 @@ using System;
 using System.Data.Hsqldb.TestCoverage;
 using NUnit.Framework;
 using System.Data.Hsqldb.Client;
+using TestCategory = NUnit.Framework.CategoryAttribute;
 
 namespace System.Data.Hsqldb.Client.UnitTests
 {
-    [TestFixture, ForSubject(typeof(HsqlConnectionStringBuilder))]
+    [TestFixture, TestCategory("DbConnection"), ForSubject(typeof(HsqlConnectionStringBuilder))]
     public class TestHsqlConnectionStringBuilder
     {
         

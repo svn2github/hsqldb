@@ -97,10 +97,7 @@ namespace System.Data.Hsqldb.Client
         /// <summary>
         /// Default constructor.
         /// </summary>
-        public HsqlParameter()
-            : base()
-        {
-        }
+        public HsqlParameter() : base() { } 
 
         #endregion
 
@@ -111,8 +108,7 @@ namespace System.Data.Hsqldb.Client
         /// </summary>
         /// <param name="parameterName">Name of the parameter.</param>
         /// <param name="dbType">The <c>DbType</c> of the parameter.</param>
-        public HsqlParameter(string parameterName, HsqlProviderType dbType)
-            : this()
+        public HsqlParameter(string parameterName, HsqlProviderType dbType) : this()
         {
             this.ParameterName = parameterName;
             this.ProviderType = dbType;
@@ -134,10 +130,7 @@ namespace System.Data.Hsqldb.Client
         /// <param name="value">
         /// The value.
         /// </param>
-        public HsqlParameter(
-            string parameterName, 
-            object value)
-            : this()
+        public HsqlParameter(string parameterName, object value) : this()
         {
             ParameterName = parameterName;
             Value = value;
@@ -153,11 +146,7 @@ namespace System.Data.Hsqldb.Client
         /// <param name="parameterName">The name of the parameter to map</param>
         /// <param name="dbType">The <c>HsqlProviderType</c> of the parameter.</param>
         /// <param name="size">The length of the parameter.</param>
-        public HsqlParameter(
-            string parameterName, 
-            HsqlProviderType dbType,
-            int size)
-            : this()
+        public HsqlParameter(string parameterName, HsqlProviderType dbType, int size) : this()
         {
             ParameterName = parameterName;
             ProviderType = dbType;
@@ -175,12 +164,8 @@ namespace System.Data.Hsqldb.Client
         /// <param name="dbType">The DbType of the parameter.</param>
         /// <param name="size">The length of the parameter.</param>
         /// <param name="sourceColumn">The name of the source column.</param>
-        public HsqlParameter(
-            string parameterName, 
-            DbType dbType,                               
-            int size, 
-            string sourceColumn)
-            : this()
+        public HsqlParameter(string parameterName, DbType dbType, int size,
+            string sourceColumn) : this()
         {
             ParameterName = parameterName;
             DbType = dbType;
@@ -231,18 +216,10 @@ namespace System.Data.Hsqldb.Client
         /// An object that is the value of this parameter.
         /// </param>
         [EditorBrowsable(EditorBrowsableState.Advanced)]
-        public HsqlParameter(
-            string parameterName, 
-            HsqlProviderType dbType, 
-            int size,                               
-            ParameterDirection direction, 
-            bool isNullable,                               
-            byte precision, 
-            byte scale, 
-            string sourceColumn,                               
-            DataRowVersion sourceVersion, 
-            object value)
-            : this()
+        public HsqlParameter(string parameterName, HsqlProviderType dbType, 
+            int size, ParameterDirection direction, bool isNullable,                               
+            byte precision, byte scale, string sourceColumn,                               
+            DataRowVersion sourceVersion, object value) : this()
         {
             ParameterName = parameterName;
             ProviderType = dbType;
@@ -681,6 +658,21 @@ namespace System.Data.Hsqldb.Client
 
         #endregion
 
+        #region DisplaySize
+        /// <summary>
+        /// Gets or sets the display size.
+        /// </summary>
+        /// <value>The display size.</value>
+        [DbProviderSpecificTypeProperty(true)]
+        [DefaultValue(0)]
+        [Description("The maximum number of characters required to display a text version of the parameter value")]
+        [DisplayName("Display Size")]
+        [Category("Data")]       
+        public int DisplaySize
+        {
+            get { return org.hsqldb.Types.getMaxDisplaySize((int)ProviderType); }
+        }
+        #endregion 
         #endregion
 
         #region Internal Methods & Properties

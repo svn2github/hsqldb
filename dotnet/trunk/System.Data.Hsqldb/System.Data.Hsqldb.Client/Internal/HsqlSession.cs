@@ -596,7 +596,7 @@ namespace System.Data.Hsqldb.Client.Internal
 
         #region FreeStatement(int)
         /// <summary>
-        /// Frees the prepared statement denoted
+        /// Free the prepared statement denoted
         /// by the given <c>statementId</c>.
         /// </summary>
         /// <param name="statementId">

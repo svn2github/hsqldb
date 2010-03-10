@@ -200,20 +200,20 @@ namespace System.Data.Hsqldb.Common.UnitTests
         {
             Assert.AreEqual(typeof(java.sql.Array), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Array));
             Assert.AreEqual(typeof(java.lang.Long), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.BigInt));
-            Assert.AreEqual(typeof(byte[]), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Binary));
+            Assert.AreEqual(typeof(org.hsqldb.types.Binary), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Binary));
             Assert.AreEqual(typeof(System.Data.Hsqldb.Common.Lob.IBlob), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Blob));
             Assert.AreEqual(typeof(java.lang.Boolean), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Boolean));
             Assert.AreEqual(typeof(string), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Char));
             Assert.AreEqual(typeof(System.Data.Hsqldb.Common.Lob.IClob), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Clob));
             Assert.AreEqual(typeof(java.net.URL), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.DataLink));
-            Assert.AreEqual(typeof(java.sql.Date), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Date));
+            Assert.AreEqual(typeof(java.util.Date), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Date));
             Assert.AreEqual(typeof(java.math.BigDecimal), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Decimal));
             Assert.AreEqual(typeof(object), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Distinct));
             Assert.AreEqual(typeof(java.lang.Double), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Double));
             Assert.AreEqual(typeof(java.lang.Double), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Float));
             Assert.AreEqual(typeof(java.lang.Integer), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Integer));
             Assert.AreEqual(typeof(org.hsqldb.types.JavaObject), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.JavaObject));
-            Assert.AreEqual(typeof(byte[]), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.LongVarBinary));
+            Assert.AreEqual(typeof(org.hsqldb.types.Binary), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.LongVarBinary));
             Assert.AreEqual(typeof(string), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.LongVarChar));
             Assert.AreEqual(typeof(void), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Null));
             Assert.AreEqual(typeof(java.math.BigDecimal), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Numeric));
@@ -225,7 +225,7 @@ namespace System.Data.Hsqldb.Common.UnitTests
             Assert.AreEqual(typeof(java.sql.Time), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Time));
             Assert.AreEqual(typeof(java.sql.Timestamp), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.TimeStamp));
             Assert.AreEqual(typeof(java.lang.Integer), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.TinyInt));
-            Assert.AreEqual(typeof(byte[]), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.VarBinary));
+            Assert.AreEqual(typeof(org.hsqldb.types.Binary), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.VarBinary));
             Assert.AreEqual(typeof(string), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.VarChar));
             Assert.AreEqual(typeof(string), HsqlConvert.ToProviderSpecificDataType(org.hsqldb.Types.VARCHAR_IGNORECASE));
             Assert.AreEqual(typeof(java.sql.SQLXML), HsqlConvert.ToProviderSpecificDataType(HsqlProviderType.Xml));

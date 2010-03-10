@@ -68,7 +68,7 @@ namespace System.Data.Hsqldb.Client
     /// </para> 
     /// <para>
     /// Because this class implements <see cref="ICustomTypeDescriptor"/>, 
-    /// it supports design time mechanisms such as the <see cref="PropertyGrid"/>.
+    /// it supports design time mechanisms such as utilized by the PropertyGrid component.
     /// </para>
     /// </remarks>
     /// <author name="boucherb@users"/>
@@ -1523,7 +1523,7 @@ namespace System.Data.Hsqldb.Client
         /// value (7000-8000 per second), when all other settings (e.g. CacheScale)
         /// are adjusted for optimal transaction rate under a given load pattern.
         /// That said, it simply may not be acceptable to risk the possibility of
-        /// losing so many commited transactions under disater conditions.
+        /// losing so many commited transactions under disaster conditions.
         /// </para>
         /// <para>
         /// This property must be specified by the connection that

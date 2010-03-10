@@ -8,7 +8,7 @@ using NUnit.Framework;
 
 namespace System.Data.Hsqldb.Common.IO.UnitTests
 {
-    [TestFixture, ForSubject(typeof(JavaInputStreamAdapter))]
+    [TestFixture, Category("IO"), ForSubject(typeof(JavaInputStreamAdapter))]
     public class TestJavaInputStreamAdapter
     {
         static JavaInputStreamAdapter NewTestSubject(string s, Encoding e, bool closed)
@@ -41,6 +41,7 @@ namespace System.Data.Hsqldb.Common.IO.UnitTests
         }
 
         [Test, OfMember("ctor"), ExpectedException(typeof(ArgumentNullException))]
+        
         public void ctorWithNullStream()
         {
             using (JavaInputStreamAdapter testSubject = new JavaInputStreamAdapter(null))
@@ -142,7 +143,7 @@ namespace System.Data.Hsqldb.Common.IO.UnitTests
             }
         }
 
-        [Test, OfMember("reset"), OfMember("Dispose"), ExpectedException(typeof(java.io.IOException), "mark/reset not supported")]
+        [Test, OfMember("reset"), OfMember("Dispose"), ExpectedException(typeof(java.io.IOException),ExpectedMessage="mark/reset not supported")]
         public void resetAfterDispose()
         {
             JavaInputStreamAdapter testSubject = NewTestSubject("asdf", Encoding.ASCII);

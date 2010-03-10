@@ -2,6 +2,9 @@
 using System;
 using System.Data.Hsqldb.TestCoverage;
 using NUnit.Framework;
+using TestSubject = System.Data.Hsqldb.Common.HsqlConvert.FromDotNet;
+using org.hsqldb.store;
+using System.Data.SqlTypes;
 #endregion
 
 namespace System.Data.Hsqldb.Common.UnitTests
@@ -9,1495 +12,970 @@ namespace System.Data.Hsqldb.Common.UnitTests
     [TestFixture, ForSubject(typeof(HsqlConvert.FromDotNet))]
     public class TestHsqlConvertFromDotNet
     {
-        
-        //[MemberAttribute(MemberName="ToBigInt")]
-        //[Test()]
-        //public virtual void bool_ToBigInt()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-
-        //    // There is no default constuctor for the parameter boolValue type Boolean.
-        //    bool boolValue;
-
-
-        //    TestSubject.ToBigInt(boolValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBigInt")]
-        //[Test()]
-        //public virtual void byte_ToBigInt()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-
-        //    // There is no default constuctor for the parameter byteValue type Byte.
-        //    byte byteValue;
-
-
-        //    TestSubject.ToBigInt(byteValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBigInt")]
-        //[Test()]
-        //public virtual void INullable_ToBigInt()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-        //    RecorderINullable nullableRecording = new RecorderINullable();
-
-        //    TestSubject.ToBigInt(nullableRecording);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBigInt")]
-        //[Test()]
-        //public virtual void decimal_ToBigInt()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-
-        //    // There is no default constuctor for the parameter decimalValue type Decimal.
-        //    decimal decimalValue;
-
-
-        //    TestSubject.ToBigInt(decimalValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBigInt")]
-        //[Test()]
-        //public virtual void double_ToBigInt()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-
-        //    // There is no default constuctor for the parameter doubleValue type Double.
-        //    double doubleValue;
-
-
-        //    TestSubject.ToBigInt(doubleValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBigInt")]
-        //[Test()]
-        //public virtual void short_ToBigInt()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-
-        //    // There is no default constuctor for the parameter shortValue type Int16.
-        //    short shortValue;
-
-
-        //    TestSubject.ToBigInt(shortValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBigInt")]
-        //[Test()]
-        //public virtual void int_ToBigInt()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-
-        //    // There is no default constuctor for the parameter intValue type Int32.
-        //    int intValue;
-
 
-        //    TestSubject.ToBigInt(intValue);
+        [Test, OfMember("ToBigInt(bool)")]        
+        public virtual void bool_ToBigInt()
+        {
+            Assert.AreEqual(ValuePool.getLong(0),TestSubject.ToBigInt(false));
+            Assert.AreEqual(ValuePool.getLong(1), TestSubject.ToBigInt(true));
+        }
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBigInt")]
-        //[Test()]
-        //public virtual void long_ToBigInt()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-
-        //    // There is no default constuctor for the parameter longValue type Int64.
-        //    long longValue;
-
-
-        //    TestSubject.ToBigInt(longValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBigInt")]
-        //[Test()]
-        //public virtual void object_ToBigInt()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-        //    object objectValue = new object();
-
-        //    TestSubject.ToBigInt(objectValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBigInt")]
-        //[Test()]
-        //public virtual void sbyte_ToBigInt()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-
-        //    // There is no default constuctor for the parameter sbyteValue type SByte.
-        //    sbyte sbyteValue;
-
-
-        //    TestSubject.ToBigInt(sbyteValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBigInt")]
-        //[Test()]
-        //public virtual void float_ToBigInt()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-
-        //    // There is no default constuctor for the parameter floatValue type Single.
-        //    float floatValue;
-
+        [Test, OfMember("ToBigInt(byte)")]        
+        public virtual void byte_ToBigInt()
+        {
+            byte byteValue = default(byte);
 
-        //    TestSubject.ToBigInt(floatValue);
+            TestSubject.ToBigInt(byteValue);
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBigInt")]
-        //[Test()]
-        //public virtual void string_ToBigInt()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-
-        //    // There is no default constuctor for the parameter stringValue type String.
-        //    string stringValue;
-
-
-        //    TestSubject.ToBigInt(stringValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBigInt")]
-        //[Test()]
-        //public virtual void ushort_ToBigInt()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // There is no default constuctor for the parameter ushortValue type UInt16.
-        //    ushort ushortValue;
+        [Test, OfMember("ToBigInt(INullable)")]        
+        public virtual void INullable_ToBigInt()
+        {
+            INullable nullable = default(INullable);
 
+            TestSubject.ToBigInt(nullable);
 
-        //    TestSubject.ToBigInt(ushortValue);
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBigInt")]
-        //[Test()]
-        //public virtual void uint_ToBigInt()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+        [Test, OfMember("ToBigInt(decimal)")]        
+        public virtual void decimal_ToBigInt()
+        {
+            decimal decimalValue = default(decimal);
 
-        //    // Create Test Method Parameters
 
-        //    // There is no default constuctor for the parameter unitValue type UInt32.
-        //    uint unitValue;
+            TestSubject.ToBigInt(decimalValue);
 
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    TestSubject.ToBigInt(unitValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
+        [Test, OfMember("ToBigInt(double)")]
         
-        //[MemberAttribute(MemberName="ToBigInt")]
-        //[Test()]
-        //public virtual void ulong_ToBigInt()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
+        public virtual void double_ToBigInt()
+        {
+            double doubleValue = default(double);
 
-        //    // There is no default constuctor for the parameter ulongValue type UInt64.
-        //    ulong ulongValue;
+            TestSubject.ToBigInt(doubleValue);
 
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    TestSubject.ToBigInt(ulongValue);
+        [Test, OfMember("ToBigInt(short)")]        
+        public virtual void short_ToBigInt()
+        {
+            short shortValue = default(short);
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBinary")]
-        //[Test()]
-        //public virtual void bool_ToBinary()
-        //{
+            TestSubject.ToBigInt(shortValue);
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // Create Test Method Parameters
+        [Test, OfMember("ToBigInt(int)")]        
+        public virtual void int_ToBigInt()
+        {
+            int intValue = default(int);
 
-        //    // There is no default constuctor for the parameter boolValue type Boolean.
-        //    bool boolValue;
+            TestSubject.ToBigInt(intValue);
 
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    TestSubject.ToBinary(boolValue);
+        [Test, OfMember("ToBigInt(long)")]        
+        public virtual void long_ToBigInt()
+        {
+            long longValue = default(long);
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBinary")]
-        //[Test()]
-        //public virtual void byte_ToBinary()
-        //{
+            TestSubject.ToBigInt(longValue);
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // Create Test Method Parameters
+        [Test, OfMember("ToBigInt(object)")]        
+        public virtual void object_ToBigInt()
+        {
+            object objectValue = null;
 
-        //    // There is no default constuctor for the parameter byteValue type Byte.
-        //    byte byteValue;
+            TestSubject.ToBigInt(objectValue);
 
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    TestSubject.ToBinary(byteValue);
+        [Test, OfMember("ToBigInt(sbyte)")]        
+        public virtual void sbyte_ToBigInt()
+        {
+            sbyte sbyteValue = default(sbyte);
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBinary")]
-        //[Test()]
-        //public virtual void INullable_ToBinary()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-        //    RecorderINullable nullableRecording = new RecorderINullable();
-
-        //    TestSubject.ToBinary(nullableRecording);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBinary")]
-        //[Test()]
-        //public virtual void decimal_ToBinary()
-        //{
+            TestSubject.ToBigInt(sbyteValue);
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // Create Test Method Parameters
+        [Test, OfMember("ToBigInt(float)")]        
+        public virtual void float_ToBigInt()
+        {
+            float floatValue = default(float);
 
-        //    // There is no default constuctor for the parameter decimalValue type Decimal.
-        //    decimal decimalValue;
+            TestSubject.ToBigInt(floatValue);
 
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    TestSubject.ToBinary(decimalValue);
+        [Test, OfMember("ToBigInt(string)")]        
+        public virtual void string_ToBigInt()
+        {
+            string stringValue = "123456789123456789";
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBinary")]
-        //[Test()]
-        //public virtual void double_ToBinary()
-        //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            TestSubject.ToBigInt(stringValue);
 
-        //    // Create Test Method Parameters
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // There is no default constuctor for the parameter doubleValue type Double.
-        //    double doubleValue;
+        [Test, OfMember("ToBigInt(ushort)")]        
+        public virtual void ushort_ToBigInt()
+        {
+            ushort ushortValue = default(ushort);
 
+            TestSubject.ToBigInt(ushortValue);
 
-        //    TestSubject.ToBinary(doubleValue);
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
+        [Test, OfMember("ToBigInt")]
         
-        //[MemberAttribute(MemberName="ToBinary")]
-        //[Test()]
-        //public virtual void short_ToBinary()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+        public virtual void uint_ToBigInt()
+        {
 
-        //    // Create Test Method Parameters
+            
 
-        //    // There is no default constuctor for the parameter shortValue type Int16.
-        //    short shortValue;
 
+            // Create Test Method Parameters
 
-        //    TestSubject.ToBinary(shortValue);
+            // There is no default constuctor for the parameter unitValue type UInt32.
+            uint unitValue = default(uint);
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBinary")]
-        //[Test()]
-        //public virtual void int_ToBinary()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
 
-        //    // Create Test Method Parameters
+            TestSubject.ToBigInt(unitValue);
 
-        //    // There is no default constuctor for the parameter intValue type Int32.
-        //    int intValue;
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-
-        //    TestSubject.ToBinary(intValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
+        [Test, OfMember("ToBigInt")]
         
-        //[MemberAttribute(MemberName="ToBinary")]
-        //[Test()]
-        //public virtual void long_ToBinary()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+        public virtual void ulong_ToBigInt()
+        {
 
-        //    // Create Test Method Parameters
+            
 
-        //    // There is no default constuctor for the parameter longValue type Int64.
-        //    long longValue;
-
-
-        //    TestSubject.ToBinary(longValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBinary")]
-        //[Test()]
-        //public virtual void object_ToBinary()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-        //    object objectValue = new object();
-
-        //    TestSubject.ToBinary(objectValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBinary")]
-        //[Test()]
-        //public virtual void sbyte_ToBinary()
-        //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            // Create Test Method Parameters
 
-        //    // Create Test Method Parameters
+            // There is no default constuctor for the parameter ulongValue type UInt64.
+            ulong ulongValue = default(ulong);
 
-        //    // There is no default constuctor for the parameter sbyteValue type SByte.
-        //    sbyte sbyteValue;
 
+            TestSubject.ToBigInt(ulongValue);
 
-        //    TestSubject.ToBinary(sbyteValue);
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
+        [Test, OfMember("ToBinary")]
         
-        //[MemberAttribute(MemberName="ToBinary")]
-        //[Test()]
-        //public virtual void float_ToBinary()
-        //{
+        public virtual void bool_ToBinary()
+        {
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
 
-        //    // Create Test Method Parameters
 
-        //    // There is no default constuctor for the parameter floatValue type Single.
-        //    float floatValue;
+            // Create Test Method Parameters
 
+            // There is no default constuctor for the parameter boolValue type Boolean.
+            bool boolValue = default(bool);
 
-        //    TestSubject.ToBinary(floatValue);
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBinary")]
-        //[Test()]
-        //public virtual void string_ToBinary()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-
-        //    // There is no default constuctor for the parameter stringValue type String.
-        //    string stringValue;
-
+            TestSubject.ToBinary(boolValue);
 
-        //    TestSubject.ToBinary(stringValue);
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
+        [Test, OfMember("ToBinary")]
         
-        //[MemberAttribute(MemberName="ToBinary")]
-        //[Test()]
-        //public virtual void ushort_ToBinary()
-        //{
+        public virtual void byte_ToBinary()
+        {
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
 
-        //    // Create Test Method Parameters
-
-        //    // There is no default constuctor for the parameter ushortValue type UInt16.
-        //    ushort ushortValue;
-
-
-        //    TestSubject.ToBinary(ushortValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBinary")]
-        //[Test()]
-        //public virtual void unit_ToBinary()
-        //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            // Create Test Method Parameters
 
-        //    // Create Test Method Parameters
+            // There is no default constuctor for the parameter byteValue type Byte.
+            byte byteValue = default(byte);
 
-        //    // There is no default constuctor for the parameter uintValue type UInt32.
-        //    uint uintValue;
 
+            TestSubject.ToBinary(byteValue);
 
-        //    TestSubject.ToBinary(uintValue);
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
+        [Test, OfMember("ToBinary")]
         
-        //[MemberAttribute(MemberName="ToBinary")]
-        //[Test()]
-        //public virtual void ulong_ToBinary()
-        //{
-        //    // Create Test Method Parameters
+        public virtual void INullable_ToBinary()
+        {
 
-        //    // There is no default constuctor for the parameter ulongValue type UInt64.
-        //    ulong ulongValue;
+            
 
 
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet.ToBinary(ulongValue);
+            // Create Test Method Parameters
+            INullable nullable = null;
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBinary")]
-        //[Test()]
-        //public virtual void bytes_ToBinary()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    org.hsqldb.types.Binary actual = System.Data.Hsqldb.Common.HsqlConvert.FromDotNet.ToBinary(bytes)
+            TestSubject.ToBinary(nullable);
 
-        //    byte[] bytes;
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // Create Test Method Parameters
-
-
-        //}
+        [Test, OfMember("ToBinary")]
         
-        //[MemberAttribute(MemberName="ToBoolean")]
-        //[Test()]
-        //public virtual void ToBoolean()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+        public virtual void decimal_ToBinary()
+        {
 
-        //    // Create Test Method Parameters
+            
 
-        //    // There is no default constuctor for the parameter boolValue type Boolean.
-        //    bool boolValue;
 
+            // Create Test Method Parameters
 
-        //    TestSubject.ToBoolean(boolValue);
+            // There is no default constuctor for the parameter decimalValue type Decimal.
+            decimal decimalValue = default(decimal);
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBoolean")]
-        //[Test()]
-        //public virtual void ToBoolean()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
 
-        //    // Create Test Method Parameters
+            TestSubject.ToBinary(decimalValue);
 
-        //    // There is no default constuctor for the parameter byteValue type Byte.
-        //    byte byteValue;
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-
-        //    TestSubject.ToBoolean(byteValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBoolean")]
-        //[Test()]
-        //public virtual void ToBoolean()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-        //    RecorderINullable nullableRecording = new RecorderINullable();
-
-        //    TestSubject.ToBoolean(nullableRecording);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
+        [Test, OfMember("ToBinary")]
         
-        //[MemberAttribute(MemberName="ToBoolean")]
-        //[Test()]
-        //public virtual void ToBoolean()
-        //{
+        public virtual void double_ToBinary()
+        {
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
 
-        //    // Create Test Method Parameters
 
-        //    // There is no default constuctor for the parameter decimalValue type Decimal.
-        //    decimal decimalValue;
+            // Create Test Method Parameters
 
+            // There is no default constuctor for the parameter doubleValue type Double.
+            double doubleValue = default(double);
 
-        //    TestSubject.ToBoolean(decimalValue);
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBoolean")]
-        //[Test()]
-        //public virtual void ToBoolean()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-
-        //    // There is no default constuctor for the parameter doubleValue type Double.
-        //    double doubleValue;
-
+            TestSubject.ToBinary(doubleValue);
 
-        //    TestSubject.ToBoolean(doubleValue);
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
+        [Test, OfMember("ToBinary")]
         
-        //[MemberAttribute(MemberName="ToBoolean")]
-        //[Test()]
-        //public virtual void ToBoolean()
-        //{
+        public virtual void short_ToBinary()
+        {
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
 
-        //    // Create Test Method Parameters
 
-        //    // There is no default constuctor for the parameter shortValue type Int16.
-        //    short shortValue;
+            // Create Test Method Parameters
 
+            // There is no default constuctor for the parameter shortValue type Int16.
+            short shortValue = default(short);
 
-        //    TestSubject.ToBoolean(shortValue);
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBoolean")]
-        //[Test()]
-        //public virtual void ToBoolean()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
+            TestSubject.ToBinary(shortValue);
 
-        //    // There is no default constuctor for the parameter intValue type Int32.
-        //    int intValue;
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-
-        //    TestSubject.ToBoolean(intValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
+        [Test, OfMember("ToBinary")]
         
-        //[MemberAttribute(MemberName="ToBoolean")]
-        //[Test()]
-        //public virtual void ToBoolean()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+        public virtual void int_ToBinary()
+        {
 
-        //    // Create Test Method Parameters
+            
 
-        //    // There is no default constuctor for the parameter longValue type Int64.
-        //    long longValue;
 
+            // Create Test Method Parameters
 
-        //    TestSubject.ToBoolean(longValue);
+            // There is no default constuctor for the parameter intValue type Int32.
+            int intValue = default(int);
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBoolean")]
-        //[Test()]
-        //public virtual void ToBoolean()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-        //    object objectValue = new object();
-
-        //    TestSubject.ToBoolean(objectValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBoolean")]
-        //[Test()]
-        //public virtual void ToBoolean()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-
-        //    // There is no default constuctor for the parameter sbyteValue type SByte.
-        //    sbyte sbyteValue;
 
+            TestSubject.ToBinary(intValue);
 
-        //    TestSubject.ToBoolean(sbyteValue);
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
+        [Test, OfMember("ToBinary")]
         
-        //[MemberAttribute(MemberName="ToBoolean")]
-        //[Test()]
-        //public virtual void ToBoolean()
-        //{
+        public virtual void long_ToBinary()
+        {
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
 
-        //    // Create Test Method Parameters
 
-        //    // There is no default constuctor for the parameter floatValue type Single.
-        //    float floatValue;
+            // Create Test Method Parameters
 
+            // There is no default constuctor for the parameter longValue type Int64.
+            long longValue = default(long);
 
-        //    TestSubject.ToBoolean(floatValue);
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBoolean")]
-        //[Test()]
-        //public virtual void ToBoolean()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            TestSubject.ToBinary(longValue);
 
-        //    // Create Test Method Parameters
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // There is no default constuctor for the parameter stringValue type String.
-        //    string stringValue;
+        [Test, OfMember("ToBinary")]        
+        public virtual void object_ToBinary()
+        {
+            object[][] values = new object[][]
+            {
+                new object[] {default(byte), new byte[1] , null},
+                new object[] {default(short), new byte[2], null},
+                new object[] {default(char), new byte[2], null},
+                new object[] {default(int), new byte[4], null},
+                new object[] {default(long), new byte[8], null},
+            };
 
+            foreach(object[] item in values)
+            {
+                object input = item[0];
+                byte[] expected = (byte[]) item[1];
+                object error = item[2];
 
-        //    TestSubject.ToBoolean(stringValue);
+                org.hsqldb.types.Binary actual = TestSubject.ToBinary(input);
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBoolean")]
-        //[Test()]
-        //public virtual void ToBoolean()
-        //{
+                Assert.AreEqual(expected.Length, actual.getBytesLength());
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+                byte[] actualBytes = actual.getBytes();
 
-        //    // Create Test Method Parameters
+                for (int i = 0; i < expected.Length; i++)
+                {
+                    Assert.AreEqual(expected[i], actualBytes[i]);
+                }
 
-        //    // There is no default constuctor for the parameter ushortValue type UInt16.
-        //    ushort ushortValue;
+            }
+        }
 
+        [Test, OfMember("ToBinary")]
+        public virtual void sbyte_ToBinary()
+        {
+            sbyte sbyteValue = default(sbyte);
 
-        //    TestSubject.ToBoolean(ushortValue);
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToBoolean")]
-        //[Test()]
-        //public virtual void ToBoolean()
-        //{
+            TestSubject.ToBinary(sbyteValue);
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // Create Test Method Parameters
+        [Test, OfMember("ToBinary")]        
+        public virtual void float_ToBinary()
+        {
+            float floatValue = default(float);
 
-        //    // There is no default constuctor for the parameter uintValue type UInt32.
-        //    uint uintValue;
 
+            TestSubject.ToBinary(floatValue);
 
-        //    TestSubject.ToBoolean(uintValue);
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
+        [Test, OfMember("ToBinary")]
         
-        //[MemberAttribute(MemberName="ToBoolean")]
-        //[Test()]
-        //public virtual void ToBoolean()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+        public virtual void string_ToBinary()
+        {
+            string stringValue = string.Empty;
 
-        //    // Create Test Method Parameters
+            TestSubject.ToBinary(stringValue);
 
-        //    // There is no default constuctor for the parameter ulongValue type UInt64.
-        //    ulong ulongValue;
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-
-        //    TestSubject.ToBoolean(ulongValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
+        [Test, OfMember("ToBinary")]
         
-        //[MemberAttribute(MemberName="ToDate")]
-        //[Test()]
-        //public virtual void ToDate()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-        //    RecorderINullable nullableRecording = new RecorderINullable();
-
-        //    TestSubject.ToDate(nullableRecording);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToDate")]
-        //[Test()]
-        //public virtual void ToDate()
-        //{
+        public virtual void ushort_ToBinary()
+        {
+            ushort ushortValue = default(ushort);
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            TestSubject.ToBinary(ushortValue);
 
-        //    // Create Test Method Parameters
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // There is no default constuctor for the parameter dateTimeValue type DateTime.
-        //    System.DateTime dateTimeValue;
+        [Test, OfMember("ToBinary")]        
+        public virtual void unit_ToBinary()
+        {
+            uint uintValue = default(uint);
 
+            TestSubject.ToBinary(uintValue);
 
-        //    TestSubject.ToDate(dateTimeValue);
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToDate")]
-        //[Test()]
-        //public virtual void ToDate()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-        //    object objectValue = new object();
-
-        //    TestSubject.ToDate(objectValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToDate")]
-        //[Test()]
-        //public virtual void ToDate()
-        //{
+        [Test, OfMember("ToBinary")]        
+        public virtual void ulong_ToBinary()
+        {
+            ulong ulongValue = default(ulong);
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            TestSubject.ToBinary(ulongValue);
 
-        //    // Create Test Method Parameters
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // There is no default constuctor for the parameter stringValue type String.
-        //    string stringValue;
+        [Test, OfMember("ToBinary")]        
+        public virtual void bytes_ToBinary()
+        {
+            byte[] bytes = null;
 
+            org.hsqldb.types.Binary actual = TestSubject.ToBinary(bytes);
 
-        //    TestSubject.ToDate(stringValue);
+        }
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToDate")]
-        //[Test()]
-        //public virtual void ToDate()
-        //{
+        [Test, OfMember("ToBoolean(bool)")]        
+        public virtual void bool_ToBoolean()
+        {
+            bool boolValue = default(bool);
+            TestSubject.ToBoolean(boolValue);
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // Create Test Method Parameters
+        [Test, OfMember("ToBoolean(byte)")]        
+        public virtual void byte_ToBoolean()
+        {
+            TestSubject.ToBoolean((byte)0);
+        }
 
-        //    // There is no default constuctor for the parameter timeSpanValue type TimeSpan.
-        //    System.TimeSpan timeSpanValue;
+        [Test, OfMember("ToBoolean(INullable)")]        
+        public virtual void nullable_ToBoolean()
+        {
+            TestSubject.ToBoolean((INullable)null);
 
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    TestSubject.ToDate(timeSpanValue);
+        [Test, OfMember("ToBoolean(decimal)")]        
+        public virtual void decimal_ToBoolean()
+        {
+            decimal decimalValue = default(decimal);
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToDateInMillis")]
-        //[Test()]
-        //public virtual void ToDateInMillis()
-        //{
+            TestSubject.ToBoolean(decimalValue);
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // Create Test Method Parameters
+        [Test, OfMember("ToBoolean(double)")]        
+        public virtual void double_ToBoolean()
+        {
+            double doubleValue = default(double);
 
-        //    // There is no default constuctor for the parameter dateTimeValue type DateTime.
-        //    System.DateTime dateTimeValue;
+            TestSubject.ToBoolean(doubleValue);
 
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    TestSubject.ToDateInMillis(dateTimeValue);
+        [Test, OfMember("ToBoolean(short)")]        
+        public virtual void short_ToBoolean()
+        {
+            short shortValue = default(short);
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToDateInMillis")]
-        //[Test()]
-        //public virtual void ToDateInMillis()
-        //{
+            TestSubject.ToBoolean(shortValue);
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // Create Test Method Parameters
+        [Test, OfMember("ToBoolean(int)")]        
+        public virtual void int_ToBoolean()
+        {
+            int intValue = default(int);
 
-        //    // There is no default constuctor for the parameter timeSpanValue type TimeSpan.
-        //    System.TimeSpan timeSpanValue;
+            TestSubject.ToBoolean(intValue);
 
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    TestSubject.ToDateInMillis(timeSpanValue);
+        [Test, OfMember("ToBoolean(long)")]        
+        public virtual void long_ToBoolean()
+        {
+            long longValue = default(long);
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToDateString")]
-        //[Test()]
-        //public virtual void ToDateString()
-        //{
+            TestSubject.ToBoolean(longValue);
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // Create Test Method Parameters
+        [Test, OfMember("ToBoolean(object)")]        
+        public virtual void object_ToBoolean()
+        {
+            object objectValue = null;
 
-        //    // There is no default constuctor for the parameter year type Int32.
-        //    int year;
+            TestSubject.ToBoolean(objectValue);
 
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // There is no default constuctor for the parameter month type Int32.
-        //    int month;
+        [Test, OfMember("ToBoolean(sbyte)")]        
+        public virtual void sbyte_ToBoolean()
+        {
+            sbyte sbyteValue = default(sbyte);
 
+            TestSubject.ToBoolean(sbyteValue);
 
-        //    // There is no default constuctor for the parameter day type Int32.
-        //    int day;
+            // 
+            // Write your assertions here.
+            // 
+        }
 
+        [Test, OfMember("ToBoolean(float)")]        
+        public virtual void float_ToBoolean()
+        {
+            float floatValue = default(float);
 
-        //    // There is no default constuctor for the parameter checkRanges type Boolean.
-        //    bool checkRanges;
+            TestSubject.ToBoolean(floatValue);
 
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    TestSubject.ToDateString(year, month, day, checkRanges);
+        [Test, OfMember("ToBoolean(string)")]        
+        public virtual void string_ToBoolean()
+        {
+            string stringValue = string.Empty;
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToDateTimeString")]
-        //[Test()]
-        //public virtual void ToDateTimeString()
-        //{
+            TestSubject.ToBoolean(stringValue);
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // Create Test Method Parameters
+        [Test, OfMember("ToBoolean(ushort)")]        
+        public virtual void ushort_ToBoolean()
+        {
+            ushort ushortValue = default(ushort);
 
-        //    // There is no default constuctor for the parameter year type Int32.
-        //    int year;
+            TestSubject.ToBoolean(ushortValue);
 
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // There is no default constuctor for the parameter month type Int32.
-        //    int month;
+        [Test, OfMember("ToBoolean(uint)")]        
+        public virtual void uint_ToBoolean()
+        {
+            uint uintValue = default(uint);
 
+            TestSubject.ToBoolean(uintValue);
 
-        //    // There is no default constuctor for the parameter day type Int32.
-        //    int day;
+            // 
+            // Write your assertions here.
+            // 
+        }
 
+        [Test, OfMember("ToBoolean(ulong)")]        
+        public virtual void ulong_ToBoolean()
+        {
+            ulong ulongValue = default(ulong);
 
-        //    // There is no default constuctor for the parameter hour type Int32.
-        //    int hour;
+            TestSubject.ToBoolean(ulongValue);
 
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // There is no default constuctor for the parameter minute type Int32.
-        //    int minute;
+        [Test, OfMember("ToDate(INullable)")]
 
+        public virtual void INullable_ToDate()
+        {
+            INullable nullable = null;
 
-        //    // There is no default constuctor for the parameter second type Int32.
-        //    int second;
+            TestSubject.ToDate(nullable);
 
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // There is no default constuctor for the parameter nanosecond type Int32.
-        //    int nanosecond;
+        [Test, OfMember("ToDate(DateTime)")]
+        public virtual void DateTime_ToDate()
+        {
+            DateTime dateTimeValue = default(DateTime);
 
+            TestSubject.ToDate(dateTimeValue);
 
-        //    // There is no default constuctor for the parameter checkRanges type Boolean.
-        //    bool checkRanges;
+            // 
+            // Write your assertions here.
+            // 
+        }
 
+        [Test, OfMember("ToDate(object)")]        
+        public virtual void object_ToDate()
+        {
+            object objectValue = null;
 
-        //    TestSubject.ToDateTimeString(year, month, day, hour, minute, second, nanosecond, checkRanges);
+            TestSubject.ToDate(objectValue);
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToDecimal")]
-        //[Test()]
-        //public virtual void ToDecimal()
-        //{
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+        [Test, OfMember("ToDate(string)")]        
+        public virtual void string_ToDate()
+        {
+            string stringValue = "2014-02-14";
 
-        //    // Create Test Method Parameters
+            TestSubject.ToDate(stringValue);
 
-        //    // There is no default constuctor for the parameter boolValue type Boolean.
-        //    bool boolValue;
+            // 
+            // Write your assertions here.
+            // 
+        }
 
+        [Test, OfMember("ToDate(TimeSpan)")]
 
-        //    TestSubject.ToDecimal(boolValue);
+        public virtual void TimeSpan_ToDate()
+        {
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToDecimal")]
-        //[Test()]
-        //public virtual void ToDecimal()
-        //{
+            TimeSpan timeSpanValue = default(TimeSpan);
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            TestSubject.ToDate(timeSpanValue);
 
-        //    // Create Test Method Parameters
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // There is no default constuctor for the parameter byteValue type Byte.
-        //    byte byteValue;
+        [Test, OfMember("ToDateInMillis")]
+        public virtual void DateTime_ToDateInMillis()
+        {
+            DateTime dateTimeValue = default(DateTime);
 
+            TestSubject.ToDateInMillis(dateTimeValue);
 
-        //    TestSubject.ToDecimal(byteValue);
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToDecimal")]
-        //[Test()]
-        //public virtual void ToDecimal()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-        //    RecorderINullable nullableRecording = new RecorderINullable();
-
-        //    TestSubject.ToDecimal(nullableRecording);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToDecimal")]
-        //[Test()]
-        //public virtual void ToDecimal()
-        //{
+        [Test, OfMember("ToDateInMillis(TimeSpan)")]
+        public virtual void TimeSpan_ToDateInMillis()
+        {
+            TimeSpan timeSpanValue = default(TimeSpan);
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            TestSubject.ToDateInMillis(timeSpanValue);
 
-        //    // Create Test Method Parameters
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // There is no default constuctor for the parameter decimalValue type Decimal.
-        //    decimal decimalValue;
+        [Test, OfMember("ToDateString")]        
+        public virtual void ToDateString()
+        {
+            int year = 2010;
+            int month = 1;
+            int day = 1;
+            bool checkRanges = true;
 
+            TestSubject.ToDateString(year, month, day, checkRanges);
 
-        //    TestSubject.ToDecimal(decimalValue);
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
+        [Test, OfMember("ToDateTimeString")]
         
-        //[MemberAttribute(MemberName="ToDecimal")]
-        //[Test()]
-        //public virtual void ToDecimal()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
+        public virtual void ToDateTimeString()
+        {
+            int year = 2010;
+            int month = 1;
+            int day = 1;
+            int hour = 12;
+            int minute = 30;
+            int second = 0;
+            int nanosecond = 0;
+            bool checkRanges = true;
 
-        //    // There is no default constuctor for the parameter doubleValue type Double.
-        //    double doubleValue;
+            TestSubject.ToDateTimeString(year, month, day, hour, minute, second, nanosecond, checkRanges);
 
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    TestSubject.ToDecimal(doubleValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
+        [Test, OfMember("ToDecimal(bool)")]
         
-        //[MemberAttribute(MemberName="ToDecimal")]
-        //[Test()]
-        //public virtual void ToDecimal()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+        public virtual void bool_ToDecimal()
+        {
+            bool boolValue = default(bool);
 
-        //    // Create Test Method Parameters
+            TestSubject.ToDecimal(boolValue);
 
-        //    // There is no default constuctor for the parameter shortValue type Int16.
-        //    short shortValue;
+            // 
+            // Write your assertions here.
+            // 
+        }
 
+        [Test, OfMember("ToDecimal(byte)")]        
+        public virtual void byte_ToDecimal()
+        {
+            byte byteValue = default(byte);
 
-        //    TestSubject.ToDecimal(shortValue);
+            TestSubject.ToDecimal(byteValue);
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToDecimal")]
-        //[Test()]
-        //public virtual void ToDecimal()
-        //{
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+        [Test, OfMember("ToDecimal(INullable)")]
 
-        //    // Create Test Method Parameters
+        public virtual void INullable_ToDecimal()
+        {
+            INullable nullable = null;
 
-        //    // There is no default constuctor for the parameter intValue type Int32.
-        //    int intValue;
+            TestSubject.ToDecimal(nullable);
 
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    TestSubject.ToDecimal(intValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToDecimal")]
-        //[Test()]
-        //public virtual void ToDecimal()
-        //{
+        [Test, OfMember("ToDecimal(decimal)")]        
+        public virtual void decimal_ToDecimal()
+        {
+            decimal decimalValue = default(decimal);
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            TestSubject.ToDecimal(decimalValue);
 
-        //    // Create Test Method Parameters
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // There is no default constuctor for the parameter longValue type Int64.
-        //    long longValue;
+        [Test, OfMember("ToDecimal(double)")]        
+        public virtual void double_ToDecimal()
+        {
+            double doubleValue = default(double);
 
+            TestSubject.ToDecimal(doubleValue);
 
-        //    TestSubject.ToDecimal(longValue);
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToDecimal")]
-        //[Test()]
-        //public virtual void ToDecimal()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-        //    object objectValue = new object();
-
-        //    TestSubject.ToDecimal(objectValue);
-
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToDecimal")]
-        //[Test()]
-        //public virtual void ToDecimal()
-        //{
+        [Test, OfMember("ToDecimal(short)")]        
+        public virtual void short_ToDecimal()
+        {
+            short shortValue = default(short);
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            TestSubject.ToDecimal(shortValue);
 
-        //    // Create Test Method Parameters
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // There is no default constuctor for the parameter sbyteValue type SByte.
-        //    sbyte sbyteValue;
+        [Test, OfMember("ToDecimal(int)")]        
+        public virtual void int_ToDecimal()
+        {
+            int intValue = default(int);
 
+            TestSubject.ToDecimal(intValue);
 
-        //    TestSubject.ToDecimal(sbyteValue);
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToDecimal")]
-        //[Test()]
-        //public virtual void ToDecimal()
-        //{
+        [Test, OfMember("ToDecimal(long)")]        
+        public virtual void long_ToDecimal()
+        {
+            long longValue = default(long);
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            TestSubject.ToDecimal(longValue);
 
-        //    // Create Test Method Parameters
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // There is no default constuctor for the parameter floatValue type Single.
-        //    float floatValue;
+        [Test, OfMember("ToDecimal(object)")]        
+        public virtual void object_ToDecimal()
+        {
+            object objectValue = null;
 
+            TestSubject.ToDecimal(objectValue);
 
-        //    TestSubject.ToDecimal(floatValue);
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToDecimal")]
-        //[Test()]
-        //public virtual void ToDecimal()
-        //{
+        [Test, OfMember("ToDecimal(sbyte)")]        
+        public virtual void sbyte_ToDecimal()
+        {
+            sbyte sbyteValue = default(sbyte);
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            TestSubject.ToDecimal(sbyteValue);
 
-        //    // Create Test Method Parameters
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // There is no default constuctor for the parameter stringValue type String.
-        //    string stringValue;
+        [Test, OfMember("ToDecimal(float)")]        
+        public virtual void float_ToDecimal()
+        {
+            float floatValue = default(float);
 
+            TestSubject.ToDecimal(floatValue);
 
-        //    TestSubject.ToDecimal(stringValue);
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
+        [Test, OfMember("ToDecimal(string)")]
         
-        //[MemberAttribute(MemberName="ToDecimal")]
-        //[Test()]
-        //public virtual void ToDecimal()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+        public virtual void string_ToDecimal()
+        {
+            string stringValue = "123123123123.123123123123";
 
-        //    // Create Test Method Parameters
+            TestSubject.ToDecimal(stringValue);
 
-        //    // There is no default constuctor for the parameter ushortValue type UInt16.
-        //    ushort ushortValue;
+            // 
+            // Write your assertions here.
+            // 
+        }
 
+        [Test, OfMember("ToDecimal(ushort)")]        
+        public virtual void ushort_ToDecimal()
+        {
+            ushort ushortValue = default(ushort);
 
-        //    TestSubject.ToDecimal(ushortValue);
+            TestSubject.ToDecimal(ushortValue);
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
-        
-        //[MemberAttribute(MemberName="ToDecimal")]
-        //[Test()]
-        //public virtual void ToDecimal()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // There is no default constuctor for the parameter uintValue type UInt32.
-        //    uint uintValue;
+        [Test, OfMember("ToDecimal(uint)")]        
+        public virtual void uint_ToDecimal()
+        {
+            uint uintValue = default(uint);
 
+            TestSubject.ToDecimal(uintValue);
 
-        //    TestSubject.ToDecimal(uintValue);
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
+        [Test, OfMember("ToDecimal(ulong)")]
         
-        //[MemberAttribute(MemberName="ToDecimal")]
-        //[Test()]
-        //public virtual void ToDecimal()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
-        //}
-        
-        //[MemberAttribute(MemberName="ToDecimal")]
-        //[Test()]
-        //public virtual void ToDecimal()
-        //{
-
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
-
-        //    // Create Test Method Parameters
+        public virtual void ulong_ToDecimal()
+        {
+            ulong ulongValue = default(ulong);
 
-        //    // There is no default constuctor for the parameter ulongValue type UInt64.
-        //    ulong ulongValue;
 
+            TestSubject.ToDecimal(ulongValue);
 
-        //    TestSubject.ToDecimal(ulongValue);
+            // 
+            // Write your assertions here.
+            // 
+        }
 
-        //    // 
-        //    // Write your assertions here.
-        //    // 
-        //}
+        //[Test, OfMember("ToDouble")]
         
-        //[MemberAttribute(MemberName="ToDouble")]
-        //[Test()]
         //public virtual void ToDouble()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -1511,14 +989,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToDouble")]
         
-        //[MemberAttribute(MemberName="ToDouble")]
-        //[Test()]
         //public virtual void ToDouble()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -1532,14 +1010,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToDouble")]
         
-        //[MemberAttribute(MemberName="ToDouble")]
-        //[Test()]
         //public virtual void ToDouble()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
         //    RecorderINullable nullableRecording = new RecorderINullable();
@@ -1550,14 +1028,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToDouble")]
         
-        //[MemberAttribute(MemberName="ToDouble")]
-        //[Test()]
         //public virtual void ToDouble()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -1571,14 +1049,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToDouble")]
         
-        //[MemberAttribute(MemberName="ToDouble")]
-        //[Test()]
         //public virtual void ToDouble()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -1592,14 +1070,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToDouble")]
         
-        //[MemberAttribute(MemberName="ToDouble")]
-        //[Test()]
         //public virtual void ToDouble()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -1613,14 +1091,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToDouble")]
         
-        //[MemberAttribute(MemberName="ToDouble")]
-        //[Test()]
         //public virtual void ToDouble()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -1634,14 +1112,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToDouble")]
         
-        //[MemberAttribute(MemberName="ToDouble")]
-        //[Test()]
         //public virtual void ToDouble()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
         //    object objectValue = new object();
@@ -1652,14 +1130,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToDouble")]
         
-        //[MemberAttribute(MemberName="ToDouble")]
-        //[Test()]
         //public virtual void ToDouble()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -1673,14 +1151,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToDouble")]
         
-        //[MemberAttribute(MemberName="ToDouble")]
-        //[Test()]
         //public virtual void ToDouble()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -1694,14 +1172,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToDouble")]
         
-        //[MemberAttribute(MemberName="ToDouble")]
-        //[Test()]
         //public virtual void ToDouble()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -1715,14 +1193,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToDouble")]
         
-        //[MemberAttribute(MemberName="ToDouble")]
-        //[Test()]
         //public virtual void ToDouble()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -1736,14 +1214,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToDouble")]
         
-        //[MemberAttribute(MemberName="ToDouble")]
-        //[Test()]
         //public virtual void ToDouble()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -1757,14 +1235,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToInteger")]
         
-        //[MemberAttribute(MemberName="ToInteger")]
-        //[Test()]
         //public virtual void ToInteger()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -1778,14 +1256,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToInteger")]
         
-        //[MemberAttribute(MemberName="ToInteger")]
-        //[Test()]
         //public virtual void ToInteger()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -1799,14 +1277,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToInteger")]
         
-        //[MemberAttribute(MemberName="ToInteger")]
-        //[Test()]
         //public virtual void ToInteger()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
         //    RecorderINullable nullableRecording = new RecorderINullable();
@@ -1817,14 +1295,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToInteger")]
         
-        //[MemberAttribute(MemberName="ToInteger")]
-        //[Test()]
         //public virtual void ToInteger()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -1838,14 +1316,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToInteger")]
         
-        //[MemberAttribute(MemberName="ToInteger")]
-        //[Test()]
         //public virtual void ToInteger()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -1859,14 +1337,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToInteger")]
         
-        //[MemberAttribute(MemberName="ToInteger")]
-        //[Test()]
         //public virtual void ToInteger()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -1880,14 +1358,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToInteger")]
         
-        //[MemberAttribute(MemberName="ToInteger")]
-        //[Test()]
         //public virtual void ToInteger()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -1901,14 +1379,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToInteger")]
         
-        //[MemberAttribute(MemberName="ToInteger")]
-        //[Test()]
         //public virtual void ToInteger()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -1922,14 +1400,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToInteger")]
         
-        //[MemberAttribute(MemberName="ToInteger")]
-        //[Test()]
         //public virtual void ToInteger()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
         //    object objectValue = new object();
@@ -1940,14 +1418,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToInteger")]
         
-        //[MemberAttribute(MemberName="ToInteger")]
-        //[Test()]
         //public virtual void ToInteger()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -1961,14 +1439,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToInteger")]
         
-        //[MemberAttribute(MemberName="ToInteger")]
-        //[Test()]
         //public virtual void ToInteger()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -1982,14 +1460,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToInteger")]
         
-        //[MemberAttribute(MemberName="ToInteger")]
-        //[Test()]
         //public virtual void ToInteger()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2003,14 +1481,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToInteger")]
         
-        //[MemberAttribute(MemberName="ToInteger")]
-        //[Test()]
         //public virtual void ToInteger()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2024,14 +1502,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToInteger")]
         
-        //[MemberAttribute(MemberName="ToInteger")]
-        //[Test()]
         //public virtual void ToInteger()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2045,14 +1523,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToInteger")]
         
-        //[MemberAttribute(MemberName="ToInteger")]
-        //[Test()]
         //public virtual void ToInteger()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2066,14 +1544,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToObject")]
         
-        //[MemberAttribute(MemberName="ToObject")]
-        //[Test()]
         //public virtual void ToObject()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
         //    object objectValue = new object();
@@ -2088,14 +1566,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToOther")]
         
-        //[MemberAttribute(MemberName="ToOther")]
-        //[Test()]
         //public virtual void ToOther()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2109,14 +1587,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToOther")]
         
-        //[MemberAttribute(MemberName="ToOther")]
-        //[Test()]
         //public virtual void ToOther()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2130,14 +1608,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToOther")]
         
-        //[MemberAttribute(MemberName="ToOther")]
-        //[Test()]
         //public virtual void ToOther()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2151,14 +1629,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToOther")]
         
-        //[MemberAttribute(MemberName="ToOther")]
-        //[Test()]
         //public virtual void ToOther()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2172,14 +1650,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToOther")]
         
-        //[MemberAttribute(MemberName="ToOther")]
-        //[Test()]
         //public virtual void ToOther()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2193,14 +1671,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToOther")]
         
-        //[MemberAttribute(MemberName="ToOther")]
-        //[Test()]
         //public virtual void ToOther()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2214,14 +1692,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToOther")]
         
-        //[MemberAttribute(MemberName="ToOther")]
-        //[Test()]
         //public virtual void ToOther()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2235,14 +1713,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToOther")]
         
-        //[MemberAttribute(MemberName="ToOther")]
-        //[Test()]
         //public virtual void ToOther()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2256,14 +1734,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToOther")]
         
-        //[MemberAttribute(MemberName="ToOther")]
-        //[Test()]
         //public virtual void ToOther()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2277,14 +1755,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToOther")]
         
-        //[MemberAttribute(MemberName="ToOther")]
-        //[Test()]
         //public virtual void ToOther()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
         //    object value = new object();
@@ -2295,14 +1773,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToOther")]
         
-        //[MemberAttribute(MemberName="ToOther")]
-        //[Test()]
         //public virtual void ToOther()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2316,14 +1794,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToOther")]
         
-        //[MemberAttribute(MemberName="ToOther")]
-        //[Test()]
         //public virtual void ToOther()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2337,14 +1815,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToOther")]
         
-        //[MemberAttribute(MemberName="ToOther")]
-        //[Test()]
         //public virtual void ToOther()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2358,14 +1836,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToOther")]
         
-        //[MemberAttribute(MemberName="ToOther")]
-        //[Test()]
         //public virtual void ToOther()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2379,14 +1857,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToOther")]
         
-        //[MemberAttribute(MemberName="ToOther")]
-        //[Test()]
         //public virtual void ToOther()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2400,14 +1878,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToOther")]
         
-        //[MemberAttribute(MemberName="ToOther")]
-        //[Test()]
         //public virtual void ToOther()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2421,14 +1899,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToOther")]
         
-        //[MemberAttribute(MemberName="ToOther")]
-        //[Test()]
         //public virtual void ToOther()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2446,25 +1924,25 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToOther")]
         
-        //[MemberAttribute(MemberName="ToOther")]
-        //[Test()]
         //public virtual void ToOther()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
         //}
+
+        //[Test, OfMember("ToReal")]
         
-        //[MemberAttribute(MemberName="ToReal")]
-        //[Test()]
         //public virtual void ToReal()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2478,14 +1956,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToReal")]
         
-        //[MemberAttribute(MemberName="ToReal")]
-        //[Test()]
         //public virtual void ToReal()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2499,14 +1977,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToReal")]
         
-        //[MemberAttribute(MemberName="ToReal")]
-        //[Test()]
         //public virtual void ToReal()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
         //    RecorderINullable nullableRecording = new RecorderINullable();
@@ -2517,14 +1995,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToReal")]
         
-        //[MemberAttribute(MemberName="ToReal")]
-        //[Test()]
         //public virtual void ToReal()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2538,14 +2016,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToReal")]
         
-        //[MemberAttribute(MemberName="ToReal")]
-        //[Test()]
         //public virtual void ToReal()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2559,14 +2037,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToReal")]
         
-        //[MemberAttribute(MemberName="ToReal")]
-        //[Test()]
         //public virtual void ToReal()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2580,14 +2058,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToReal")]
         
-        //[MemberAttribute(MemberName="ToReal")]
-        //[Test()]
         //public virtual void ToReal()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2601,14 +2079,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToReal")]
         
-        //[MemberAttribute(MemberName="ToReal")]
-        //[Test()]
         //public virtual void ToReal()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2622,14 +2100,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToReal")]
         
-        //[MemberAttribute(MemberName="ToReal")]
-        //[Test()]
         //public virtual void ToReal()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
         //    object objectValue = new object();
@@ -2640,14 +2118,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToReal")]
         
-        //[MemberAttribute(MemberName="ToReal")]
-        //[Test()]
         //public virtual void ToReal()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2661,14 +2139,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToReal")]
         
-        //[MemberAttribute(MemberName="ToReal")]
-        //[Test()]
         //public virtual void ToReal()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2682,14 +2160,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToReal")]
         
-        //[MemberAttribute(MemberName="ToReal")]
-        //[Test()]
         //public virtual void ToReal()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2703,14 +2181,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToReal")]
         
-        //[MemberAttribute(MemberName="ToReal")]
-        //[Test()]
         //public virtual void ToReal()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2724,14 +2202,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToReal")]
         
-        //[MemberAttribute(MemberName="ToReal")]
-        //[Test()]
         //public virtual void ToReal()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2745,14 +2223,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToReal")]
         
-        //[MemberAttribute(MemberName="ToReal")]
-        //[Test()]
         //public virtual void ToReal()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2766,14 +2244,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToSmallInt")]
         
-        //[MemberAttribute(MemberName="ToSmallInt")]
-        //[Test()]
         //public virtual void ToSmallInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2787,14 +2265,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToSmallInt")]
         
-        //[MemberAttribute(MemberName="ToSmallInt")]
-        //[Test()]
         //public virtual void ToSmallInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2808,14 +2286,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToSmallInt")]
         
-        //[MemberAttribute(MemberName="ToSmallInt")]
-        //[Test()]
         //public virtual void ToSmallInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2829,14 +2307,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToSmallInt")]
         
-        //[MemberAttribute(MemberName="ToSmallInt")]
-        //[Test()]
         //public virtual void ToSmallInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2850,14 +2328,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToSmallInt")]
         
-        //[MemberAttribute(MemberName="ToSmallInt")]
-        //[Test()]
         //public virtual void ToSmallInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2871,14 +2349,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToSmallInt")]
         
-        //[MemberAttribute(MemberName="ToSmallInt")]
-        //[Test()]
         //public virtual void ToSmallInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2892,14 +2370,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToSmallInt")]
         
-        //[MemberAttribute(MemberName="ToSmallInt")]
-        //[Test()]
         //public virtual void ToSmallInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2913,14 +2391,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToSmallInt")]
         
-        //[MemberAttribute(MemberName="ToSmallInt")]
-        //[Test()]
         //public virtual void ToSmallInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
         //    object objectValue = new object();
@@ -2931,14 +2409,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToSmallInt")]
         
-        //[MemberAttribute(MemberName="ToSmallInt")]
-        //[Test()]
         //public virtual void ToSmallInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2952,14 +2430,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToSmallInt")]
         
-        //[MemberAttribute(MemberName="ToSmallInt")]
-        //[Test()]
         //public virtual void ToSmallInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2973,14 +2451,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToSmallInt")]
         
-        //[MemberAttribute(MemberName="ToSmallInt")]
-        //[Test()]
         //public virtual void ToSmallInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -2994,14 +2472,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToSmallInt")]
         
-        //[MemberAttribute(MemberName="ToSmallInt")]
-        //[Test()]
         //public virtual void ToSmallInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3015,14 +2493,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToSmallInt")]
         
-        //[MemberAttribute(MemberName="ToSmallInt")]
-        //[Test()]
         //public virtual void ToSmallInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3036,14 +2514,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToSmallInt")]
         
-        //[MemberAttribute(MemberName="ToSmallInt")]
-        //[Test()]
         //public virtual void ToSmallInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3057,14 +2535,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToString")]
         
-        //[MemberAttribute(MemberName="ToString")]
-        //[Test()]
         //public virtual void ToString()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
         //    RecorderINullable nullableRecording = new RecorderINullable();
@@ -3075,14 +2553,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToString")]
         
-        //[MemberAttribute(MemberName="ToString")]
-        //[Test()]
         //public virtual void ToString()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3096,14 +2574,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToString")]
         
-        //[MemberAttribute(MemberName="ToString")]
-        //[Test()]
         //public virtual void ToString()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
         //    object value = new object();
@@ -3114,14 +2592,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToString")]
         
-        //[MemberAttribute(MemberName="ToString")]
-        //[Test()]
         //public virtual void ToString()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3135,14 +2613,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTime")]
         
-        //[MemberAttribute(MemberName="ToTime")]
-        //[Test()]
         //public virtual void ToTime()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
         //    RecorderINullable nullableRecording = new RecorderINullable();
@@ -3153,14 +2631,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTime")]
         
-        //[MemberAttribute(MemberName="ToTime")]
-        //[Test()]
         //public virtual void ToTime()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3174,14 +2652,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTime")]
         
-        //[MemberAttribute(MemberName="ToTime")]
-        //[Test()]
         //public virtual void ToTime()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
         //    object value = new object();
@@ -3192,14 +2670,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTime")]
         
-        //[MemberAttribute(MemberName="ToTime")]
-        //[Test()]
         //public virtual void ToTime()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3213,14 +2691,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTime")]
         
-        //[MemberAttribute(MemberName="ToTime")]
-        //[Test()]
         //public virtual void ToTime()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3234,14 +2712,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTimeInMillis")]
         
-        //[MemberAttribute(MemberName="ToTimeInMillis")]
-        //[Test()]
         //public virtual void ToTimeInMillis()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3255,14 +2733,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTimeInMillis")]
         
-        //[MemberAttribute(MemberName="ToTimeInMillis")]
-        //[Test()]
         //public virtual void ToTimeInMillis()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3276,14 +2754,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTimestamp")]
         
-        //[MemberAttribute(MemberName="ToTimestamp")]
-        //[Test()]
         //public virtual void ToTimestamp()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
         //    RecorderINullable nullableRecording = new RecorderINullable();
@@ -3294,14 +2772,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTimestamp")]
         
-        //[MemberAttribute(MemberName="ToTimestamp")]
-        //[Test()]
         //public virtual void ToTimestamp()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3315,14 +2793,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTimestamp")]
         
-        //[MemberAttribute(MemberName="ToTimestamp")]
-        //[Test()]
         //public virtual void ToTimestamp()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
         //    object value = new object();
@@ -3333,14 +2811,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTimestamp")]
         
-        //[MemberAttribute(MemberName="ToTimestamp")]
-        //[Test()]
         //public virtual void ToTimestamp()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3354,14 +2832,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTimestamp")]
         
-        //[MemberAttribute(MemberName="ToTimestamp")]
-        //[Test()]
         //public virtual void ToTimestamp()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3375,14 +2853,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTimestampInMillis")]
         
-        //[MemberAttribute(MemberName="ToTimestampInMillis")]
-        //[Test()]
         //public virtual void ToTimestampInMillis()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3396,14 +2874,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTimestampInMillis")]
         
-        //[MemberAttribute(MemberName="ToTimestampInMillis")]
-        //[Test()]
         //public virtual void ToTimestampInMillis()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3417,14 +2895,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTimeString")]
         
-        //[MemberAttribute(MemberName="ToTimeString")]
-        //[Test()]
         //public virtual void ToTimeString()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3450,14 +2928,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTinyInt")]
         
-        //[MemberAttribute(MemberName="ToTinyInt")]
-        //[Test()]
         //public virtual void ToTinyInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3471,14 +2949,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTinyInt")]
         
-        //[MemberAttribute(MemberName="ToTinyInt")]
-        //[Test()]
         //public virtual void ToTinyInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3492,14 +2970,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTinyInt")]
         
-        //[MemberAttribute(MemberName="ToTinyInt")]
-        //[Test()]
         //public virtual void ToTinyInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3513,14 +2991,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTinyInt")]
         
-        //[MemberAttribute(MemberName="ToTinyInt")]
-        //[Test()]
         //public virtual void ToTinyInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3534,14 +3012,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTinyInt")]
         
-        //[MemberAttribute(MemberName="ToTinyInt")]
-        //[Test()]
         //public virtual void ToTinyInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3555,14 +3033,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTinyInt")]
         
-        //[MemberAttribute(MemberName="ToTinyInt")]
-        //[Test()]
         //public virtual void ToTinyInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3576,14 +3054,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTinyInt")]
         
-        //[MemberAttribute(MemberName="ToTinyInt")]
-        //[Test()]
         //public virtual void ToTinyInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3597,14 +3075,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTinyInt")]
         
-        //[MemberAttribute(MemberName="ToTinyInt")]
-        //[Test()]
         //public virtual void ToTinyInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
         //    object objectValue = new object();
@@ -3615,14 +3093,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTinyInt")]
         
-        //[MemberAttribute(MemberName="ToTinyInt")]
-        //[Test()]
         //public virtual void ToTinyInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3636,14 +3114,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTinyInt")]
         
-        //[MemberAttribute(MemberName="ToTinyInt")]
-        //[Test()]
         //public virtual void ToTinyInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3657,14 +3135,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTinyInt")]
         
-        //[MemberAttribute(MemberName="ToTinyInt")]
-        //[Test()]
         //public virtual void ToTinyInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3678,14 +3156,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTinyInt")]
         
-        //[MemberAttribute(MemberName="ToTinyInt")]
-        //[Test()]
         //public virtual void ToTinyInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3699,14 +3177,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTinyInt")]
         
-        //[MemberAttribute(MemberName="ToTinyInt")]
-        //[Test()]
         //public virtual void ToTinyInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 
@@ -3720,14 +3198,14 @@ namespace System.Data.Hsqldb.Common.UnitTests
         //    // Write your assertions here.
         //    // 
         //}
+
+        //[Test, OfMember("ToTinyInt")]
         
-        //[MemberAttribute(MemberName="ToTinyInt")]
-        //[Test()]
         //public virtual void ToTinyInt()
         //{
 
-        //    // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-        //    System.Data.Hsqldb.Common.HsqlConvert.FromDotNet TestSubject;
+            
+
 
         //    // Create Test Method Parameters
 

@@ -28,18 +28,18 @@
     <div id="main">
         <p>
             <b>Data Query and Manipulation Language</b> (<strong>DQL</strong>/<b>DML</b>) is
-            a family of <a class="mw-redirect" href="/wiki/Computer_language" title="Computer language">
+            a family of <a class="mw-redirect" href="http://en.wikipedia.org/wiki/Computer_language" title="Computer language">
                 <span>computer languages</span></a> used by computer programs and database users
-            to create, retrieve, update and delete data in a <a href="/wiki/Database" title="Database">
+            to create, retrieve, update and delete data in a <a class="mw-redirect" href="http://en.wikipedia.org/wiki/Database" title="Database">
                 <span>database</span></a>.&nbsp; For this reason, the acronym <strong>CRUD</strong>
             is also often used to refer to this family of operations.</p>
         <p>
-            Currently the most popular data query and manipulation language is&nbsp;<a href="/wiki/SQL"
-                title="SQL"><span>SQL</span></a>, which is used to retrieve and manipulate <a href="/wiki/Data"
-                    title="Data"><span>data</span></a> in a <a href="/wiki/Relational_database" title="Relational database">
+            Currently the most popular data query and manipulation language is <a class="mw-redirect" href="http://en.wikipedia.org/wiki/SQL"
+                title="SQL"><span>SQL</span></a>, which is used to retrieve and manipulate <a class="mw-redirect" href="http://en.wikipedia.org/wiki/Data"
+                    title="Data"><span>data</span></a> in a <a class="mw-redirect" href="http://en.wikipedia.org/wiki/Relational_database" title="Relational database">
                         <span>Relational database</span></a></p>
         <p>
-            Data query and manipulation languages were initially only used by <a href="/wiki/Computer_program"
+            Data query and manipulation languages were initially only used by <a class="mw-redirect" href="http://en.wikipedia.org/wiki/Computer_program"
                 title="Computer program"><span>computer programs</span></a>, but (with the advent
             of SQL) have come to be used by people, as well.</p>
         <p>
@@ -60,29 +60,26 @@
 EXPLAIN PLAN FOR { DELETE ... | INSERT ... | SELECT ... | UPDATE ..};
         </pre>
         <p>
-            <tt><span style="font-family: Verdana">Each HSQLDB SQL statement is a </span><a href="/wiki/Declarative_programming"
-                title="Declarative programming"><span style="text-decoration: underline; font-family: Verdana;">
-                    declarative</span></a><span style="font-family: Verdana"> command, </span><span style="font-family: Verdana">
-                        as opposed to </span><a href="/wiki/Imperative_programming" title="Imperative programming">
-                            <span style="text-decoration: underline; font-family: Verdana;">imperative</span></a><span
-                                style="font-family: Verdana">, in that it describes <i>what</i> the program should
-                                accomplish, rather than describing <i>how</i> to go about accomplishing it.</span></tt></p>
+            Each HSQLDB SQL statement is a <a href="http://en.wikipedia.org/wiki/Declarative_programming"
+            title="Declarative programming">declarative</a> (as opposed to <a href="/wiki/Imperative_programming" 
+	        title="Imperative programming">imperative</a>) command, in that it describes <i>what</i> the program should
+            accomplish, rather than describing <i>how</i> to go about accomplishing it.</span></p>
         <p>
             <tt>EXPLAIN PLAN</tt> can be used with any DQL/DML command to retrieve a detailed
             list of the elements and usages in the actual execution plan, an abstract description
             of <em>how</em> HSQLDB will go about accomplishing it.</p>
         <p>
             The generated list includes elements describing which indexes are employed and the
-            role they play.&nbsp; This information can be used to understand and hand-tune query
+            role they play. This information can be used to understand and hand-tune query
             execution, as well as to determine if existing indexes are perhaps not utilized
             or opportunities exist to create new indexes to improve the efficiency of the execution
-            plan.&nbsp;</p>
+            plan.</p>
         <h3>
             INSERT</h3>
-        <pre lang="sql">INSERT INTO table [( column [,...] )]
+        <pre lang="sql">INSERT INTO &lt;table-name&gt; [( column [,...] )]
 {
-      VALUES(Expression [,...])
-    | SelectStatement
+      VALUES(&lt;value-expression&gt; [,&lt;value-expression&gt;]*)
+    | &lt;select-statement&gt;
 };
         </pre>
         <p>
@@ -90,17 +87,17 @@ EXPLAIN PLAN FOR { DELETE ... | INSERT ... | SELECT ... | UPDATE ..};
         <h3>
             SELECT</h3>
         <pre lang="sql">   SELECT [{LIMIT &lt;offset&gt; &lt;limit&gt; | TOP &lt;limit&gt; | FIRST &lt;limit&gt;}][ALL | DISTINCT]
-          { selectExpression | table.* | * } [, ...]
-    [INTO [CACHED | TEMP  | TEXT] newTable]
-     FROM tableList
-   [WHERE Condition]
-[GROUP BY Expression [, ...]]
-  [HAVING Condtion]
+          { &lt;selected-column-expression&gt; | &&lt;table-identifier&gt;.* | * } [, ...]
+    [INTO [CACHED | TEMP  | TEXT] &&lt;table-identifier&gt;]
+     FROM &lt;table-list&gt;
+   [WHERE &lt;condition-expression&gt;]
+[GROUP BY &lt;selected-column-expression&gt; [, ...]*]
+  [HAVING  &lt;condition-expression&gt;]
   [{UNION [ALL | DISTINCT] |
     MINUS [DISTINCT] |
    EXCEPT [DISTINCT] |
-INTERSECT [DISTINCT]} selectStatement]
-[ORDER BY orderExpression [, ...]]
+INTERSECT [DISTINCT]}  &lt;select-statement&gt;]
+[ORDER BY  &lt;order-by-expression&gt; [, ...]]
    [LIMIT &lt;limit&gt; [OFFSET &lt;offset&gt;]];
         </pre>
         <p>
@@ -109,32 +106,47 @@ INTERSECT [DISTINCT]} selectStatement]
             <p>
                 <strong>Components of a <tt>SELECT</tt> command</strong></p>
             <dl>
-                <dt style="margin-bottom: 1em;">tableList</dt>
+                <dt style="margin-bottom: 1em;">&lt;table-list&gt;</dt>
                 <dd>
-                    <pre lang="sql">    table [{CROSS | INNER | LEFT OUTER | RIGHT OUTER} JOIN table ON Condition] [, ...]
+                    <pre lang="sql">    &lt;table-list-item&gt;  [,...]
                     </pre>
                 </dd>
-                <dt style="margin-bottom: 1em;">table</dt>
+                <dt style="margin-bottom: 1em;"> &lt;table-list-item&gt;</dt>
                 <dd>
-                    <pre lang="sql">    { (selectStatement) [AS] label | tableName}
+                    <pre lang="sql">    &lt;table-list-term&gt; [&lt;join-expression&gt;]
+                    </pre>
+                </dd>	
+                <dt style="margin-bottom: 1em;"> &lt;table-list-term&gt;</dt>
+                <dd>
+                    <pre lang="sql">    { (&lt;select-statement&gt;) [AS] label | &lt;table-identifier&gt;}
+                    </pre>
+                </dd>				
+                <dt style="margin-bottom: 1em;">&lt;join-expression&gt;</dt>
+                <dd>
+                    <pre lang="sql">    &lt;join-expression-term&gt; [...]
                     </pre>
                 </dd>
-                <dt style="margin-bottom: 1em;">selectExpression</dt>
+				<dt style="margin-bottom: 1em;">&lt;join-expression-term&gt;</dt>
+                <dd>
+                    <pre lang="sql">    {CROSS | INNER | LEFT [OUTER] | RIGHT [OUTER]} JOIN &lt;table-list-item&gt; ON &lt;condition-expression&gt;	
+                    </pre>
+                </dd>			
+                <dt style="margin-bottom: 1em;">&lt;selected-column-expression&gt; </dt>
                 <dd>
                     <pre lang="sql">    {
-          &lt;sql-expression&gt;
+          &lt;value-expression&gt;
         | COUNT(*)
-        | COUNT([ALL | DISTINCT]] Expression)
-        | MIN([ALL | DISTINCT]] Expression)
-        | MAX([ALL | DISTINCT]] Expression)
-        | SUM([ALL | DISTINCT]] Expression)
-        | AVG([ALL | DISTINCT]] Expression)
-        | SOME([ALL | DISTINCT]] Expression)
-        | EVERY([ALL | DISTINCT]] Expression)
-        | VAR_POP(Expression)
-        | VAR_SAMP(Expression)
-        | STDDEV_POP(Expression)
-        | STDDEV_SAMP(Expression)
+        | COUNT([ALL | DISTINCT]] &lt;value-expression&gt;)
+        | MIN([ALL | DISTINCT]] &lt;value-expression&gt;)
+        | MAX([ALL | DISTINCT]] &lt;value-expression&gt;)
+        | SUM([ALL | DISTINCT]] &lt;value-expression&gt;)
+        | AVG([ALL | DISTINCT]] &lt;value-expression&gt;)
+        | SOME([ALL | DISTINCT]] &lt;boolean-expression&gt;)
+        | EVERY([ALL | DISTINCT]] &lt;boolean-expression&gt;)
+        | VAR_POP(&lt;value-expression&gt;)
+        | VAR_SAMP(&lt;value-expression&gt;)
+        | STDDEV_POP(&lt;value-expression&gt;)
+        | STDDEV_SAMP(&lt;value-expression&gt;)
     } [[AS] label]
                     </pre>
                     <p>
@@ -157,16 +169,16 @@ INTERSECT [DISTINCT]} selectStatement]
                         If <tt>CROSS JOIN</tt> is specified, no <tt>ON</tt> condition is allowed for the
                         join.</p>
                 </dd>
-                <dt style="margin-bottom: 1em;">orderExpression</dt>
+                <dt style="margin-bottom: 1em;">&lt;order-by-expression&gt;</dt>
                 <dd>
-                    <pre lang="sql">    { columnNr | columnAlias | selectExpression } [ASC | DESC]
+                    <pre lang="sql">    { &lt;selected-column-ordinal&gt; | &lt;selected-column-alias&gt; | &lt;selected-column-expression&gt; } [ASC | DESC]
                     </pre>
                 </dd>
                 <dt style="margin-bottom: 1em;"><tt>LIMIT n m</tt></dt>
                 <dd>
                     <p>
-                        Discards the first <tt>n</tt> rows <tt>(OFFSET)</tt> and returns the first <tt>m</tt>
-                        rows of the remaining result set <tt>(LIMIT)</tt>.</p>
+                        Discards the first <tt>n</tt> rows (the <tt>OFFSET</tt>) and returns the first <tt>m</tt>
+                        rows of the remaining result set (the <tt>LIMIT</tt>).</p>
                 </dd>
                 <dd>
                     <p>
@@ -175,7 +187,7 @@ INTERSECT [DISTINCT]} selectStatement]
                 <dd>
                     <p>
                         <tt>LIMIT 0 m</tt> is equivalent to <tt>TOP m</tt> or <tt>FIRST m</tt> in other
-                        RDBMS's</p>
+                        RDBMS</p>
                 </dd>
                 <dd>
                     <p>
@@ -195,36 +207,41 @@ INTERSECT [DISTINCT]} selectStatement]
                 <dt style="margin-bottom: 1em;"><tt>UNION</tt> and other set operations</dt>
                 <dd>
                     <p>
-                        Multiple <tt>UNION</tt> statements may be combined union <tt>UNION</tt>, <tt>EXCEPT</tt>
+                        Multiple set operations may be combined to form arbitrary length chains of <tt>UNION</tt>, <tt>EXCEPT</tt>
                         and <tt>INTERSECT</tt>.</p>
                 </dd>
                 <dd>
                     <p>
-                        Each <tt>SELECT</tt> is treated as a term, and the set operation as an operator
-                        in an expression.</p>
+                        Within a chain of set operations, each <tt>SELECT</tt> is treated as a term and each <tt>UNION</tt>, <tt>EXCEPT</tt>
+                        and <tt>INTERSECT</tt> is treated as an operator.</p>
                 </dd>
                 <dd>
                     <p>
-                        The expression is evaluated from left to right but <tt>INTERSECT</tt> has highest
-                        precedence.</p>
+                        By default, set operations are evaluated from left to right using equal precedence, with the exception
+						of <tt>INTERSECT</tt>, which is considered to have the highest precedence.</p>
                 </dd>
                 <dd>
                     <p>
-                        You can use parentheses around any number of <tt>SELECT</tt> statements to manually
-                        control the precedence.</p>
+                        Because not all set operations are commutative, however, parentheses may be used to override the default
+						set operation evaluation prececdence .</p>
                 </dd>
             </dl>
         </div>
         <h3>
             UPDATE</h3>
-        <pre lang="sql">UPDATE table
-   SET column = Expression [, ...]
-[WHERE Condition];
+        <pre lang="sql">UPDATE &lt;table-name&gt;
+   SET &lt;column-name&gt; = &lt;value-expression&gt; [, &lt;column-name&gt; = &lt;value-expression&gt;]*
+[WHERE &lt;condition-expression&gt;]
         </pre>
         <p>
             Modifies data of a table in the database.</p>
+        <div id="footer">
+            <div class="footerLine">
+                <img alt="footer.gif" width="100%" height="3px" src="../../icons/footer.gif" title="Footer image" />
+            </div>
+            <include item="footer" />
+        </div>		
     </div>
-    <include item="footer" />
 </body>
 </html>
 <!-- @SortOrder 2 -->

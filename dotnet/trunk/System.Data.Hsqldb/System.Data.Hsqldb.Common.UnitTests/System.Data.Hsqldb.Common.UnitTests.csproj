@@ -54,7 +54,6 @@
     <Compile Include="IO.UnitTests\BaseJavaInputStream.cs" />
     <Compile Include="IO.UnitTests\BaseNonClosableStream.cs" />
     <Compile Include="IO.UnitTests\BaseStreamAdapter.cs" />
-    <Compile Include="IO.UnitTests\IOTest.cs" />
     <Compile Include="IO.UnitTests\TestJavaInputStreamAdapter.cs" />
     <Compile Include="IO.UnitTests\TestJavaInputStreamWrapper.cs" />
     <Compile Include="IO.UnitTests\TestJavaOutputStreamAdapter.cs" />

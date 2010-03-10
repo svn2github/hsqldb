@@ -1,11 +1,11 @@
 using System;
 using System.Data.Hsqldb.TestCoverage;
 using NUnit.Framework;
-
+using TestCategory = NUnit.Framework.CategoryAttribute;
 
 namespace System.Data.Hsqldb.Client.UnitTests
 {
-    [TestFixture, ForSubject(typeof(HsqlDataAdapter))]
+    [TestFixture, TestCategory("DbDataAdapter"), ForSubject(typeof(HsqlDataAdapter))]
     public class TestHsqlDataAdapter
     {        
         [Test, OfMember("Clone")]

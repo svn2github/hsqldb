@@ -6,7 +6,7 @@ using System.IO;
 
 namespace System.Data.Hsqldb.Common.IO.UnitTests
 {
-    [TestFixture, ForSubject(typeof(JavaOutputStreamAdapter))]
+    [TestFixture, Category("IO"), ForSubject(typeof(JavaOutputStreamAdapter))]
     public class TestJavaOutputStreamAdapter
     {
         static JavaOutputStreamAdapter NewTestSubject()
@@ -37,6 +37,14 @@ namespace System.Data.Hsqldb.Common.IO.UnitTests
             }
         }
 
+        [Test, OfMember("close"), OfMember("Dispose")]
+        public void closeAfterDispose()
+        {
+            JavaOutputStreamAdapter testSubject = NewTestSubject();
+            testSubject.Dispose();
+            testSubject.close();            
+        }
+
         [Test, OfMember("close"), ExpectedException(typeof(java.io.IOException))]
         public void closeWithIOException()
         {
@@ -58,6 +66,14 @@ namespace System.Data.Hsqldb.Common.IO.UnitTests
             testSubject.write(1);
         }
 
+        [Test, OfMember("Dispose")]
+        public void DisposeAfterDispose()
+        {
+            JavaOutputStreamAdapter testSubject = NewTestSubject();
+            testSubject.Dispose();
+            testSubject.Dispose();
+        }
+
         [Test, OfMember("flush")]
         public void flush()
         {
@@ -65,6 +81,14 @@ namespace System.Data.Hsqldb.Common.IO.UnitTests
             {
                 testSubject.flush();
             }
+        }
+
+        [Test, OfMember("flush"), OfMember("Dispose")]
+        public void flushAfterDispose()
+        {
+            JavaOutputStreamAdapter testSubject = NewTestSubject();
+            testSubject.Dispose();
+            testSubject.flush();
         }
 
         [Test, OfMember("flush"), ExpectedException(typeof(java.io.IOException))]

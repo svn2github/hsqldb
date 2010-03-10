@@ -1016,7 +1016,7 @@ namespace System.Data.Hsqldb.Common
             [CLSCompliant(false)]
             public static JavaLong ToBigInt(string stringValue)
             {
-                return ToBigInt(ParseBigInt(stringValue));
+                return ParseBigInt(stringValue);
             }
             #endregion
 
@@ -3757,7 +3757,14 @@ namespace System.Data.Hsqldb.Common
             [CLSCompliant(false)]
             public static JavaBigDecimal ToDecimal(string stringValue)
             {
-                return new JavaBigDecimal(stringValue);
+                try
+                {
+                    return new JavaBigDecimal(stringValue);
+                }
+                catch (Exception)
+                {
+                    throw UnsupportedInputDataFormat(stringValue, Types.DECIMAL);
+                }
             }
             #endregion
 

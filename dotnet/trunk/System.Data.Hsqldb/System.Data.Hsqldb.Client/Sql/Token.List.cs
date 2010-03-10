@@ -220,6 +220,9 @@ namespace System.Data.Hsqldb.Client.Sql
         /// <summary>
         /// Constructs a copy of the given <c>HsqlTokenList</c>.
         /// </summary>
+        /// <remarks>
+        /// TODO: Implement Mutable token list.
+        /// </remarks>
         /// <param name="from">which to copy.</param>
         public TokenList(TokenList from)
         {
@@ -571,13 +574,11 @@ namespace System.Data.Hsqldb.Client.Sql
         /// the statically-bound representation of this list.
         /// </returns>
         /// <remarks>
-        /// The statically-bound representation of this list is the
-        /// one in which each named parameter list element whose <c>Value</c>
-        /// property equals the <c>ParameterName</c> property of an
-        /// <c>HsqlParameter</c> object in the given collection is
-        /// replaced by an SQL literal character sequence representating the
+        /// The statically-bound representation of this list is the charater
+        /// sequence representation in which each <c>NamedParameter</c> <c>Token</c> 
+        /// is replaced by an SQL literal character sequence representating the
         /// <c>Value</c> property of the matching <c>HsqlParameter</c>
-        /// object.
+        /// object from the given <c>parameters</c> collection.
         /// </remarks>
         public StringBuilder AppendStaticallyBoundForm(StringBuilder sb,
                          HsqlParameterCollection parameters,
@@ -591,12 +592,12 @@ namespace System.Data.Hsqldb.Client.Sql
             {
                 throw new HsqlDataSourceException(
                     "Cannot statically bind parameter markers"
-                    + " ('?' tokens) by name.");
+                    + " ('?' tokens) by name."); //NOI18N
             }
-
-            // Not perfectly accurate, but better than nothing.
+            
             if (sb == null)
             {
+                // Not perfectly accurate preallocation, but better than nothing.
                 sb = new StringBuilder(m_normalizedCapacity);
             }
             else

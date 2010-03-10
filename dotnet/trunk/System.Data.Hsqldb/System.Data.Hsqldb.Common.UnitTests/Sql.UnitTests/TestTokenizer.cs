@@ -10,11 +10,12 @@ using System.Collections.Generic;
 
 using HsqlBinary = org.hsqldb.types.Binary;
 using HsqlStringConverter = org.hsqldb.lib.StringConverter;
+using TestCategory = NUnit.Framework.CategoryAttribute;
 #endregion
 
 namespace System.Data.Hsqldb.Common.Sql.UnitTests
 {
-    [TestFixture, ForSubject(typeof(Tokenizer))]
+    [TestFixture, TestCategory("SQL"), ForSubject(typeof(Tokenizer))]
     public class TestTokenizer
     {
         [Test, OfMember("EnforceTwoPartIdentifierChain")]
@@ -863,31 +864,73 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
         [Test, OfMember("ParameterName")]
         public void ParameterName()
         {
-            Assert.Fail("TODO");
+            Tokenizer testSubject = new Tokenizer("select @p_dummy from DUAL");
+
+            testSubject.GetNextAsSimpleToken();
+            testSubject.GetNextAsString();
+
+            Assert.AreEqual("p_dummy", testSubject.ParameterName);
+            Assert.AreEqual('@', testSubject.ParameterNamePrefix);
+            
         }
 
         [Test, OfMember("PartMarker")]
         public void PartMarker()
         {
-            Assert.Fail("TODO");
+            Tokenizer testSubject = new Tokenizer("part of this");
+
+            testSubject.SetPartMarker();
+            int origin = testSubject.PartMarker;
+            testSubject.GetNextAsString();
+            testSubject.GetNextAsString();
+            Assert.AreEqual("part of", testSubject.GetPart(origin, testSubject.Position));
         }
 
         [Test, OfMember("Position")]
         public void Position()
         {
-            Assert.Fail("TODO");
+            Tokenizer testSubject = new Tokenizer("the relative position is");
+
+            Assert.AreEqual(0, testSubject.Position);
+
+            testSubject.GetNextAsSimpleToken();
+            testSubject.GetNextAsString();
+
+            Assert.AreEqual("the relative".Length, testSubject.Position);
         }
         
         [Test, OfMember("Reset")]
         public void Reset()
         {
-            Assert.Fail("TODO"); 
+            Tokenizer testSubject = new Tokenizer("Foo Bar BAz");
+
+            string source1 = testSubject.GetPart(0, "Foo Bar BAz".Length);
+
+            testSubject.Reset("baZ BAR foo");
+
+            string source2 = testSubject.GetPart(0, "baZ BAR foo".Length);
+
+            Assert.AreNotEqual(source1, source2);
+
+            Assert.AreEqual("Foo Bar BAz", source1);
+            Assert.AreEqual("baZ BAR foo", source2);
         }
         
         [Test, OfMember("SetPartMarker")]
         public void SetPartMarker()
         {
-            Assert.Fail("TODO");
+            Tokenizer testSubject = new Tokenizer("set part marker");
+
+            testSubject.SetPartMarker();            
+            testSubject.GetNextAsString();
+            testSubject.GetNextAsString();
+            
+            Assert.AreEqual("set part", testSubject.GetPart(testSubject.PartMarker, testSubject.Position));
+
+            testSubject.SetPartMarker();                        
+            testSubject.GetNextAsString();
+
+            Assert.AreEqual(" marker", testSubject.GetPart(testSubject.PartMarker, testSubject.Position));
         }
 
         [Test, OfMember("TokenType")]
@@ -1075,25 +1118,25 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
             testSubject.GetThis("TEST");
 
             Assert.AreEqual(false, testSubject.WasNamedParameter);
-            Assert.AreEqual(null, testSubject.ParameterName);
+            Assert.AreEqual(string.Empty, testSubject.ParameterName);
             Assert.AreEqual(' ', testSubject.ParameterNamePrefix);
 
             testSubject.GetThis(Token.ValueFor.SET);
 
             Assert.AreEqual(false, testSubject.WasNamedParameter);
-            Assert.AreEqual(null, testSubject.ParameterName);
+            Assert.AreEqual(string.Empty, testSubject.ParameterName);
             Assert.AreEqual(' ', testSubject.ParameterNamePrefix);
 
             testSubject.GetThis("ID");
 
             Assert.AreEqual(false, testSubject.WasNamedParameter);
-            Assert.AreEqual(null, testSubject.ParameterName);
+            Assert.AreEqual(string.Empty, testSubject.ParameterName);
             Assert.AreEqual(' ', testSubject.ParameterNamePrefix);
 
             testSubject.GetThis(Token.ValueFor.EQUALS);
 
             Assert.AreEqual(false, testSubject.WasNamedParameter);
-            Assert.AreEqual(null, testSubject.ParameterName);
+            Assert.AreEqual(string.Empty, testSubject.ParameterName);
             Assert.AreEqual(' ', testSubject.ParameterNamePrefix);
 
             testSubject.GetNextAsString();
@@ -1105,19 +1148,19 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
             testSubject.GetThis(Token.ValueFor.COMMA);
 
             Assert.AreEqual(false, testSubject.WasNamedParameter);
-            Assert.AreEqual(null, testSubject.ParameterName);
+            Assert.AreEqual(string.Empty, testSubject.ParameterName);
             Assert.AreEqual(' ', testSubject.ParameterNamePrefix);
 
             testSubject.GetThis("VAL");
 
             Assert.AreEqual(false, testSubject.WasNamedParameter);
-            Assert.AreEqual(null, testSubject.ParameterName);
+            Assert.AreEqual(string.Empty, testSubject.ParameterName);
             Assert.AreEqual(' ', testSubject.ParameterNamePrefix);
 
             testSubject.GetThis(Token.ValueFor.EQUALS);
 
             Assert.AreEqual(false, testSubject.WasNamedParameter);
-            Assert.AreEqual(null, testSubject.ParameterName);
+            Assert.AreEqual(string.Empty, testSubject.ParameterName);
             Assert.AreEqual(' ', testSubject.ParameterNamePrefix);
 
             testSubject.GetNextAsString();

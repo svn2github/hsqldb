@@ -417,7 +417,7 @@ td.line {
 
 .nowrap * { white-space: nowrap; }
 
-.nb { color: Orange; font-weight: bold; }
+.nb { color: DarkOrange; font-weight: bold; }
 
 .warning { color: OrangeRed }
 
