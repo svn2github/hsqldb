@@ -38,6 +38,7 @@ import java.io.InputStream;
 
 import org.hsqldb.Database;
 import org.hsqldb.lib.HsqlByteArrayInputStream;
+import org.hsqldb.lib.ResourceStreamProvider;
 
 /**
  * This class is a random access wrapper around a DataInputStream object and
@@ -226,7 +227,7 @@ final class ScaledRAFileInJar implements ScaledRAInterface {
             file.close();
         }
 
-        InputStream fis = getClass().getResourceAsStream(fileName);
+        InputStream fis = ResourceStreamProvider.getResourceAsStream(fileName);
 
         file = new DataInputStream(fis);
     }

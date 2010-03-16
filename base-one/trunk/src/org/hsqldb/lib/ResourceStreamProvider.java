@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2010, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,13 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+
 package org.hsqldb.lib;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import org.hsqldb.HsqlException;
-import org.hsqldb.Trace;
+
 import org.hsqldb.persist.Logger;
 
 /**
@@ -47,90 +48,74 @@ import org.hsqldb.persist.Logger;
  * @since 1.8.1.3
  */
 public class ResourceStreamProvider {
-    
+
     private static ClassLoader loader;
-	private static HashSet forbiddenProtocols = new HashSet();
-	
-	static {
-	    forbiddenProtocols.add("file");
-	}
-    
-    private ResourceStreamProvider() {
+    private static HashSet     forbiddenProtocols = new HashSet();
+
+    static {
+        forbiddenProtocols.add("file");
     }
-    
-    public static synchronized void setLoader(ClassLoader loader)
-    {
+
+    private ResourceStreamProvider() {}
+
+    public static synchronized void setLoader(ClassLoader loader) {
         ResourceStreamProvider.loader = loader;
     }
-    
-    public static synchronized ClassLoader getLoader()
-    {
+
+    public static synchronized ClassLoader getLoader() {
         return ResourceStreamProvider.loader;
     }
-	
-	public static Set forbiddenProtocols() {
-	    return forbiddenProtocols;
-	}
-    
-    public static boolean exists(String resource)
-    {
-        ClassLoader loader = ResourceStreamProvider.getLoader();
-        
-        URL url = null;
-        
-        if (loader == null)
-        {
-            url = Logger.class.getResource(resource);            
-        }
-        else
-        {
-            url = loader.getResource(resource);
-            
-            if (url == null)
-            {
-                url = Logger.class.getResource(resource);
-            }
-        }  
-        
-        return url != null &&  !forbiddenProtocols().contains(url.getProtocol());
+
+    public static Set forbiddenProtocols() {
+        return forbiddenProtocols;
     }
-    
-    public static InputStream getResourceAsStream(String resource) 
-    throws IOException
-    {
+
+    public static boolean exists(String resource) {
+
         ClassLoader loader = ResourceStreamProvider.getLoader();
-        
-        URL url = null;
-        
-        if (loader == null)
-        {
-            url = Logger.class.getResource(resource);            
-        }
-        else
-        {
+        URL         url    = null;
+
+        if (loader == null) {
+            url = Logger.class.getResource(resource);
+        } else {
             url = loader.getResource(resource);
-            
-            if (url == null)
-            {
+
+            if (url == null) {
                 url = Logger.class.getResource(resource);
             }
         }
-        
-        if (url == null)
-        {
-           throw new IOException(
-                    "Missing resource: " + resource);
+
+        return url != null
+               && !forbiddenProtocols().contains(url.getProtocol());
+    }
+
+    public static InputStream getResourceAsStream(String resource)
+    throws IOException {
+
+        ClassLoader loader = ResourceStreamProvider.getLoader();
+        URL         url    = null;
+
+        if (loader == null) {
+            url = Logger.class.getResource(resource);
+        } else {
+            url = loader.getResource(resource);
+
+            if (url == null) {
+                url = Logger.class.getResource(resource);
+            }
         }
-        
+
+        if (url == null) {
+            throw new IOException("Missing resource: " + resource);
+        }
+
         String protocol = url.getProtocol();
-        
-        if (forbiddenProtocols.contains(protocol))
-        {
-            throw new IOException(
-                    "Wrong protocol ["+protocol+"] for resource : " + resource);
+
+        if (forbiddenProtocols.contains(protocol)) {
+            throw new IOException("Wrong protocol [" + protocol
+                                  + "] for resource : " + resource);
         }
-        
-       return url.openStream();
+
+        return url.openStream();
     }
-    
 }

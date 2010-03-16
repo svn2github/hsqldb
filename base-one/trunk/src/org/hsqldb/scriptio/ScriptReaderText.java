@@ -43,6 +43,7 @@ import org.hsqldb.Result;
 import org.hsqldb.Session;
 import org.hsqldb.Trace;
 import org.hsqldb.lib.SimpleLog;
+import org.hsqldb.lib.ResourceStreamProvider;
 import org.hsqldb.lib.StringConverter;
 import org.hsqldb.rowio.RowInputTextLog;
 
@@ -73,7 +74,7 @@ public class ScriptReaderText extends ScriptReaderBase {
     protected void openFile() throws IOException {
 
         InputStream d = db.isFilesInJar()
-                        ? getClass().getResourceAsStream(fileName)
+                        ? ResourceStreamProvider.getResourceAsStream(fileName)
                         : db.getFileAccess().openInputStreamElement(fileName);
 
         dataStreamIn = new BufferedReader(
