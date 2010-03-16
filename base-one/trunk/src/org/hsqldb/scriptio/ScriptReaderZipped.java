@@ -40,7 +40,6 @@ import java.util.zip.InflaterInputStream;
 
 import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
-import org.hsqldb.lib.ResourceStreamProvider;
 
 /**
  *
@@ -58,7 +57,7 @@ class ScriptReaderZipped extends ScriptReaderBinary {
     protected void openFile() throws IOException {
 
         InputStream d = db.isFilesInJar()
-                        ? ResourceStreamProvider.getResourceAsStream(fileName)
+                        ? getClass().getResourceAsStream(fileName)
                         : db.getFileAccess().openInputStreamElement(fileName);
 
         dataStreamIn = new DataInputStream(

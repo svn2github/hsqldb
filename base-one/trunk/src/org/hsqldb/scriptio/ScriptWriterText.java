@@ -32,6 +32,7 @@
 package org.hsqldb.scriptio;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
@@ -68,25 +69,39 @@ public class ScriptWriterText extends ScriptWriterBase {
     RowOutputTextLog rowOut;
 
     // todo - perhaps move this global into a lib utility class
-    public static final byte[] BYTES_LINE_SEP;
+    public final static byte[] BYTES_LINE_SEP;
+    static final byte[]        BYTES_COMMIT;
+    static final byte[]        BYTES_INSERT_INTO;
+    static final byte[]        BYTES_VALUES;
+    static final byte[]        BYTES_TERM;
+    static final byte[]        BYTES_DELETE_FROM;
+    static final byte[]        BYTES_WHERE;
+    static final byte[]        BYTES_SEQUENCE;
+    static final byte[]        BYTES_SEQUENCE_MID;
+    static final byte[]        BYTES_C_ID_INIT;
+    static final byte[]        BYTES_C_ID_TERM;
+    static final byte[]        BYTES_SCHEMA;
 
     static {
         String sLineSep = System.getProperty("line.separator", "\n");
 
-        BYTES_LINE_SEP = sLineSep.getBytes();
+        try {
+            BYTES_LINE_SEP     = sLineSep.getBytes("ISO8859-1");
+            BYTES_COMMIT       = "COMMIT".getBytes("ISO8859-1");
+            BYTES_INSERT_INTO  = "INSERT INTO ".getBytes("ISO8859-1");
+            BYTES_VALUES       = " VALUES(".getBytes("ISO8859-1");
+            BYTES_TERM         = ")".getBytes("ISO8859-1");
+            BYTES_DELETE_FROM  = "DELETE FROM ".getBytes("ISO8859-1");
+            BYTES_WHERE        = " WHERE ".getBytes("ISO8859-1");
+            BYTES_SEQUENCE     = "ALTER SEQUENCE ".getBytes("ISO8859-1");
+            BYTES_SEQUENCE_MID = " RESTART WITH ".getBytes("ISO8859-1");
+            BYTES_C_ID_INIT    = "/*C".getBytes("ISO8859-1");
+            BYTES_C_ID_TERM    = "*/".getBytes("ISO8859-1");
+            BYTES_SCHEMA       = "SET SCHEMA ".getBytes("ISO8859-1");
+        } catch (UnsupportedEncodingException uuex) {
+            throw new java.lang.RuntimeException(uuex.getMessage());
+        }
     }
-
-    static final byte[] BYTES_COMMIT       = "COMMIT".getBytes();
-    static final byte[] BYTES_INSERT_INTO  = "INSERT INTO ".getBytes();
-    static final byte[] BYTES_VALUES       = " VALUES(".getBytes();
-    static final byte[] BYTES_TERM         = ")".getBytes();
-    static final byte[] BYTES_DELETE_FROM  = "DELETE FROM ".getBytes();
-    static final byte[] BYTES_WHERE        = " WHERE ".getBytes();
-    static final byte[] BYTES_SEQUENCE     = "ALTER SEQUENCE ".getBytes();
-    static final byte[] BYTES_SEQUENCE_MID = " RESTART WITH ".getBytes();
-    static final byte[] BYTES_C_ID_INIT    = "/*C".getBytes();
-    static final byte[] BYTES_C_ID_TERM    = "*/".getBytes();
-    static final byte[] BYTES_SCHEMA       = "SET SCHEMA ".getBytes();
 
     ScriptWriterText() {}
 
@@ -131,8 +146,7 @@ public class ScriptWriterText extends ScriptWriterBase {
     }
 
     public void writeLogStatement(Session session,
-                                  String s)
-                                  throws IOException, HsqlException {
+                                  String s) throws IOException, HsqlException {
 
         schemaToLog = session.currentSchema;
         busyWriting = true;
@@ -216,8 +230,8 @@ public class ScriptWriterText extends ScriptWriterBase {
         rowOut.write(BYTES_DELETE_FROM);
         rowOut.writeString(table.getName().statementName);
         rowOut.write(BYTES_WHERE);
-        rowOut.writeData(table.getColumnCount(), table.getColumnTypes(),
-                         data, table.columnList, table.getPrimaryKey());
+        rowOut.writeData(table.getColumnCount(), table.getColumnTypes(), data,
+                         table.columnList, table.getPrimaryKey());
         rowOut.write(BYTES_LINE_SEP);
         fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
 

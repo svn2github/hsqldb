@@ -1376,10 +1376,10 @@ public class Server implements HsqlSocketRequestHandler {
      * @param action a code indicating what has happend
      */
     final void notify(int action, int id) {
-	    notifyImpl(action, id);
-	}
-	
-	protected void notifyImpl(int action, int id) {
+        notifyImpl(action, id);
+    }
+
+    protected void notifyImpl(int action, int id) {
 
         printWithThread("notifiy(" + action + "," + id + ") entered");
 
