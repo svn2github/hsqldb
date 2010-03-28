@@ -535,13 +535,23 @@ public class Log {
         return writeDelay;
     }
 
+    /**
+     * Write delay 0 means sync on each commit. Values larger than 0 and less
+     * than 10 ms are treated as 10 ms.
+     */
     void setWriteDelay(int delay) {
+
+        if (delay > 0 && delay < 10) {
+            delay = 10;
+        }
 
         writeDelay = delay;
 
         if (dbLogWriter != null) {
-            synchLog();
+            dbLogWriter.forceSync();
+            dbLogWriter.stop();
             dbLogWriter.setWriteDelay(delay);
+            dbLogWriter.start();
         }
     }
 

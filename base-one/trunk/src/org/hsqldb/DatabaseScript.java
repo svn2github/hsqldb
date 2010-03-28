@@ -165,8 +165,8 @@ public class DatabaseScript {
             boolean millis = delay < 1000;
 
             if (millis) {
-                if (delay != 0 && delay < 20) {
-                    delay = 20;
+                if (delay != 0 && delay < 10) {
+                    delay = 10;
                 }
             } else {
                 delay /= 1000;

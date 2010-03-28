@@ -194,6 +194,7 @@ class DatabaseCommandInterpreter {
                                                + Token.T_SCHEMA + ' '
                                                + schemaName.statementName
                                                + ' ' + Token.T_CASCADE);
+                    database.logger.synchLog();
                     session.endSchemaDefinition();
                 }
             } catch (HsqlException e) {}
@@ -3281,6 +3282,7 @@ class DatabaseCommandInterpreter {
 
         if (sourceDDL != null) {
             database.logger.writeToLog(session, sourceDDL);
+            database.logger.synchLog();
         }
     }
 
@@ -3388,6 +3390,7 @@ class DatabaseCommandInterpreter {
 
         userObject.setPassword(password);
         database.logger.writeToLog(session, userObject.getAlterUserDDL());
+        database.logger.synchLog();
         session.setScripting(false);
     }
 

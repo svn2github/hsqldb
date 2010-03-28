@@ -197,6 +197,27 @@ public abstract class ScriptWriterBase implements Runnable {
         }
     }
 
+    /**
+     *  Called externally.
+     */
+    public synchronized void forceSync() {
+
+        if (fileStreamOut != null) {
+            try {
+                fileStreamOut.flush();
+                outDescriptor.sync();
+
+                syncCount++;
+            } catch (IOException e) {
+                Trace.printSystemOut("flush() or sync() error: "
+                                     + e.toString());
+            }
+
+            needsSync = false;
+            forceSync = false;
+        }
+    }
+
     public void close() throws HsqlException {
 
         stop();
@@ -297,7 +318,7 @@ public abstract class ScriptWriterBase implements Runnable {
                         break;
 
                     case Table.TEXT_TABLE :
-                        script = includeCachedData &&!t.isReadOnly();
+                        script = includeCachedData && !t.isReadOnly();
                         break;
                 }
 
@@ -335,12 +356,11 @@ public abstract class ScriptWriterBase implements Runnable {
         writeDataTerm();
     }
 
-    protected void writeTableInit(Table t)
-    throws HsqlException, IOException {}
+    protected void writeTableInit(Table t) throws HsqlException, IOException {}
 
     protected void writeTableTerm(Table t) throws HsqlException, IOException {
 
-        if (t.isDataReadOnly() &&!t.isTemp() &&!t.isText()) {
+        if (t.isDataReadOnly() && !t.isTemp() && !t.isText()) {
             StringBuffer a = new StringBuffer("SET TABLE ");
 
             a.append(t.getName().statementName);
@@ -409,22 +429,15 @@ public abstract class ScriptWriterBase implements Runnable {
     }
 
     public void setWriteDelay(int delay) {
-
         writeDelay = delay;
-
-        int period = writeDelay == 0 ? 1000
-                                     : writeDelay;
-
-        HsqlTimer.setPeriod(timerTask, period);
     }
 
     public void start() {
 
-        int period = writeDelay == 0 ? 1000
-                                     : writeDelay;
-
-        timerTask = DatabaseManager.getTimer().schedulePeriodicallyAfter(0,
-                period, this, false);
+        if (writeDelay > 0) {
+            timerTask = DatabaseManager.getTimer().schedulePeriodicallyAfter(0,
+                    writeDelay, this, false);
+        }
     }
 
     public void stop() {
