@@ -134,7 +134,7 @@ public class RAShadowFile {
             source.seek(position);
             source.read(buffer, 12, readSize);
             dest.seek(writePos);
-            dest.write(buffer);
+            dest.write(buffer, 0, buffer.length);
         } catch (Throwable t) {
             bitMap.unset(pageOffset);
             close();
@@ -157,6 +157,7 @@ public class RAShadowFile {
     void close() throws IOException {
 
         if (dest != null) {
+            dest.getFD().sync();
             dest.close();
 
             dest = null;
@@ -177,10 +178,11 @@ public class RAShadowFile {
             long   position = source.readLong();
             byte[] buffer   = new byte[size];
 
-            source.read(buffer);
+            source.read(buffer, 0, buffer.length);
             dest.seek(position);
-            dest.write(buffer);
+            dest.write(buffer, 0, buffer.length);
         }
+
         source.close();
         dest.close();
     }

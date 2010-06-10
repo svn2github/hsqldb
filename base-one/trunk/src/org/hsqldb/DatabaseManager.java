@@ -81,13 +81,16 @@ public class DatabaseManager {
      */
     public static Vector getDatabaseURIs() {
 
-        Vector   v  = new Vector();
-        Iterator it = databaseIDMap.values().iterator();
+        Vector v = new Vector();
 
-        while (it.hasNext()) {
-            Database db = (Database) it.next();
+        synchronized (databaseIDMap) {
+            Iterator it = databaseIDMap.values().iterator();
 
-            v.addElement(db.getURI());
+            while (it.hasNext()) {
+                Database db = (Database) it.next();
+
+                v.addElement(db.getURI());
+            }
         }
 
         return v;
@@ -103,14 +106,16 @@ public class DatabaseManager {
      */
     public static void closeDatabases(int mode) {
 
-        Iterator it = databaseIDMap.values().iterator();
+        synchronized (databaseIDMap) {
+            Iterator it = databaseIDMap.values().iterator();
 
-        while (it.hasNext()) {
-            Database db = (Database) it.next();
+            while (it.hasNext()) {
+                Database db = (Database) it.next();
 
-            try {
-                db.close(mode);
-            } catch (HsqlException e) {}
+                try {
+                    db.close(mode);
+                } catch (HsqlException e) {}
+            }
         }
     }
 
@@ -120,7 +125,11 @@ public class DatabaseManager {
     static Session newSession(int dbID, String user,
                               String password) throws HsqlException {
 
-        Database db = (Database) databaseIDMap.get(dbID);
+        Database db = null;
+
+        synchronized (databaseIDMap) {
+            db = (Database) databaseIDMap.get(dbID);
+        }
 
         return db == null ? null
                           : db.connect(user, password);
@@ -148,7 +157,11 @@ public class DatabaseManager {
      */
     static Session getSession(int dbId, int sessionId) {
 
-        Database db = (Database) databaseIDMap.get(dbId);
+        Database db = null;
+
+        synchronized (databaseIDMap) {
+            db = (Database) databaseIDMap.get(dbId);
+        }
 
         return db == null ? null
                           : db.sessionManager.getSession(sessionId);
@@ -260,9 +273,11 @@ public class DatabaseManager {
             db            = new Database(type, path, key, props);
             db.databaseID = dbIDCounter;
 
-            databaseIDMap.put(dbIDCounter, db);
+            synchronized (databaseIDMap) {
+                databaseIDMap.put(dbIDCounter, db);
 
-            dbIDCounter++;
+                dbIDCounter++;
+            }
 
             databaseMap.put(key, db);
         }
@@ -318,7 +333,10 @@ public class DatabaseManager {
                                      "DatabaseManager.addDatabaseObject()");
         }
 
-        databaseIDMap.put(db.databaseID, db);
+        synchronized (databaseIDMap) {
+            databaseIDMap.put(db.databaseID, db);
+        }
+
         databaseMap.put(key, db);
     }
 
@@ -350,24 +368,26 @@ public class DatabaseManager {
             try {
                 key = filePathToKey(path);
             } catch (HsqlException e) {
-                Iterator it       = databaseMap.keySet().iterator();
-                Object   foundKey = null;
+                synchronized (databaseMap) {
+                    Iterator it       = databaseMap.keySet().iterator();
+                    Object   foundKey = null;
 
-                while (it.hasNext()) {
-                    Object currentKey = it.next();
+                    while (it.hasNext()) {
+                        Object currentKey = it.next();
 
-                    if (databaseMap.get(currentKey) == database) {
-                        foundKey = currentKey;
+                        if (databaseMap.get(currentKey) == database) {
+                            foundKey = currentKey;
 
-                        break;
+                            break;
+                        }
                     }
-                }
 
-                if (foundKey == null) {
+                    if (foundKey == null) {
 
-                    // ??? return;
-                } else {
-                    key = foundKey;
+                        // ??? return;
+                    } else {
+                        key = foundKey;
+                    }
                 }
             }
         } else if (type == DatabaseURL.S_RES) {
@@ -380,10 +400,19 @@ public class DatabaseManager {
                 "DatabaseManager.lookupDatabaseObject()"));
         }
 
-        databaseIDMap.remove(dbID);
-        databaseMap.remove(key);
+        boolean isEmpty = false;
 
-        if (databaseIDMap.isEmpty()) {
+        synchronized (databaseIDMap) {
+            databaseIDMap.remove(dbID);
+
+            isEmpty = databaseIDMap.isEmpty();
+        }
+
+        synchronized (databaseMap) {
+            databaseMap.remove(key);
+        }
+
+        if (isEmpty) {
             ValuePool.resetPool();
         }
     }

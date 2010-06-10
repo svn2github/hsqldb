@@ -363,6 +363,10 @@ public class DataFileCache {
             }
 
             if (dataFile != null) {
+                if (dataFile instanceof ScaledRAInterface) {
+                    ((ScaledRAInterface) dataFile).synch();
+                }
+
                 dataFile.close();
                 appLog.sendLine(SimpleLog.LOG_NORMAL,
                                 "DataFileCache.close() : close");

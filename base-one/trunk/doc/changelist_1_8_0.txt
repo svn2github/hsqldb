@@ -6,6 +6,12 @@ hsqldb 1.8.x, including point releases, in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
+2010.06.10  1.8.1.3
+
+Fixed occasional deadlock issue with SET WRITE DELAY
+Fixed synchronization issue with mass creation of hundreds of mem; database 
+Added sync() calls to closing all files
+Added all improvements to GUI utilities from version 2.0
 
 2010.02.27  1.8.1.2
 
@@ -14,7 +20,7 @@ Fixed regression in the optimisation added in 1.8.1.1
 2009.09.02  1.8.1.1
 
 Added support for SET FILES INCREMENT BACKUP { TRUE | FALSE } - the same as
-documented 1.9 functionality
+  documented version 2.0 functionality
 Fixed regression of get_column_names connection properties - now defaults to true
 Fixed lock file issue - reverted to default lock file creation
 Allowed mixed-case resource paths for res: databases

@@ -70,6 +70,7 @@
 
 package org.hsqldb.lib;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -97,6 +98,7 @@ public class ZipUnzipFile {
 
         InputStream          in        = null;
         DeflaterOutputStream f         = null;
+        OutputStream         outstream = null;
         boolean              completed = false;
 
         // if there is no file
@@ -107,10 +109,11 @@ public class ZipUnzipFile {
         try {
             byte[] b = new byte[COPY_BLOCK_SIZE];
 
-            in = storage.openInputStreamElement(infilename);
-            f = new DeflaterOutputStream(
-                storage.openOutputStreamElement(outfilename),
-                new Deflater(Deflater.BEST_SPEED), COPY_BLOCK_SIZE);
+            in        = storage.openInputStreamElement(infilename);
+            outstream = storage.openOutputStreamElement(outfilename);
+            f = new DeflaterOutputStream(outstream,
+                                         new Deflater(Deflater.BEST_SPEED),
+                                         COPY_BLOCK_SIZE);
 
             while (true) {
                 int l = in.read(b, 0, COPY_BLOCK_SIZE);
@@ -133,6 +136,11 @@ public class ZipUnzipFile {
 
                 if (f != null) {
                     f.finish();    // reported to be missing from close() in some JRE libs
+
+                    if (outstream instanceof FileOutputStream) {
+                        storage.getFileSync(outstream).sync();
+                    }
+
                     f.close();
                 }
 
@@ -186,6 +194,11 @@ public class ZipUnzipFile {
 
                 if (outstream != null) {
                     outstream.flush();
+
+                    if (outstream instanceof FileOutputStream) {
+                        storage.getFileSync(outstream).sync();
+                    }
+
                     outstream.close();
                 }
 

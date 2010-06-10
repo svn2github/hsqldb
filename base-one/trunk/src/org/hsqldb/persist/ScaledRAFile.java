@@ -32,6 +32,7 @@
 package org.hsqldb.persist;
 
 import java.io.EOFException;
+import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -64,6 +65,7 @@ class ScaledRAFile implements ScaledRAInterface {
     //
     final SimpleLog                appLog;
     final RandomAccessFile         file;
+    final FileDescriptor           fileDescriptor;
     private final boolean          readOnly;
     final String                   fileName;
     boolean                        isNio;
@@ -164,8 +166,9 @@ class ScaledRAFile implements ScaledRAInterface {
             HsqlDatabaseProperties.hsqldb_raf_buffer_scale, 12, 8, 13);
         int bufferSize = 1 << bufferScale;
 
-        buffer     = new byte[bufferSize];
-        ba         = new HsqlByteArrayInputStream(buffer);
+        buffer         = new byte[bufferSize];
+        ba             = new HsqlByteArrayInputStream(buffer);
+        fileDescriptor = file.getFD();
         fileLength = length();
     }
 
@@ -182,8 +185,9 @@ class ScaledRAFile implements ScaledRAInterface {
             HsqlDatabaseProperties.hsqldb_raf_buffer_scale, 12);
         int bufferSize = 1 << bufferScale;
 
-        buffer     = new byte[bufferSize];
-        ba         = new HsqlByteArrayInputStream(buffer);
+        buffer         = new byte[bufferSize];
+        ba             = new HsqlByteArrayInputStream(buffer);
+        fileDescriptor = file.getFD();
         fileLength = length();
     }
 
@@ -526,6 +530,13 @@ class ScaledRAFile implements ScaledRAInterface {
 
     public Database getDatabase() {
         return null;
+    }
+
+    public void synch() {
+
+        try {
+            fileDescriptor.sync();
+        } catch (IOException e) {}
     }
 
     private void resetPointer() {

@@ -31,13 +31,12 @@
 
 package org.hsqldb.persist;
 
+import org.hsqldb.Database;
 import org.hsqldb.lib.Storage;
 
-import java.io.IOException;
-
-import org.hsqldb.Database;
-
 public interface ScaledRAInterface extends Storage {
+
+    void synch();
 
     boolean canAccess(int length);
 

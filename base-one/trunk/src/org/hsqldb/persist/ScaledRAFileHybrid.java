@@ -48,7 +48,7 @@ import org.hsqldb.Database;
  * @version  1.8.0.5
  * @since 1.7.2
  */
-public class ScaledRAFileHybrid implements ScaledRAInterface {
+public final class ScaledRAFileHybrid implements ScaledRAInterface {
 
     final Database    database;
     final String      fileName;
@@ -145,6 +145,10 @@ public class ScaledRAFileHybrid implements ScaledRAInterface {
 
     public Database getDatabase() {
         return null;
+    }
+
+    public void synch() {
+        store.synch();
     }
 
     private void checkLength(int length) throws IOException {
