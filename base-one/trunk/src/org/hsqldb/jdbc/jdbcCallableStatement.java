@@ -37,9 +37,11 @@ import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Date;
 //#ifdef JAVA6
+/*
 import java.sql.NClob;
 import java.sql.RowId;
 import java.sql.SQLXML;
+*/
 //#endif JAVA6
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -3104,6 +3106,7 @@ implements CallableStatement {
     
 //#endif JAVA4
 //#ifdef JAVA6
+/*
     public void setPoolable(boolean poolable) throws SQLException
     {
         throw new UnsupportedOperationException("Not supported yet.");
@@ -3373,6 +3376,7 @@ implements CallableStatement {
     {
         throw new UnsupportedOperationException("Not supported yet.");
     }
+*/
 
 //#endif JAVA6
 }
