@@ -14,7 +14,7 @@
         Do not address questions about property file(s) to the
         hsqldb community. -->
    <property file='build/build.properties'/>
-   <property name="hsqldb.version" value="1.8.1.2"/>
+   <property name="hsqldb.version" value="1.8.1.3"/>
 
    <tstamp>
        <format property="_tmpstamp" pattern="yyyy/MM/dd-HH:mm:ss"
@@ -767,13 +767,13 @@ examples:
     <target name="javadoc" depends="-preparedoc"
             description="Create javadoc for the distribution package">
       <javadoc
-		   sourcefiles="${src}/org/hsqldb/jdbcDriver.java,
+                   sourcefiles="${src}/org/hsqldb/jdbcDriver.java,
                         ${src}/org/hsqldb/Trigger.java,
-		   				${src}/org/hsqldb/Server.java,
-		   				${src}/org/hsqldb/WebServer.java,
-		   				${src}/org/hsqldb/sample/TriggerSample.java,
-		   				${src}/org/hsqldb/util/RCData.java,
-		   				${src}/org/hsqldb/util/SqlTool.java"
+                                                   ${src}/org/hsqldb/Server.java,
+                                                   ${src}/org/hsqldb/WebServer.java,
+                                                   ${src}/org/hsqldb/sample/TriggerSample.java,
+                                                   ${src}/org/hsqldb/util/RCData.java,
+                                                   ${src}/org/hsqldb/util/SqlTool.java"
            destdir="${basedir}/doc/src"
            classpath="${basedir}/lib/servlet.jar;${basedir}/lib/junit.jar"
            author="true"
