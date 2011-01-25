@@ -35,9 +35,7 @@ namespace System.Data.Hsqldb.Common.UnitTests
             {
                 Assert.AreEqual(org.hsqldb.Trace.NUMERIC_VALUE_OUT_OF_RANGE, -hdse.ErrorCode);
             }
-        }
-
-        
+        }        
 
         [Test, OfMember("ToDataType")]
         public void ToDataType()
@@ -234,13 +232,98 @@ namespace System.Data.Hsqldb.Common.UnitTests
         [Test, OfMember("ToSqlLiteral")]
         public void ToSqlLiteral()
         {
-            Assert.AreEqual("'foo'", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.AnsiString, "foo")));
-            Assert.AreEqual("'foo'", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.AnsiStringFixedLength, "foo")));
-            //--
-            Assert.AreEqual("CAST('0123456789abcdef' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, new byte[] {
-                (byte)1,(byte)35, (byte)69, (byte) 103, (byte) 137, (byte) 171, (byte) 205, (byte) 239})));
-            Assert.AreEqual("CAST('0123456789abcdef' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, "0123456789abcdef")));
+            // FIX LENGTH CUTOVER
+            //
+            // 1..255    : CHAR
+            // 256..2000 : VARCHAR
+            // > 2000    : LONGVARCHAR
 
+            // VARIABLE LENGTH CUTOVER
+            //
+            // 1..2000   : VARCHAR
+            // > 2000    : LONGVARCHAR
+
+            string shortCharSequence = "foo";
+            string medCharSequence = "0123456789";
+            
+            medCharSequence += medCharSequence; // 20
+            medCharSequence += medCharSequence; // 40
+            medCharSequence += medCharSequence; // 80
+            medCharSequence += medCharSequence; // 160
+            medCharSequence += medCharSequence; // 320
+
+            string longCharSequence = medCharSequence;
+
+            longCharSequence += longCharSequence; // 640
+            longCharSequence += longCharSequence; // 1280
+            longCharSequence += longCharSequence; // 2560
+
+            Assert.AreEqual(string.Format("CAST('{0}' AS CHAR(3))", shortCharSequence), HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.AnsiStringFixedLength, shortCharSequence)));
+            Assert.AreEqual(string.Format("CAST('{0}' AS CHAR(3))", shortCharSequence), HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.StringFixedLength, shortCharSequence)));
+            Assert.AreEqual(string.Format("CAST('{0}' AS VARCHAR(3))", shortCharSequence), HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.AnsiString, shortCharSequence)));
+            Assert.AreEqual(string.Format("CAST('{0}' AS VARCHAR(3))", shortCharSequence), HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.String, shortCharSequence)));  
+            //--
+            Assert.AreEqual(string.Format("CAST('{0}' AS VARCHAR(320))", medCharSequence), HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.AnsiStringFixedLength, medCharSequence)));
+            Assert.AreEqual(string.Format("CAST('{0}' AS VARCHAR(320))", medCharSequence), HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.StringFixedLength, medCharSequence)));
+            Assert.AreEqual(string.Format("CAST('{0}' AS VARCHAR(320))", medCharSequence), HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.AnsiString, medCharSequence)));
+            Assert.AreEqual(string.Format("CAST('{0}' AS VARCHAR(320))", medCharSequence), HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.String, medCharSequence))); 
+            //--
+            //--
+            Assert.AreEqual(string.Format("CAST('{0}' AS LONGVARCHAR)", longCharSequence), HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.AnsiStringFixedLength, longCharSequence)));
+            Assert.AreEqual(string.Format("CAST('{0}' AS LONGVARCHAR)", longCharSequence), HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.StringFixedLength, longCharSequence)));
+            Assert.AreEqual(string.Format("CAST('{0}' AS LONGVARCHAR)", longCharSequence), HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.AnsiString, longCharSequence)));
+            Assert.AreEqual(string.Format("CAST('{0}' AS LONGVARCHAR)", longCharSequence), HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.String, longCharSequence))); 
+            //--
+
+            // BINARY LENGTH CUTOVER
+
+            // 1..255    : BINARY
+            // 256..4000 : VARBINARY
+            // > 4000    : LONGVARBINARY
+
+            byte[] shortBinary = new byte[] {
+                (byte)1,(byte)35, (byte)69, (byte) 103, (byte) 137, (byte) 171, (byte) 205, (byte) 239
+            };
+
+            string shortBinaryString = "0123456789abcdef";
+
+            byte[] medBinary = (new SqlBinary(shortBinary) + new SqlBinary(shortBinary)).Value; // 16
+
+            medBinary = (new SqlBinary(medBinary) + new SqlBinary(medBinary)).Value; // 32
+            medBinary = (new SqlBinary(medBinary) + new SqlBinary(medBinary)).Value; // 64
+            medBinary = (new SqlBinary(medBinary) + new SqlBinary(medBinary)).Value; // 128
+            medBinary = (new SqlBinary(medBinary) + new SqlBinary(medBinary)).Value; // 256
+
+            string medBinaryString = shortBinaryString + shortBinaryString; //16
+
+            medBinaryString += medBinaryString; // 32
+            medBinaryString += medBinaryString; // 64
+            medBinaryString += medBinaryString; // 128
+            medBinaryString += medBinaryString; // 256
+
+            byte[] longBinary = (new SqlBinary(medBinary) + new SqlBinary(medBinary)).Value; // 512
+
+            longBinary = (new SqlBinary(longBinary) + new SqlBinary(longBinary)).Value; // 1024
+            longBinary = (new SqlBinary(longBinary) + new SqlBinary(longBinary)).Value; // 2048
+            longBinary = (new SqlBinary(longBinary) + new SqlBinary(longBinary)).Value; // 4096
+
+            string longBinaryString = medBinaryString + medBinaryString; // 512
+
+            longBinaryString += longBinaryString; // 1024
+            longBinaryString += longBinaryString; // 2048
+            longBinaryString += longBinaryString; // 4096
+
+            //--
+            Assert.AreEqual(string.Format("CAST('{0}' AS BINARY(8))", shortBinaryString), HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, shortBinary)));
+            Assert.AreEqual(string.Format("CAST('{0}' AS BINARY(8))", shortBinaryString), HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, shortBinaryString)));
+            //--
+            Assert.AreEqual(string.Format("CAST('{0}' AS VARBINARY(256))", medBinaryString), HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, medBinary)));
+            Assert.AreEqual(string.Format("CAST('{0}' AS VARBINARY(256))", medBinaryString), HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, medBinaryString)));
+            //--
+            Assert.AreEqual(string.Format("CAST('{0}' AS LONGVARBINARY)", longBinaryString), HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, longBinary)));
+            Assert.AreEqual(string.Format("CAST('{0}' AS LONGVARBINARY)", longBinaryString), HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, longBinaryString)));
+
+            //
             long longBits = java.lang.Double.doubleToRawLongBits(123456789.987654321D);
 
             byte[] longBytes = new byte[]
@@ -255,9 +338,9 @@ namespace System.Data.Hsqldb.Common.UnitTests
                         (byte) ((longBits >> 0)  & 0xff)
                     };
 
-            Assert.AreEqual("CAST('419d6f3457f35ba8' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, longBytes)));
-            Assert.AreEqual("CAST('419d6f3457f35ba8' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, longBits)));
-            Assert.AreEqual("CAST('419d6f3457f35ba8' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, 123456789.987654321D)));
+            Assert.AreEqual("CAST('419d6f3457f35ba8' AS BINARY(8))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, longBytes)));
+            Assert.AreEqual("CAST('419d6f3457f35ba8' AS BINARY(8))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, longBits)));
+            Assert.AreEqual("CAST('419d6f3457f35ba8' AS BINARY(8))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, 123456789.987654321D)));
 
             int intBits = java.lang.Float.floatToRawIntBits(123456789.987654321F);
 
@@ -269,113 +352,115 @@ namespace System.Data.Hsqldb.Common.UnitTests
                         (byte) ((intBits >> 0)  & 0xff)
                     };
 
-            Assert.AreEqual("CAST('4ceb79a3' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, intBits)));
-            Assert.AreEqual("CAST('4ceb79a3' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, intBytes)));
-            Assert.AreEqual("CAST('4ceb79a3' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, 123456789.987654321F)));
+            Assert.AreEqual("CAST('4ceb79a3' AS BINARY(4))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, intBits)));
+            Assert.AreEqual("CAST('4ceb79a3' AS BINARY(4))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, intBytes)));
+            Assert.AreEqual("CAST('4ceb79a3' AS BINARY(4))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, 123456789.987654321F)));
 
-            Assert.AreEqual("CAST('ffffffffffffffffffffffff00000000' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, decimal.MaxValue)));
-            Assert.AreEqual("CAST('ffffffffffffffffffffffff80000000' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, decimal.MinValue)));
+            Assert.AreEqual("CAST('ffffffffffffffffffffffff00000000' AS BINARY(16))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, decimal.MaxValue)));
+            Assert.AreEqual("CAST('ffffffffffffffffffffffff80000000' AS BINARY(16))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, decimal.MinValue)));
 
-            Assert.AreEqual("CAST('00' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (sbyte)0)));
-            Assert.AreEqual("CAST('01' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (sbyte)1)));
-            Assert.AreEqual("CAST('80' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, sbyte.MinValue)));
-            Assert.AreEqual("CAST('7f' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, sbyte.MaxValue)));
+            Assert.AreEqual("CAST('00' AS BINARY(1))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (sbyte)0)));
+            Assert.AreEqual("CAST('01' AS BINARY(1))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (sbyte)1)));
+            Assert.AreEqual("CAST('80' AS BINARY(1))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, sbyte.MinValue)));
+            Assert.AreEqual("CAST('7f' AS BINARY(1))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, sbyte.MaxValue)));
 
-            Assert.AreEqual("CAST('00' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (byte)0)));
-            Assert.AreEqual("CAST('01' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (byte)1)));
-            Assert.AreEqual("CAST('00' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, byte.MinValue)));
-            Assert.AreEqual("CAST('ff' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, byte.MaxValue)));
+            Assert.AreEqual("CAST('00' AS BINARY(1))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (byte)0)));
+            Assert.AreEqual("CAST('01' AS BINARY(1))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (byte)1)));
+            Assert.AreEqual("CAST('00' AS BINARY(1))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, byte.MinValue)));
+            Assert.AreEqual("CAST('ff' AS BINARY(1))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, byte.MaxValue)));
 
-            Assert.AreEqual("CAST('0000' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (char)0)));
-            Assert.AreEqual("CAST('0001' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (char)1)));
-            Assert.AreEqual("CAST('0000' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, char.MinValue)));
-            Assert.AreEqual("CAST('ffff' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, char.MaxValue)));
+            Assert.AreEqual("CAST('0000' AS BINARY(2))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (char)0)));
+            Assert.AreEqual("CAST('0001' AS BINARY(2))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (char)1)));
+            Assert.AreEqual("CAST('0000' AS BINARY(2))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, char.MinValue)));
+            Assert.AreEqual("CAST('ffff' AS BINARY(2))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, char.MaxValue)));
 
-            Assert.AreEqual("CAST('0000' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (short)0)));
-            Assert.AreEqual("CAST('0001' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (short)1)));
-            Assert.AreEqual("CAST('8000' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, short.MinValue)));
-            Assert.AreEqual("CAST('7fff' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, short.MaxValue)));
+            Assert.AreEqual("CAST('0000' AS BINARY(2))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (short)0)));
+            Assert.AreEqual("CAST('0001' AS BINARY(2))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (short)1)));
+            Assert.AreEqual("CAST('8000' AS BINARY(2))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, short.MinValue)));
+            Assert.AreEqual("CAST('7fff' AS BINARY(2))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, short.MaxValue)));
 
-            Assert.AreEqual("CAST('0000' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (ushort)0)));
-            Assert.AreEqual("CAST('0001' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (ushort)1)));
-            Assert.AreEqual("CAST('0000' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, ushort.MinValue)));
-            Assert.AreEqual("CAST('ffff' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, ushort.MaxValue)));
+            Assert.AreEqual("CAST('0000' AS BINARY(2))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (ushort)0)));
+            Assert.AreEqual("CAST('0001' AS BINARY(2))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (ushort)1)));
+            Assert.AreEqual("CAST('0000' AS BINARY(2))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, ushort.MinValue)));
+            Assert.AreEqual("CAST('ffff' AS BINARY(2))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, ushort.MaxValue)));
 
-            Assert.AreEqual("CAST('00000000' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (int)0)));
-            Assert.AreEqual("CAST('00000001' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (int)1)));
-            Assert.AreEqual("CAST('80000000' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, int.MinValue)));
-            Assert.AreEqual("CAST('7fffffff' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, int.MaxValue)));
+            Assert.AreEqual("CAST('00000000' AS BINARY(4))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (int)0)));
+            Assert.AreEqual("CAST('00000001' AS BINARY(4))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (int)1)));
+            Assert.AreEqual("CAST('80000000' AS BINARY(4))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, int.MinValue)));
+            Assert.AreEqual("CAST('7fffffff' AS BINARY(4))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, int.MaxValue)));
 
-            Assert.AreEqual("CAST('00000000' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (uint)0)));
-            Assert.AreEqual("CAST('00000001' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (uint)1)));
-            Assert.AreEqual("CAST('00000000' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, uint.MinValue)));
-            Assert.AreEqual("CAST('ffffffff' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, uint.MaxValue)));
+            Assert.AreEqual("CAST('00000000' AS BINARY(4))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (uint)0)));
+            Assert.AreEqual("CAST('00000001' AS BINARY(4))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (uint)1)));
+            Assert.AreEqual("CAST('00000000' AS BINARY(4))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, uint.MinValue)));
+            Assert.AreEqual("CAST('ffffffff' AS BINARY(4))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, uint.MaxValue)));
 
-            Assert.AreEqual("CAST('0000000000000000' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (long)0)));
-            Assert.AreEqual("CAST('0000000000000001' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (long)1)));
-            Assert.AreEqual("CAST('8000000000000000' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, long.MinValue)));
-            Assert.AreEqual("CAST('7fffffffffffffff' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, long.MaxValue)));
+            Assert.AreEqual("CAST('0000000000000000' AS BINARY(8))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (long)0)));
+            Assert.AreEqual("CAST('0000000000000001' AS BINARY(8))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (long)1)));
+            Assert.AreEqual("CAST('8000000000000000' AS BINARY(8))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, long.MinValue)));
+            Assert.AreEqual("CAST('7fffffffffffffff' AS BINARY(8))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, long.MaxValue)));
 
-            Assert.AreEqual("CAST('0000000000000000' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (ulong)0)));
-            Assert.AreEqual("CAST('0000000000000001' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (ulong)1)));
-            Assert.AreEqual("CAST('0000000000000000' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, ulong.MinValue)));
-            Assert.AreEqual("CAST('ffffffffffffffff' AS BINARY)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, ulong.MaxValue)));
+            Assert.AreEqual("CAST('0000000000000000' AS BINARY(8))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (ulong)0)));
+            Assert.AreEqual("CAST('0000000000000001' AS BINARY(8))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, (ulong)1)));
+            Assert.AreEqual("CAST('0000000000000000' AS BINARY(8))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, ulong.MinValue)));
+            Assert.AreEqual("CAST('ffffffffffffffff' AS BINARY(8))", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Binary, ulong.MaxValue)));
 
             //--
-            Assert.AreEqual("FALSE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, false)));
-            Assert.AreEqual("FALSE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, "frue")));
-            Assert.AreEqual("FALSE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (sbyte)0)));
-            Assert.AreEqual("FALSE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (byte)0)));
-            Assert.AreEqual("FALSE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (char)0)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (char)'0')));
-            Assert.AreEqual("FALSE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (short)0)));
-            Assert.AreEqual("FALSE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (ushort)0)));
-            Assert.AreEqual("FALSE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (int)0)));
-            Assert.AreEqual("FALSE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (uint)0)));
-            Assert.AreEqual("FALSE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (long)0)));
-            Assert.AreEqual("FALSE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (ulong)0)));
-            Assert.AreEqual("FALSE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (float)0)));
-            Assert.AreEqual("FALSE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (double)0)));
-            Assert.AreEqual("FALSE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (decimal)0)));
+            Assert.AreEqual("CAST((1=0) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, false)));
+            Assert.AreEqual("CAST((1=0) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, "frue"))); // ... ;-)
+            Assert.AreEqual("CAST((1=0) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (sbyte)0)));
+            Assert.AreEqual("CAST((1=0) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (byte)0)));
+            Assert.AreEqual("CAST((1=0) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (char)0)));
+            Assert.AreEqual("CAST((1=0) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (char)'0')));
+            Assert.AreEqual("CAST((1=0) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (short)0)));
+            Assert.AreEqual("CAST((1=0) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (ushort)0)));
+            Assert.AreEqual("CAST((1=0) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (int)0)));
+            Assert.AreEqual("CAST((1=0) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (uint)0)));
+            Assert.AreEqual("CAST((1=0) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (long)0)));
+            Assert.AreEqual("CAST((1=0) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (ulong)0)));
+            Assert.AreEqual("CAST((1=0) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (float)0)));
+            Assert.AreEqual("CAST((1=0) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (double)0)));
+            Assert.AreEqual("CAST((1=0) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (decimal)0)));
 
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, true)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, "TrUe")));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (sbyte)1)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (byte)1)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (short)1)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (ushort)1)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (int)1)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (uint)1)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (long)1)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (ulong)1)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (float)1)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (double)1)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (decimal)1)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, true)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, "TrUe")));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (sbyte)1)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (byte)1)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (char)1)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (char)'1')));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (short)1)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (ushort)1)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (int)1)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (uint)1)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (long)1)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (ulong)1)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (float)1)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (double)1)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (decimal)1)));
 
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (sbyte)-1)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (byte)1)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (short)-1)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (ushort)2)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (int)-1)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (uint)2)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (long)-1)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (ulong)2)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (float)-1)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (double)-1)));
-            Assert.AreEqual("TRUE", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (decimal)-1)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (sbyte)-1)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (byte)1)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (short)-1)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (ushort)2)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (int)-1)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (uint)2)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (long)-1)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (ulong)2)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (float)-1)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (double)-1)));
+            Assert.AreEqual("CAST((1=1) AS BOOLEAN)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Boolean, (decimal)-1)));
             //--
 
-            Assert.AreEqual("1", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (sbyte)1)));
-            Assert.AreEqual("1", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (byte)1)));
-            Assert.AreEqual("1", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (short)1)));
-            Assert.AreEqual("1", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (ushort)1)));
-            Assert.AreEqual("1", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (int)1)));
-            Assert.AreEqual("1", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (uint)1)));
-            Assert.AreEqual("1", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (long)1)));
-            Assert.AreEqual("1", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (ulong)1)));
-            Assert.AreEqual("1", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (float)1)));
-            Assert.AreEqual("1", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (double)1)));
-            Assert.AreEqual("1", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (decimal)1)));
+            Assert.AreEqual("CAST(1 AS SMALLINT)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (sbyte)1)));
+            Assert.AreEqual("CAST(1 AS SMALLINT)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (byte)1)));
+            Assert.AreEqual("CAST(1 AS SMALLINT)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (short)1)));
+            Assert.AreEqual("CAST(1 AS SMALLINT)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (ushort)1)));
+            Assert.AreEqual("CAST(1 AS SMALLINT)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (int)1)));
+            Assert.AreEqual("CAST(1 AS SMALLINT)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (uint)1)));
+            Assert.AreEqual("CAST(1 AS SMALLINT)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (long)1)));
+            Assert.AreEqual("CAST(1 AS SMALLINT)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (ulong)1)));
+            Assert.AreEqual("CAST(1 AS SMALLINT)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (float)1)));
+            Assert.AreEqual("CAST(1 AS SMALLINT)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (double)1)));
+            Assert.AreEqual("CAST(1 AS SMALLINT)", HsqlConvert.ToSqlLiteral(new FakeDataParameter(DbType.Byte, (decimal)1)));
         }
 
         [Test, OfMember("UnknownConversion")]

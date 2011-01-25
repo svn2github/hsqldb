@@ -7,6 +7,17 @@ namespace System.Data.Hsqldb.Common.UnitTests
     [TestFixture, ForSubject(typeof(HsqlConvert.FromJava))]
     public class TestHsqlConvertFromJava
     {
+        public void test()
+        {
+            double d = long.MaxValue;
+
+            d += 1024D;
+
+            checked
+            {
+                long l = (long)d;
+            }
+        }
         
         //[MemberAttribute(MemberName="ToBigInt")]
         //[Test()]

@@ -69,6 +69,7 @@ using StringConverter = org.hsqldb.lib.StringConverter;
 using ValuePool = org.hsqldb.store.ValuePool;
 using Binary = org.hsqldb.types.Binary;
 using JavaObject = org.hsqldb.types.JavaObject;
+using JavaMath = java.lang.Math;
 using TypeCode = System.TypeCode;
 using IConvertible = System.IConvertible;
 using Convert = System.Convert;
@@ -154,7 +155,7 @@ namespace System.Data.Hsqldb.Common
                     throw new NullReferenceException("stringValue");
                 }
 
-                return (stringValue.Length == 4 && stringValue.Equals("TRUE", 
+                return (stringValue.Length == 4 && stringValue.Equals("TRUE",
                     IgnoreCase)) ? JavaBoolean.TRUE : JavaBoolean.FALSE;
             }
             #endregion
@@ -209,7 +210,7 @@ namespace System.Data.Hsqldb.Common
             [CLSCompliant(false)]
             public static JavaBoolean ToBoolean(char charValue)
             {
-                return (charValue == 0) ? FALSE : TRUE;
+                return (charValue == '0' || charValue == 0) ? FALSE : TRUE;
             }
             #endregion
 
@@ -777,7 +778,7 @@ namespace System.Data.Hsqldb.Common
                 {
                     return null;
                 }
-                else if (nullable is SqlInt64) // most likely first
+                if (nullable is SqlInt64) // most likely first
                 {
                     return ToBigInt(((SqlInt64)nullable).Value);
                 }
@@ -803,11 +804,35 @@ namespace System.Data.Hsqldb.Common
                 }
                 if (nullable is SqlDecimal)
                 {
-                    return ToBigInt(((SqlDecimal)nullable).Value);
+                    try
+                    {
+                        checked
+                        {
+                            long longValue = (long) ((SqlDecimal)nullable).Value;
+
+                            return ToBigInt(longValue);
+                        }
+                    }
+                    catch (OverflowException)
+                    {
+                        throw HsqlConvert.NumericValueOutOfRange(nullable);
+                    }
                 }
                 if (nullable is SqlMoney)
                 {
-                    return ToBigInt(((SqlMoney)nullable).Value);
+                    try
+                    {
+                        checked
+                        {
+                            long longValue = (long) ((SqlMoney)nullable).Value;
+
+                            return ToBigInt(longValue);
+                        }
+                    }
+                    catch (OverflowException)
+                    {
+                        throw HsqlConvert.NumericValueOutOfRange(nullable);
+                    }
                 }
                 if (nullable is SqlBoolean)
                 {
@@ -815,11 +840,43 @@ namespace System.Data.Hsqldb.Common
                 }
                 if (nullable is SqlString)
                 {
-                    return ToBigInt(((SqlString)nullable).Value);
+                    try
+                    {
+                        checked
+                        {
+                            long longValue = (long) ((SqlString)nullable).ToSqlDecimal().Value;
+
+                            return ToBigInt(longValue);
+                        }
+                    }
+                    catch (FormatException)
+                    {
+                        throw HsqlConvert.UnsupportedSourceDataFormat(nullable, Types.BIGINT);
+                    }
+                    catch (OverflowException)
+                    {
+                        throw HsqlConvert.NumericValueOutOfRange(nullable);
+                    }
                 }
                 if (nullable is SqlChars)
                 {
-                    return ToBigInt(((SqlChars)nullable).ToSqlString());
+                    try
+                    {
+                        checked
+                        {
+                            long longValue = (long)((SqlChars)nullable).ToSqlString().ToSqlDecimal().Value;
+
+                            return ToBigInt(longValue);
+                        }
+                    }
+                    catch (FormatException)
+                    {
+                        throw HsqlConvert.UnsupportedSourceDataFormat(nullable, Types.BIGINT);
+                    }
+                    catch (OverflowException)
+                    {
+                        throw HsqlConvert.NumericValueOutOfRange(nullable);
+                    }
                 }
 
                 throw HsqlConvert.WrongDataType(nullable);
@@ -921,12 +978,14 @@ namespace System.Data.Hsqldb.Common
             [CLSCompliant(false)]
             public static JavaLong ToBigInt(float floatValue)
             {
-                if (long.MaxValue < floatValue || floatValue < long.MinValue)
+                long longValue = (long)Math.Round(floatValue);
+
+                if (longValue > 9223371761976868863L || longValue < long.MinValue)
                 {
                     throw NumericValueOutOfRange(floatValue);
                 }
 
-                return ValuePool.getLong((long)floatValue);
+                return ValuePool.getLong(longValue);
             }
             #endregion
 
@@ -951,12 +1010,17 @@ namespace System.Data.Hsqldb.Common
             [CLSCompliant(false)]
             public static JavaLong ToBigInt(double doubleValue)
             {
-                if (long.MaxValue < doubleValue || doubleValue < long.MinValue)
+                if (doubleValue > 9.22337203685478E+18D || doubleValue < -9.22337203685478E+18D)
                 {
                     throw NumericValueOutOfRange(doubleValue);
                 }
-
-                return ValuePool.getLong((long)doubleValue);
+                else
+                {
+                    unchecked
+                    {
+                        return ValuePool.getLong(((long)doubleValue));
+                    }
+                }
             }
             #endregion
 
@@ -985,8 +1049,13 @@ namespace System.Data.Hsqldb.Common
                 {
                     throw NumericValueOutOfRange(decimalValue);
                 }
-
-                return ValuePool.getLong((long)decimalValue);
+                else
+                {
+                    unchecked
+                    {
+                        return ValuePool.getLong((long)decimalValue);
+                    }
+                }
             }
             #endregion
 
@@ -1805,7 +1874,7 @@ namespace System.Data.Hsqldb.Common
 
             #region ToString
 
-            #region ToDateTimeString(...)
+            #region ToDateTimeString(int,int,int,int,int,int,int,bool)
             /// <summary>
             /// Retrieves the SQL date-time character sequence
             /// corresponding to the given date-time component values.
@@ -1965,7 +2034,7 @@ namespace System.Data.Hsqldb.Common
             }
             #endregion
 
-            #region ToDateString(...)
+            #region ToDateString(int,int,int,bool)
             /// <summary>
             /// Retrieves the SQL date <see cref="System.String"/>
             /// corresponding to the given values.
@@ -2028,7 +2097,7 @@ namespace System.Data.Hsqldb.Common
             }
             #endregion
 
-            #region ToTimeString(...)
+            #region ToTimeString(int,int,int,bool)
             /// <summary>
             /// Retrieves the SQL time <see cref="System.String"/> value
             /// corresponding to the given values.
@@ -2098,13 +2167,12 @@ namespace System.Data.Hsqldb.Common
 
             #region ToString(DateTime)
             /// <summary>
-            /// Retrieves the SQL date-time character sequence
-            /// corresponding to the given <see cref="System.DateTime"/>
+            /// Retrieves the SQL date-time character sequence corresponding
+            /// to the given <see cref="System.DateTime"/>
             /// value.
             /// </summary>
             /// <param name="dateTimeValue">
-            /// For which to retrieve the SQL date-time
-            /// character sequence.
+            /// For which to retrieve the SQL date-time character sequence.
             /// </param>
             /// <returns>
             /// The corresponding value.
@@ -2133,37 +2201,25 @@ namespace System.Data.Hsqldb.Common
 
             #region ToString(INullable)
             /// <summary>
-            /// Converts the given <see cref="INullable"/> value to an equivalent
-            /// HSQLDB SQL literal value character sequence.
+            /// Converts the given <see cref="INullable"/> value to an
+            /// equivalent SQL literal value character sequence.
             /// <remarks>
             /// <para>
-            /// Note that, to be parsed as part of an HSQLDB SQL commad
+            /// Note that to be parsed as an embedded part of an SQL command
             /// text character sequence, the returned character sequence may
-            /// need to be converted to the SQL string literal form (i.e.
-            /// augmented with leading and trailing single quotes, and
-            /// with embedded single quotes escaped by doubling).
+            /// need to be additionally converted to a specific SQL value
+            /// literal form (i.e. prefixed and suffixed to indicate an SQL
+            /// literal of the desired data type, possibly with occurrences of
+            /// certain internal characters escaped using the convention
+            /// of the target SQL environment).
             /// </para>
             /// <para>
-            /// This is currently always true for <see cref="SqlBinary"/> and
-            /// <see cref="SqlBytes"/>, which are both converted to
-            /// hexadecimal-encoded character sequences.
+            /// Because there is no guarantee that quoting conventions are
+            /// standard or consistent across different data providers, it is
+            /// safer and more portable to avoid such issues using parameter
+            /// markers, allowing each provider to handle any additional
+            /// conversions internally.
             /// </para>
-            /// <para>
-            /// More obviously, this is always true for <see cref="SqlChars"/>,
-            /// <see cref="SqlString"/> and <see cref="SqlXml"/>.  Additionally,
-            /// embedded CR/LF characters need to be encoded to hexadecimal
-            /// unicode escape form (i.e. sequences of the form: \uhhhh, where
-            /// hhhh is the hexadecimal representation of the 16-bit unicode
-            /// character code point).
-            /// </para>
-            /// <para>
-            /// Less obviously, because there exist a myriad of forms
-            /// and conventions regarding UUID/GUID handling, special
-            /// treatment is typically required for <see cref="SqlGuid"/>,
-            /// even if first converted to an equivalent <see cref="SqlBinary"/>
-            /// or <see cref="SqlBytes"/> instance.
-            /// </para>
-            /// </remarks>
             /// </summary>
             /// <param name="nullable">
             /// To convert to an SQL literal value character sequence.
@@ -2290,7 +2346,7 @@ namespace System.Data.Hsqldb.Common
                     throw HsqlConvert.NumericValueOutOfRange(totalMillis);
                 }
 
-                cal.setTimeInMillis(java.lang.Math.round(totalMillis));
+                cal.setTimeInMillis(JavaMath.round(totalMillis));
 
                 int year = cal.get(JavaCalendar.YEAR);
                 int month = cal.get(JavaCalendar.MONTH) + 1;
@@ -3763,7 +3819,7 @@ namespace System.Data.Hsqldb.Common
                 }
                 catch (Exception)
                 {
-                    throw UnsupportedInputDataFormat(stringValue, Types.DECIMAL);
+                    throw UnsupportedSourceDataFormat(stringValue, Types.DECIMAL);
                 }
             }
             #endregion

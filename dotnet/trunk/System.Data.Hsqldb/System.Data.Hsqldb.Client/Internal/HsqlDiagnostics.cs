@@ -33,28 +33,25 @@
 #endregion
 
 #region Using
-using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 
-using IHsqlProtocol = org.hsqldb.IHsqlProtocol;
-using HsqlProtocol = org.hsqldb.HsqlProtocol;
-using HsqlException = org.hsqldb.HsqlException;
-using HsqlTypes = org.hsqldb.Types;
-using JavaBoolean = java.lang.Boolean;
 using ColumnMetaData = org.hsqldb.jdbc.jdbcColumnMetaData;
+using HsqlException = org.hsqldb.HsqlException;
+using HsqlProtocol = org.hsqldb.HsqlProtocol;
+using HsqlTypes = org.hsqldb.Types;
+using IHsqlProtocol = org.hsqldb.IHsqlProtocol;
 using Iterator = org.hsqldb.lib.Iterator;
+using JavaBoolean = java.lang.Boolean;
 using Record = org.hsqldb.Record;
 using Request = org.hsqldb.Result;
-using Response = org.hsqldb.Result;
-using ResultMetaData = org.hsqldb.Result.ResultMetaData;
 using RequestType = org.hsqldb.ResultConstants.__Fields;
+using Response = org.hsqldb.Result;
 using ResponseType = org.hsqldb.ResultConstants.__Fields;
-using ServerConstants = org.hsqldb.ServerConstants.__Fields;
+using ResultMetaData = org.hsqldb.Result.ResultMetaData;
 #endregion
 
 namespace System.Data.Hsqldb.Client.Internal
@@ -67,7 +64,8 @@ namespace System.Data.Hsqldb.Client.Internal
     /// <author name="boucherb@users"/>
     internal static class HsqlDiagnostics
     {
-        private static readonly IHsqlProtocol m_Protocol = HsqlProtocol.GetInstance();
+        private static readonly IHsqlProtocol s_protocol = HsqlProtocol.GetInstance();
+        private static readonly object[] s_noargs = new object[0];
 
         #region Internal Static Methods
 
@@ -79,7 +77,7 @@ namespace System.Data.Hsqldb.Client.Internal
         internal static void Debug(string message)
         {
             #if DEBUG
-            Debug0(message, new object[0]);
+            Debug0(message, s_noargs);
             #endif
         } 
         #endregion
@@ -122,14 +120,14 @@ namespace System.Data.Hsqldb.Client.Internal
         internal static void DebugResponse(Response response)
         {
 #if DEBUG            
-            int responseType = m_Protocol.GetType(response);
+            int responseType = s_protocol.GetType(response);
 
             switch (responseType)
             {
                 case ResponseType.UPDATECOUNT:
                     {
                         Debug0("response: updatecount: {0}",
-                            m_Protocol.GetUpdateCount(response));
+                            s_protocol.GetUpdateCount(response));
                         break;
                     }
                 case ResponseType.DATA:
@@ -376,7 +374,7 @@ namespace System.Data.Hsqldb.Client.Internal
         {
             StringBuilder sb = new StringBuilder();
 
-            int requestType = m_Protocol.GetType(request);
+            int requestType = s_protocol.GetType(request);
 
             switch (requestType)
             {
@@ -384,7 +382,7 @@ namespace System.Data.Hsqldb.Client.Internal
                     {
                         sb.AppendFormat(
                             "SQLCLI:SQLPREPARE {0}",
-                            m_Protocol.GetCommandText(request));
+                            s_protocol.GetCommandText(request));
 
                         break;
                     }
@@ -392,7 +390,7 @@ namespace System.Data.Hsqldb.Client.Internal
                     {
                         if (request.getSize() <= 1)
                         {
-                            sb.Append(m_Protocol.GetCommandText(request));
+                            sb.Append(s_protocol.GetCommandText(request));
                         }
                         else
                         {
@@ -419,14 +417,14 @@ namespace System.Data.Hsqldb.Client.Internal
                             sb.Append("BATCHMODE:");
                         }
 
-                        sb.Append(m_Protocol.GetStatementId(request));
+                        sb.Append(s_protocol.GetStatementId(request));
 
                         break;
                     }
                 case RequestType.SQLFREESTMT:
                     {
                         sb.Append("SQLCLI:SQLFREESTMT:")
-                          .Append(m_Protocol.GetStatementId(request));
+                          .Append(s_protocol.GetStatementId(request));
 
                         break;
                     }
@@ -464,7 +462,7 @@ namespace System.Data.Hsqldb.Client.Internal
                     {
                         sb.Append("SQLCLI:SQLENDTRAN:");
 
-                        int endTranType = m_Protocol.GetEndTranType(
+                        int endTranType = s_protocol.GetEndTranType(
                             request);
 
                         switch (endTranType)
@@ -483,14 +481,14 @@ namespace System.Data.Hsqldb.Client.Internal
                                 {
                                     sb.AppendFormat(
                                         "SAVEPOINT_NAME_RELEASE {0}",
-                                        m_Protocol.GetSavepointName(request));
+                                        s_protocol.GetSavepointName(request));
                                     break;
                                 }
                             case RequestType.SAVEPOINT_NAME_ROLLBACK:
                                 {
                                     sb.AppendFormat(
                                         "SAVEPOINT_NAME_ROLLBACK {0}",
-                                        m_Protocol.GetSavepointName(request));
+                                        s_protocol.GetSavepointName(request));
                                     break;
                                 }
                             case RequestType.COMMIT_AND_CHAIN:
@@ -528,7 +526,7 @@ namespace System.Data.Hsqldb.Client.Internal
                     {
                         sb.Append("SQLCLI:SQLSETCONNECTATTR:");
 
-                        int attributeType = m_Protocol.GetAttributeType(
+                        int attributeType = s_protocol.GetAttributeType(
                             request);
 
                         switch (attributeType)
@@ -537,7 +535,7 @@ namespace System.Data.Hsqldb.Client.Internal
                                 {
                                     sb.AppendFormat(
                                         "SQL_ATTR_SAVEPOINT_NAME {0}",
-                                        m_Protocol.GetSavepointName(request));
+                                        s_protocol.GetSavepointName(request));
                                     break;
                                 }
                             default:
@@ -675,16 +673,16 @@ namespace System.Data.Hsqldb.Client.Internal
             System.Reflection.MethodBase method
                 = frames[Math.Min(2, frames.Length - 1)].GetMethod();
 
-            string prefix = string.Format(
-                            "{0}:{1}:{2}.{3}: ",
+            string debugFormat = string.Format(
+                            "{0}:{1}:{2}.{3}: {4}",
                             DateTime.Now,
                             ThreadToString(Thread.CurrentThread),
                             method.DeclaringType.Name,
-                            method.Name);
+                            method.Name,
+                            format);
 
-            //System.Diagnostics.Debug.Print(prefix + format, args);
-
-            System.Console.WriteLine(prefix + format, args); 
+            System.Diagnostics.Debug.Print(debugFormat, args);
+            //System.Console.WriteLine(debugFormat, args); 
 #endif
         }
         #endregion 

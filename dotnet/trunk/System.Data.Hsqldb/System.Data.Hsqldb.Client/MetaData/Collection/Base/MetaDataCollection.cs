@@ -574,7 +574,7 @@ SELECT SCHEMA_NAME
         #region IsLongProviderType(int)
         /// <summary>
         /// Determines whether the specified SQL data type code
-        /// denots a SQL data type that is is long variant of an
+        /// denotes an SQL data type that is is a long variant of an
         /// intrinsic character or octet sequence type, such
         /// as LONGVARCHAR, LONGBINARY, BLOB or CLOB.
         /// </summary>

@@ -48,7 +48,6 @@ using System.Data.Hsqldb.Common.Sql;
 
 namespace System.Data.Hsqldb.Client.Sql
 {
-
     #region TokenList
     /// <summary>
     /// <para>
@@ -61,7 +60,7 @@ namespace System.Data.Hsqldb.Client.Sql
     {
         #region Fields
 
-        private static readonly int[] m_NoOrdinals = new int[0];
+        private static readonly int[] s_noOrdinals = new int[0];
 
         private List<Token> m_list = new List<Token>();
         private int[] m_parameterMarkerTokenPositions;
@@ -802,7 +801,7 @@ namespace System.Data.Hsqldb.Client.Sql
             bool found = m_nameToTokenOrdinals.TryGetValue(
                 parameterName, out ordinals);
 
-            return (found) ? ordinals : m_NoOrdinals;
+            return (found) ? ordinals : s_noOrdinals;
         }
 
         #endregion
@@ -823,7 +822,7 @@ namespace System.Data.Hsqldb.Client.Sql
             bool found = m_nameToBindOrdinals.TryGetValue(
                 parameterName, out ordinals);
 
-            return (found) ? ordinals : m_NoOrdinals;
+            return (found) ? ordinals : s_noOrdinals;
         }
 
         #endregion
@@ -888,5 +887,4 @@ namespace System.Data.Hsqldb.Client.Sql
     }
 
     #endregion
-
 }

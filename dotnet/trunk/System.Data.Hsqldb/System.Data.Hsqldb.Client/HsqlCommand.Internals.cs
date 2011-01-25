@@ -33,32 +33,21 @@
 #endregion
 
 #region Using
-
-using System;
-
-using System.ComponentModel;
-using System.Data;
-using System.Data.Common;
-using System.Data.Hsqldb.Common.Enumeration;
+using System.Collections.Generic;
 using System.Data.Hsqldb.Client.Internal;
 using System.Data.Hsqldb.Client.MetaData;
+using System.Data.Hsqldb.Client.Sql;
+using System.Data.Hsqldb.Common;
+using System.Data.Hsqldb.Common.Enumeration;
 using System.Data.Hsqldb.Common.Sql;
 using System.Text;
-using System.Threading;
-
-#if W32DESIGN
-using System.Drawing;
-#endif
-
+using HsqlTypes = org.hsqldb.Types;
 using ParameterMetaData = org.hsqldb.Result.ResultMetaData;
 using PMD = java.sql.ParameterMetaData.__Fields;
 using Result = org.hsqldb.Result;
-using ResultConstants = org.hsqldb.ResultConstants.__Fields;
-using HsqlTypes = org.hsqldb.Types;
-using System.Data.Hsqldb.Client.Sql;
-using System.Data.Hsqldb.Common;
-using System.Collections.Generic;
-
+#if W32DESIGN
+using System.Drawing;
+#endif
 #endregion
 
 namespace System.Data.Hsqldb.Client
@@ -70,9 +59,9 @@ namespace System.Data.Hsqldb.Client
         #region Fields
 
         // Facilitates a quick test for named parameters.
-        private static readonly char[] m_ParameterChars = new char[] { '@', ':' };
+        private static readonly char[] s_parameterChars = new char[] { '@', ':' };
         // Optimization to avoid burning through empty object[] instances
-        private static readonly object[] m_NoParameters = new object[0];
+        private static readonly object[] s_noParameters = new object[0];
         //
         // Backs the CommandText property.
         private string m_commandText = String.Empty;
@@ -114,16 +103,15 @@ namespace System.Data.Hsqldb.Client
         /// is a copy of the given command object.
         /// </summary>
         /// <param name="srcCommand">The source command.</param>
-        private HsqlCommand(HsqlCommand srcCommand)
-            : this()
+        private HsqlCommand(HsqlCommand srcCommand) : this()
         {
-            this.m_commandTextHasParameters
+            m_commandTextHasParameters
                 = srcCommand.m_commandTextHasParameters;
 
             if (srcCommand.m_commandTextHasParameters && 
                 (srcCommand.m_tokenList != null))
             {
-                this.m_tokenList = srcCommand.m_tokenList.Clone();
+                m_tokenList = srcCommand.m_tokenList.Clone();
             }
 
             this.CommandText = srcCommand.CommandText;
@@ -185,7 +173,7 @@ namespace System.Data.Hsqldb.Client
         /// When unbound parameters exist.  An unbound parameter condition
         /// occurs when a parameter's existence is declared in the command
         /// text using a marker or can be inferred from
-        /// the signature of the stored proceduce to be executed, and
+        /// the signature of the stored procedure to be executed, and
         /// the parameter collection of this <c>HsqlCommand</c> contains
         /// no corresponding <c>HsqlParameter</c> instance or the
         /// corresponding <c>HsqlParameter</c> instance exists, but either
@@ -196,9 +184,9 @@ namespace System.Data.Hsqldb.Client
         /// </exception>
         internal void ApplyParameters(bool batch)
         {
-            HsqlStatement l_statement = m_statement;
+            HsqlStatement statement = m_statement;
 
-            if (l_statement == null)
+            if (statement == null)
             {
                 return;
             }
@@ -207,22 +195,22 @@ namespace System.Data.Hsqldb.Client
 
             if (parameters == null || parameters.Count == 0)
             {
-                int expectedCount = l_statement.ParameterCount;
+                int expectedCount = statement.ParameterCount;
 
                 if (expectedCount == 0)
                 {
-                    l_statement.SetParameterValues(m_NoParameters);
+                    statement.SetParameterValues(s_noParameters);
 
                     return;
                 }
 
                 throw new HsqlDataSourceException(string.Format(
-                    "{0} unbound Parameters Exist.",
+                    "{0} unbound parameters exist.",
                     expectedCount)); // NOI18N
             }
 
             TokenList tokenList = TokenList;
-            int[] bindTypes = l_statement.ParameterTypes;
+            int[] bindTypes = statement.ParameterTypes;
             object[] values = new object[tokenList.ParameterCount];
 
             int boundValueCount = 0;
@@ -267,11 +255,11 @@ namespace System.Data.Hsqldb.Client
 
             if (batch)
             {
-                l_statement.AddBatch(values);
+                statement.AddBatch(values);
             }
             else
             {
-                l_statement.SetParameterValues(values);
+                statement.SetParameterValues(values);
             }
         }
         #endregion
@@ -288,20 +276,15 @@ namespace System.Data.Hsqldb.Client
             }
             else
             {
-                List<string> commandTextBatch = m_commandTextBatch;
-
-                if (commandTextBatch == null)
+                if (m_commandTextBatch == null)
                 {
-                    commandTextBatch = new List<string>();
+                    m_commandTextBatch = new List<string>();
                 }
 
-                commandTextBatch.Add(StaticallyBoundCommandText);
-
-                m_commandTextBatch = commandTextBatch;
+                m_commandTextBatch.Add(StaticallyBoundCommandText);
             }
         } 
         #endregion
-
 
         #region ClearBatchInternal()
         internal void ClearBatchInternal()
@@ -329,8 +312,8 @@ namespace System.Data.Hsqldb.Client
 
             Prepare();
 
-            HsqlStatement l_statement = m_statement;
-            ParameterMetaData pmd = l_statement.ParameterDescriptor.metaData;
+            HsqlStatement statement = m_statement;
+            ParameterMetaData pmd = statement.ParameterDescriptor.metaData;
 
             string[] parameterNames = pmd.colNames;
             int count = parameterNames.Length;
@@ -410,7 +393,7 @@ namespace System.Data.Hsqldb.Client
         /// <returns>
         /// An array whose elements indicate the number of rows in
         /// the database that were affected by the execution of the
-        /// corresponding batch element.
+        /// corresponding batch elements.
         /// </returns>
         internal int[] ExecuteBatchInternal()
         {
@@ -428,8 +411,6 @@ namespace System.Data.Hsqldb.Client
                         "No commands have been added to the batch",
                         new InvalidOperationException());
                 }
-
-                m_commandTextBatch = null;
 
                 return Session.ExecuteNonQueryBatchDirect(commandTextBatch.ToArray());
             }
@@ -451,8 +432,7 @@ namespace System.Data.Hsqldb.Client
             }
             else
             {
-                return Session.ExecuteScalarDirect(
-                    StaticallyBoundCommandText);
+                return Session.ExecuteScalarDirect(StaticallyBoundCommandText);
             }
         }
         #endregion
@@ -477,9 +457,12 @@ namespace System.Data.Hsqldb.Client
                     Prepare(); // already correctly locked.
                 }
 
-                HsqlDataReader reader0 = new HsqlDataReader(
-                    m_statement.ResultDescriptor, behavior, this,
-                    this.m_dbConnection);
+                Result descriptor = m_statement.ResultDescriptor;
+                HsqlCommand originatingCommand = this;
+                HsqlConnection originatingConnection = m_dbConnection;
+
+                HsqlDataReader reader0 = new HsqlDataReader(descriptor, behavior, 
+                    originatingCommand, originatingConnection);
 
                 if (Behavior.IsKeyInfo(behavior))
                 {

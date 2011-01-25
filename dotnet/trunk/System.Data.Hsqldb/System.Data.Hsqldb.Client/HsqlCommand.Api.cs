@@ -33,30 +33,15 @@
 #endregion
 
 #region Using
-
-using System;
 using System.ComponentModel;
+using System.Data.Common;
+using System.Data.Hsqldb.Common;
+using System.Data.Hsqldb.Common.Attribute;
+
 #if W32DESIGN
 using System.Drawing;
 #endif
-using System.Data;
-using System.Data.Common;
-using System.Text;
-using System.Threading;
 
-using System.Data.Hsqldb.Client.Internal;
-using System.Data.Hsqldb.Client.MetaData;
-
-using System.Data.Hsqldb.Common;
-using System.Data.Hsqldb.Common.Attribute;
-using System.Data.Hsqldb.Common.Enumeration;
-using System.Data.Hsqldb.Common.Sql;
-
-using ParameterMetaData = org.hsqldb.Result.ResultMetaData;
-using PMD = java.sql.ParameterMetaData.__Fields;
-using Result = org.hsqldb.Result;
-using ResultConstants = org.hsqldb.ResultConstants.__Fields;
-using HsqlTypes = org.hsqldb.Types;
 #endregion
 
 namespace System.Data.Hsqldb.Client
@@ -1016,7 +1001,7 @@ namespace System.Data.Hsqldb.Client
                     // of introducing an optimization in the first
                     // place.
                     m_commandTextHasParameters = 
-                        (value.IndexOfAny(m_ParameterChars) >= 0);
+                        (value.IndexOfAny(s_parameterChars) >= 0);
                 }
             }
         }
@@ -1338,47 +1323,34 @@ namespace System.Data.Hsqldb.Client
         /// </summary>
         /// <remarks>
         /// <para>
-        /// While this command <see cref="IsPrepared"/>, the assumption and
-        /// current constraint (imposed by the 1.8.0 engine protocol) is that
-        /// the command text must be held constant across all calls to this
-        /// method that are intented to participate together in a future
-        /// invocation of <see cref="ExecuteBatch()"/>.
-        /// </para>
-        /// <para> 
-        /// In this case it is a precondition that for each elligible
-        /// parameter described in the parameter metadata of the prepared
-        /// form of this command, there exists a bindable element in the
-        /// current <see cref="Parameters"/> collection.
+        /// Note that the 1.8.0 engine protocol API does not yet natively 
+        /// support heterogeneous prepared statement batching.  Moreover, 
+        /// because the HSQLDB 1.8.0 ADO.NET data provider does not yet 
+        /// attempt to emulate support for this, changing the command
+        /// text while a command is in the prepared state must necessarily
+        /// invalidate that state. Similarly, invoking <see cref="Prepare()"/>
+        /// or <see cref="UnPrepare()"/> necessarily has a side effect 
+        /// equivalent to invoking <see cref="ClearBatch()"/>
         /// </para>
         /// <para>
-        /// If the precondition holds, then the Input and InputOutput elements
-        /// of the <see cref="Parameters"/>  collection are converted into an
-        /// array of object values which is added to an internal list for
-        /// subsequent transmission as part of a prepared SQL batch execution.
+        /// In particular, when an <c>HsqlCommand</c> <see cref="IsPrepared"/>, 
+        /// the <c>Input</c> and <c>InputOutput</c> elements of the
+        /// <see cref="Parameters"/> collection are converted into an
+        /// array of object values which is added to an internal list
+        /// for subsequent transmission and binding to a single prepared
+        /// statement and the command text must be held constant across
+        /// all calls to this method that are intended to register batch
+        /// items to participate together in a single future invocation of
+        /// <see cref="ExecuteBatch()"/>.
         /// </para>
         /// <para>
-        /// While this command is *not* prepared, it is not longer a
-        /// constraint that the command text must be held constant
-        /// across all calls to this method that are intented to participate
-        /// together in a future invocation of <see cref="ExecuteBatch()"/>.
-        /// In this case, however, there is an alternative constraint (again,
-        /// imposed by the 1.8.0 engine protocol) which is that batch items
-        /// consist of statically bound SQL registered for direct SQL batch
-        /// exection.  That is, parameter tokens in the current command text
-        /// must be replaced with SQL literal values derived from the
-        /// corresponding elements of the current <see cref="Parameters"/>
-        /// collection and it is the SQL text that is added to the batch.
-        /// </para>
-        /// <para> 
-        /// In this case it is a precondition that for each parameter token
-        /// in the current command text, there exists a bindable Input or
-        /// InputOutput element in the current <see cref="Parameters"/>
-        /// collection.
-        /// </para>         
-        /// <para>
-        /// Note carefully that preparing or unpreparing an HsqlCommand has
-        /// a side effect equivalent to invoking <see cref="ClearBatch()"/>
-        /// </para>
+        /// When an <c>HsqlCommand</c> is *not* in a prepared state, parameter
+        /// tokens in a copy of the current command text are replaced with
+        /// SQL literal values derived from the corresponding elements of the
+        /// current <see cref="Parameters"/> collection, and it is the resulting
+        /// statically bound command text that is retained for subsequent
+        /// transmission as part of a future direct SQL batch execution.
+        /// </para>        
         /// </remarks>
         public void AddBatch()
         {
@@ -1420,7 +1392,7 @@ namespace System.Data.Hsqldb.Client
         /// is not the current command type.
         /// </para>
         /// <para>
-        /// Currently, a side-effect of this method is to <see cref="Prepare()"/>
+        /// A side-effect of this method is to <see cref="Prepare()"/>
         /// this command.  This policy is used because it is typically more
         /// efficient in the long run.  If the intent is to minimize the number
         /// of open prepared statements, simply call <see cref="UnPrepare()"/>
@@ -1559,7 +1531,7 @@ namespace System.Data.Hsqldb.Client
         /// </value>
         public bool IsPrepared
         {
-            get { return m_statement != null; }
+            get { lock (SyncRoot) { return m_statement != null; } }
         }
 
         #endregion

@@ -63,7 +63,7 @@ namespace System.Data.Hsqldb.Client.Internal
     /// instance, exposing a slightly more ADO.NET-centric
     /// API. In the majority of cases, this class simply delegates
     /// to the underlying <c>SessionInterface</c>, rethrowing
-    /// any raised <c>org.hsqldb.HsqlException</c> object as 
+    /// any raised <c>org.hsqldb.HsqlException</c> object as an 
     /// <c>HsqlDataSourceException</c> object.
     /// </remarks>
     internal sealed partial class HsqlSession
@@ -79,14 +79,14 @@ namespace System.Data.Hsqldb.Client.Internal
 
         #region Fields
 
-        private static readonly org.hsqldb.IHsqlProtocol m_Protocol
+        private static readonly org.hsqldb.IHsqlProtocol s_protocol
             = org.hsqldb.HsqlProtocol.GetInstance();
-        private static readonly string m_EmbeddedServerVersion
+        private static readonly string s_embeddedServerVersion
             = string.Format("{0} {1}",
                             org.hsqldb.persist.HsqlDatabaseProperties.PRODUCT_NAME,
                             org.hsqldb.persist.HsqlDatabaseProperties.THIS_FULL_VERSION);
-        private static readonly int[] m_NoParameterTypes = new int[0];
-        private static readonly object[] m_NoParameterValues = new object[0];
+        private static readonly int[] s_noParameterTypes = new int[0];
+        private static readonly object[] s_noParameterValues = new object[0];
 
         #endregion
 
@@ -99,7 +99,7 @@ namespace System.Data.Hsqldb.Client.Internal
         /// <value>The embedded server version.</value>
         internal static string EmbeddedServerVersion
         {
-            get { return m_EmbeddedServerVersion; }
+            get { return s_embeddedServerVersion; }
         }
         #endregion
 
@@ -150,9 +150,9 @@ namespace System.Data.Hsqldb.Client.Internal
 
             m_session = session;
 
-            if (m_session is EmbeddedSession)
+            if (session is EmbeddedSession)
             {
-                m_serverVersion = m_EmbeddedServerVersion;
+                m_serverVersion = s_embeddedServerVersion;
             }
         }
         #endregion
@@ -237,7 +237,7 @@ namespace System.Data.Hsqldb.Client.Internal
         /// </returns>
         internal Response ExecuteDirect(string sql)
         {
-            return Execute(m_Protocol.CreateExecuteDirectRequest(sql));
+            return Execute(s_protocol.CreateExecuteDirectRequest(sql));
         }
         #endregion
 
@@ -254,13 +254,13 @@ namespace System.Data.Hsqldb.Client.Internal
         /// </returns>
         internal int ExecuteNonQueryDirect(string sql)
         {
-            Request request = m_Protocol.CreateExecuteDirectRequest(sql);
+            Request request = s_protocol.CreateExecuteDirectRequest(sql);
 
-            m_Protocol.SetMaxRows(request, 1);
+            s_protocol.SetMaxRows(request, 1);
 
             Response response = Execute(request);
 
-            return m_Protocol.GetUpdateCount(response);
+            return s_protocol.GetUpdateCount(response);
         }
         #endregion
 
@@ -280,7 +280,7 @@ namespace System.Data.Hsqldb.Client.Internal
         internal int[] ExecuteNonQueryBatchDirect(string[] sql)
         {            
             int batchSize = sql.Length;
-            Request request = m_Protocol.CreateExecuteBatchDirectRequest();
+            Request request = s_protocol.CreateExecuteBatchDirectRequest();
 
             for (int i = 0; i < batchSize; i++)
             {
@@ -313,7 +313,7 @@ namespace System.Data.Hsqldb.Client.Internal
         {
             Response response = Execute(request);
 
-            int[] updateCounts = m_Protocol.GetUpdateCounts(response);
+            int[] updateCounts = s_protocol.GetUpdateCounts(response);
 
             if (updateCounts.Length != expectedUpdateCounts)
             {
@@ -338,9 +338,9 @@ namespace System.Data.Hsqldb.Client.Internal
         /// </returns>
         internal object ExecuteScalarDirect(string sql)
         {
-            Request request = m_Protocol.CreateExecuteDirectRequest(sql);
+            Request request = s_protocol.CreateExecuteDirectRequest(sql);
 
-            m_Protocol.SetMaxRows(request, 1);
+            s_protocol.SetMaxRows(request, 1);
 
             Response response = Execute(request);
 
@@ -388,8 +388,8 @@ namespace System.Data.Hsqldb.Client.Internal
         internal int ExecuteNonQueryPrepared(int statementId)
         {
             return ExecuteNonQueryPrepared(statementId,
-                                           m_NoParameterTypes,
-                                           m_NoParameterValues);
+                                           s_noParameterTypes,
+                                           s_noParameterValues);
         }
         #endregion
 
@@ -428,11 +428,11 @@ namespace System.Data.Hsqldb.Client.Internal
         /// </returns>
         internal int ExecuteNonQueryPrepared(Request request)
         {
-            m_Protocol.SetMaxRows(request,1);
+            s_protocol.SetMaxRows(request,1);
 
             Response response = Execute(request);
 
-            return m_Protocol.GetUpdateCount(response);
+            return s_protocol.GetUpdateCount(response);
         }
         #endregion
 
@@ -456,7 +456,7 @@ namespace System.Data.Hsqldb.Client.Internal
         {
             Response response = Execute(request);
 
-            int[] updateCounts = m_Protocol.GetUpdateCounts(response);
+            int[] updateCounts = s_protocol.GetUpdateCounts(response);
 
             if (updateCounts.Length != expectedUpdateCounts)
             {
@@ -485,8 +485,8 @@ namespace System.Data.Hsqldb.Client.Internal
         {
             return ExecuteScalarPrepared(
                 statementId,
-                m_NoParameterTypes,
-                m_NoParameterValues);
+                s_noParameterTypes,
+                s_noParameterValues);
         }
 
         #endregion
@@ -505,7 +505,7 @@ namespace System.Data.Hsqldb.Client.Internal
             Request request = new Request(RequestType.SQLEXECUTE,
                 parameterTypes, statementId);
 
-            m_Protocol.SetParameterData(request, parameterData);
+            s_protocol.SetParameterData(request, parameterData);
 
             return ExecuteScalarPrepared(request);
         }
@@ -522,7 +522,7 @@ namespace System.Data.Hsqldb.Client.Internal
         /// </returns>
         internal object ExecuteScalarPrepared(Request request)
         {
-            m_Protocol.SetMaxRows(request, 1);
+            s_protocol.SetMaxRows(request, 1);
 
             Response response = Execute(request);
 
@@ -572,7 +572,7 @@ namespace System.Data.Hsqldb.Client.Internal
         /// </returns>
         internal HsqlStatement PrepareStatement(string sql)
         {
-            Request request = m_Protocol.CreatePrepareStatementRequest(sql);
+            Request request = s_protocol.CreatePrepareStatementRequest(sql);
             Response response = Execute(request);
 
             // TODO: A bit messy to sit here on the .NET side?
@@ -581,7 +581,7 @@ namespace System.Data.Hsqldb.Client.Internal
             org.hsqldb.Record root = response.rRoot;
 
             PrepareAck pAck = (PrepareAck)root.data[0];
-            int statementId = m_Protocol.GetStatementId(pAck);
+            int statementId = s_protocol.GetStatementId(pAck);
 
             ResultDescriptor resultDescriptor
                 = (ResultDescriptor)root.next.data[0];
@@ -604,7 +604,7 @@ namespace System.Data.Hsqldb.Client.Internal
         /// </param>
         internal void FreeStatement(int statementId)
         {
-            Execute(m_Protocol.CreateFreeStatementRequest(statementId));
+            Execute(s_protocol.CreateFreeStatementRequest(statementId));
         }
         #endregion
 

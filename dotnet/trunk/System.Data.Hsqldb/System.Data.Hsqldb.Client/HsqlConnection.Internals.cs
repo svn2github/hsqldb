@@ -497,7 +497,7 @@ namespace System.Data.Hsqldb.Client
             {
                 try
                 {
-                    handler(this, warning);
+                    handler.Invoke(this, warning);
                 }
                 catch (Exception ex)
                 {
@@ -516,7 +516,7 @@ namespace System.Data.Hsqldb.Client
 
         #region Session
         /// <summary>
-        /// Gets the session.
+        /// Gets the current, open session, throwing if there is none.
         /// </summary>
         /// <value>The session.</value>
         internal HsqlSession Session
@@ -525,13 +525,13 @@ namespace System.Data.Hsqldb.Client
         }
         #endregion
 
-        #region LocalTransaction
+        #region DatabaseTransaction
         /// <summary>
         /// Gets an <see cref="HsqlTransaction"/> instance representing
-        /// the local database transaction for this connection.
+        /// the current database transaction for this connection.
         /// </summary>
         /// <value>The current database transaction; may be null.</value>
-        internal HsqlTransaction LocalTransaction
+        internal HsqlTransaction DatabaseTransaction
         {
             get { lock (m_syncRoot) { CheckClosed(); return m_transaction; } }
         }
@@ -539,9 +539,9 @@ namespace System.Data.Hsqldb.Client
 
         #region Enlistment
         /// <summary>
-        /// Gets or sets an object instance that represents the enlistment
-        /// of the local database transaction, if any, in a
-        /// System.Transactions.Transaction.
+        /// Gets or sets an <see cref="HsqlEnlistment"/> object that represents the
+        /// enlistment of the current database transaction, if any, in a
+        /// <see cref="System.Transactions.Transaction"/>.
         /// </summary>
         /// <value>
         /// The current System.Transactions.Transaction enlistment; may be null.
@@ -591,8 +591,7 @@ namespace System.Data.Hsqldb.Client
         #region CheckClosed()
 
         /// <summary>
-        /// Tests if this connection is closed,
-        /// throwing an exception if it is.
+        /// Tests if this connection is closed, throwing an exception if it is.
         /// </summary>
         /// <exception cref="InvalidOperationException">
         /// When this connection is closed.

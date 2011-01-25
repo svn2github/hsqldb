@@ -54,7 +54,7 @@ namespace System.Data.Hsqldb.Client.Internal
         internal static class Factory
         {
             #region Fields
-            private static readonly object m_ResLock;
+            private static readonly object s_resLock;
             #endregion
 
             #region Static Initializer
@@ -63,7 +63,7 @@ namespace System.Data.Hsqldb.Client.Internal
             /// </summary>
             static Factory()
             {
-                m_ResLock = new object();
+                s_resLock = new object();
             }
             #endregion
 
@@ -118,10 +118,10 @@ namespace System.Data.Hsqldb.Client.Internal
             /// instance; work is performed toward configuring and locking
             /// the ambient class loading environment to correctly handle
             /// searching the transitive closure of <c>ikvmres:</c>
-            /// protocol resources reachable by comile-time reference, 
+            /// protocol resources reachable by compile-time reference, 
             /// starting with the assemblies referenced on the call stack,
-            /// as well as the entry level, calling and executing assemblies,
-            /// as well as their related satellite assemblies.
+            /// as well as the entry level, calling and executing assemblies
+            /// and their related satellite assemblies.
             /// </remarks>
             /// <param name="properties">The properties.</param>
             /// <returns>an embedded session</returns>
@@ -158,7 +158,7 @@ namespace System.Data.Hsqldb.Client.Internal
                 java.lang.ClassLoader loader
                     = IkvmResourceLoaderFactory.CreateLoader(startingList);
 
-                lock (m_ResLock)
+                lock (s_resLock)
                 {
                     org.hsqldb.lib.ResourceStreamProvider.setLoader(loader);
 

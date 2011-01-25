@@ -33,30 +33,11 @@
 #endregion
 
 #region Using
-
-using System;
-
 using System.ComponentModel;
-using System.Data;
 using System.Data.Common;
-using System.Data.Hsqldb.Common.Enumeration;
-using System.Data.Hsqldb.Client.Internal;
-using System.Data.Hsqldb.Client.MetaData;
-using System.Data.Hsqldb.Common.Sql;
-using System.Text;
-using System.Threading;
-
 #if W32DESIGN
 using System.Drawing;
 #endif
-
-using ParameterMetaData = org.hsqldb.Result.ResultMetaData;
-using PMD = java.sql.ParameterMetaData.__Fields;
-using Result = org.hsqldb.Result;
-using ResultConstants = org.hsqldb.ResultConstants.__Fields;
-using HsqlTypes = org.hsqldb.Types;
-
-
 #endregion
 
 namespace System.Data.Hsqldb.Client

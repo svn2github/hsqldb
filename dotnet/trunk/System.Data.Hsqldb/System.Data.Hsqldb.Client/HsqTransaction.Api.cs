@@ -62,7 +62,7 @@ namespace System.Data.Hsqldb.Client
         /// The characters with which a savepoint name legally start
         /// </summary>
         public const string LegalSavepointNameStart
-            = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"; 
+            = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         #endregion
 
         #region LegalSavepointNamePart

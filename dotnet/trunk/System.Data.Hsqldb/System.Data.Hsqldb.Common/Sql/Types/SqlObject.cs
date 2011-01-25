@@ -106,11 +106,11 @@ namespace System.Data.Hsqldb.Common.Sql.Types
             "EABED6CD-8225-4ac9-A57E-E3587465760B"); 
         #endregion
 
-        #region m_HeaderBytes
+        #region s_headerBytes
         /// <summary>
         /// Private copy of <c>SerializationHeader</c>, in a ready-to-use form.
         /// </summary>
-        private static readonly byte[] m_HeaderBytes = SqlObject
+        private static readonly byte[] s_headerBytes = SqlObject
             .SerializationHeader.ToByteArray(); 
         #endregion
 
@@ -145,7 +145,7 @@ namespace System.Data.Hsqldb.Common.Sql.Types
 
             byte[] buffer = new byte[16 + bytes.Length];
 
-            m_HeaderBytes.CopyTo(buffer, 0);
+            s_headerBytes.CopyTo(buffer, 0);
             bytes.CopyTo(buffer, 16);
 
             return buffer;
@@ -173,7 +173,7 @@ namespace System.Data.Hsqldb.Common.Sql.Types
             }
 
             bool startsWithHeader = true; // maybe
-            byte[] headerBytes = m_HeaderBytes;
+            byte[] headerBytes = s_headerBytes;
             int headerBytesLength = headerBytes.Length;
 
             if (value.Length < headerBytesLength)
@@ -234,7 +234,7 @@ namespace System.Data.Hsqldb.Common.Sql.Types
                 {
                     BinaryFormatter formatter = new BinaryFormatter();
 
-                    stream.Write(m_HeaderBytes, 0, m_HeaderBytes.Length);
+                    stream.Write(s_headerBytes, 0, s_headerBytes.Length);
                     formatter.Serialize(stream, value);
 
                     bytes = stream.ToArray();
@@ -268,9 +268,7 @@ namespace System.Data.Hsqldb.Common.Sql.Types
         /// The object graph obtained by deserializing the given array of
         /// octets.
         /// </returns>
-        public static object Deserialize(
-            byte[] value,
-            out bool isJavaObject)
+        public static object Deserialize(byte[] value, out bool isJavaObject)
         {
             bool hasHeader = StartsWithSerializationHeader(value);
             object obj;

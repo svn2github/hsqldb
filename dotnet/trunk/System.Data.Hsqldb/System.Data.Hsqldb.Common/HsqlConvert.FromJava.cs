@@ -1685,24 +1685,31 @@ namespace System.Data.Hsqldb.Common
             public static DateTime ToDate(object o)
             {
                 JavaTimestamp timestampValue = o as JavaTimestamp;
+                long javaTimeInMillis;
 
                 if (timestampValue != null)
                 {
-                    return ToDate(timestampValue.getTime());
+                    javaTimeInMillis = timestampValue.getTime();
+
+                    return ToDate(javaTimeInMillis);
                 }
 
                 JavaDate dateValue = o as JavaDate;
 
                 if (dateValue != null)
                 {
-                    return ToDate(dateValue.getTime());
+                    javaTimeInMillis = dateValue.getTime();
+
+                    return ToDate(javaTimeInMillis);
                 }
 
                 string s = o as string;
 
                 if (s != null)
                 {
-                    return ToDate(HsqlDateTime.dateValue(s).getTime());
+                    javaTimeInMillis = HsqlDateTime.dateValue(s).getTime();
+
+                    return ToDate(javaTimeInMillis);
                 }
 
                 JavaObject objectValue = o as JavaObject;
@@ -1711,16 +1718,14 @@ namespace System.Data.Hsqldb.Common
                 {
                     bool isJavaObject;
 
-                    object unwrapped = FromJava
-                        .UnWrap(objectValue, out isJavaObject);
+                    object uw = FromJava.UnWrap(objectValue, out isJavaObject);
 
                     if (isJavaObject)
                     {
                         return FromJava.ToDate(objectValue);
                     }
 
-                    long javaTimeInMillis = FromDotNet
-                        .ToDate(unwrapped).getTime();
+                    javaTimeInMillis = FromDotNet.ToDate(uw).getTime();
 
                     return FromJava.ToDate(javaTimeInMillis);
                 }
@@ -1730,9 +1735,7 @@ namespace System.Data.Hsqldb.Common
                     throw InvalidConversion(HsqlTypes.TIME);
                 }
 
-                if (o is HsqlBinary
-                    || o is Array
-                    || o is JavaNumber)
+                if (o is HsqlBinary || o is Array || o is JavaNumber)
                 {
                     throw WrongDataType(o);
                 }
@@ -1741,7 +1744,16 @@ namespace System.Data.Hsqldb.Common
 
                 s = (jobj == null) ? o.ToString() : jobj.toString();
 
-                return ToDate(HsqlDateTime.dateValue(s.Trim()).getTime());
+                if (s == null)
+                {
+                    throw HsqlConvert.UnsupportedSourceDataFormat(o, HsqlTypes.DATE);
+                }
+
+                s = s.Trim();
+
+                javaTimeInMillis = HsqlDateTime.dateValue(s).getTime();
+
+                return ToDate(javaTimeInMillis);
             }
             #endregion
 
@@ -1805,8 +1817,7 @@ namespace System.Data.Hsqldb.Common
                 {
                     bool isJavaObject;
 
-                    object unwrapped = FromJava
-                        .UnWrap(objectValue, out isJavaObject);
+                    object unwrapped = FromJava.UnWrap(objectValue, out isJavaObject);
 
                     return (isJavaObject)
                         ? FromJava.ToBinary(unwrapped)
@@ -1868,8 +1879,7 @@ namespace System.Data.Hsqldb.Common
             /// <returns>
             /// The expected <c>System.Object</c> representation.
             /// </returns>
-            public static object UnWrap(
-                object sourceObject,
+            public static object UnWrap(object sourceObject, 
                 out bool isJavaObject)
             {
                 JavaObject javaObject = sourceObject as JavaObject;
@@ -1917,7 +1927,7 @@ namespace System.Data.Hsqldb.Common
             /// The result in this case is a <c>System.Object</c> graph;
             /// </para> 
             /// <para>
-            /// otherwise, <c>isJavaObject</c> is set <c>true</c> and the
+            /// Otherwise, <c>isJavaObject</c> is set <c>true</c> and the
             /// entire content of the wrapped <c>byte[]</c> is deserialized
             /// using a <c>java.io.ObjectInputStream</c>, resulting in a
             /// <c>java.lang.Object</c> graph.

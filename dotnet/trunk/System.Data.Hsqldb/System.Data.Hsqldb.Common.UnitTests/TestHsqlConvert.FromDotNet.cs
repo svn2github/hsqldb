@@ -12,7 +12,7 @@ namespace System.Data.Hsqldb.Common.UnitTests
     [TestFixture, ForSubject(typeof(HsqlConvert.FromDotNet))]
     public class TestHsqlConvertFromDotNet
     {
-
+        #region ToBigint
         [Test, OfMember("ToBigInt(bool)")]        
         public virtual void bool_ToBigInt()
         {
@@ -23,25 +23,113 @@ namespace System.Data.Hsqldb.Common.UnitTests
         [Test, OfMember("ToBigInt(byte)")]        
         public virtual void byte_ToBigInt()
         {
-            byte byteValue = default(byte);
-
-            TestSubject.ToBigInt(byteValue);
-
-            // 
-            // Write your assertions here.
-            // 
+            for (int i = byte.MinValue; i <= byte.MaxValue; i++)
+            {
+                byte byteValue = (byte)i;
+                Assert.AreEqual(ValuePool.getLong(byteValue), TestSubject.ToBigInt(byteValue));
+            }
         }
 
-        [Test, OfMember("ToBigInt(INullable)")]        
+        [Test, OfMember("ToBigInt(INullable)")]
         public virtual void INullable_ToBigInt()
         {
-            INullable nullable = default(INullable);
+            Assert.IsNull(TestSubject.ToBigInt(default(INullable)));
 
-            TestSubject.ToBigInt(nullable);
+            // Sqlint64
 
-            // 
-            // Write your assertions here.
-            // 
+            Assert.IsNull(TestSubject.ToBigInt(SqlInt64.Null));
+            Assert.AreSame(ValuePool.getLong(SqlInt64.MinValue.Value), TestSubject.ToBigInt(SqlInt64.MinValue));
+            Assert.AreSame(ValuePool.getLong(SqlInt64.Zero.Value), TestSubject.ToBigInt(SqlInt64.Zero));
+            Assert.AreSame(ValuePool.getLong(SqlInt64.MaxValue.Value), TestSubject.ToBigInt(SqlInt64.MaxValue));
+
+            // SqlInt32
+
+            Assert.IsNull(TestSubject.ToBigInt(SqlInt32.Null));
+            Assert.AreSame(ValuePool.getLong(SqlInt32.MinValue.Value), TestSubject.ToBigInt(SqlInt32.MinValue));
+            Assert.AreSame(ValuePool.getLong(SqlInt32.Zero.Value), TestSubject.ToBigInt(SqlInt32.Zero));
+            Assert.AreSame(ValuePool.getLong(SqlInt32.MaxValue.Value), TestSubject.ToBigInt(SqlInt32.MaxValue));
+
+            // SqlInt16
+
+            Assert.IsNull(TestSubject.ToBigInt(SqlInt16.Null));
+            Assert.AreSame(ValuePool.getLong(SqlInt16.MinValue.Value), TestSubject.ToBigInt(SqlInt16.MinValue));
+            Assert.AreSame(ValuePool.getLong(SqlInt16.Zero.Value), TestSubject.ToBigInt(SqlInt16.Zero));
+            Assert.AreSame(ValuePool.getLong(SqlInt16.MaxValue.Value), TestSubject.ToBigInt(SqlInt16.MaxValue));
+
+            // SqlDecimal
+
+            Assert.IsNull(TestSubject.ToBigInt(SqlDecimal.Null));
+            
+            try
+            {
+                TestSubject.ToBigInt(SqlDecimal.MinValue);
+            }
+            catch (Exception ex)
+            {
+                Assert.IsTrue(ex is HsqlDataSourceException);
+            }
+
+            Assert.AreSame(ValuePool.getLong(long.MinValue), TestSubject.ToBigInt(new SqlDecimal(long.MinValue)));
+            Assert.AreSame(ValuePool.getLong(0), TestSubject.ToBigInt(new SqlDecimal(0)));
+            Assert.AreSame(ValuePool.getLong(long.MaxValue), TestSubject.ToBigInt(new SqlDecimal(long.MaxValue)));
+
+            try
+            {
+                TestSubject.ToBigInt(SqlDecimal.MaxValue);
+            }
+            catch (Exception ex)
+            {
+                Assert.IsTrue(ex is HsqlDataSourceException);
+            }
+
+            // SqlDouble
+
+            Assert.IsNull(TestSubject.ToBigInt(SqlDouble.Null));
+
+            try
+            {
+                TestSubject.ToBigInt(SqlDouble.MinValue);
+            }
+            catch (Exception ex)
+            {
+                Assert.IsTrue(ex is HsqlDataSourceException);
+            }
+            //unchecked
+            //{
+            //    string s = Convert.ToString((long)9.2233720368547758E+18D);
+            //}
+            Assert.AreSame(ValuePool.getLong(long.MinValue), TestSubject.ToBigInt(new SqlDouble(long.MinValue)));
+            Assert.AreSame(ValuePool.getLong(0), TestSubject.ToBigInt(new SqlDouble(0)));
+            //Assert.AreEqual(9223372036854775295L, TestSubject.ToBigInt(new SqlDouble(9223372036854775294L)).longValue());
+
+            try
+            {
+                TestSubject.ToBigInt(new SqlDouble((double)9223372036854775296L));
+            }
+            catch (Exception ex)
+            {
+                Assert.IsTrue(ex is HsqlDataSourceException);
+            }
+
+            // SqlMoney
+
+            Assert.IsNull(TestSubject.ToBigInt(SqlMoney.Null));
+
+            Assert.AreSame(ValuePool.getLong(SqlMoney.MaxValue.ToSqlDecimal().ToSqlInt64().Value), TestSubject.ToBigInt(SqlMoney.MaxValue));
+            Assert.AreSame(ValuePool.getLong(0), TestSubject.ToBigInt(new SqlDouble(0)));
+            Assert.AreSame(ValuePool.getLong(SqlMoney.MinValue.ToSqlDecimal().ToSqlInt64().Value), TestSubject.ToBigInt(SqlMoney.MinValue));
+
+
+            //SqlSingle;
+
+            Assert.IsNull(TestSubject.ToBigInt(SqlSingle.Null));
+
+            Assert.AreSame(ValuePool.getLong(0), TestSubject.ToBigInt(new SqlDouble(0)));
+
+            //SqlBoolean;
+            //SqlString;            
+            //SqlChars;
+            //SqlXml;
         }
 
         [Test, OfMember("ToBigInt(decimal)")]        
@@ -57,8 +145,7 @@ namespace System.Data.Hsqldb.Common.UnitTests
             // 
         }
 
-        [Test, OfMember("ToBigInt(double)")]
-        
+        [Test, OfMember("ToBigInt(double)")]        
         public virtual void double_ToBigInt()
         {
             double doubleValue = default(double);
@@ -167,8 +254,7 @@ namespace System.Data.Hsqldb.Common.UnitTests
             // 
         }
 
-        [Test, OfMember("ToBigInt")]
-        
+        [Test, OfMember("ToBigInt(uint)")]        
         public virtual void uint_ToBigInt()
         {
 
@@ -188,8 +274,7 @@ namespace System.Data.Hsqldb.Common.UnitTests
             // 
         }
 
-        [Test, OfMember("ToBigInt")]
-        
+        [Test, OfMember("ToBigInt(ulong)")]        
         public virtual void ulong_ToBigInt()
         {
 
@@ -208,18 +293,12 @@ namespace System.Data.Hsqldb.Common.UnitTests
             // Write your assertions here.
             // 
         }
+        #endregion
 
-        [Test, OfMember("ToBinary")]
-        
+        #region ToBinary
+        [Test, OfMember("ToBinary")]        
         public virtual void bool_ToBinary()
         {
-
-            
-
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter boolValue type Boolean.
             bool boolValue = default(bool);
 
 
@@ -230,17 +309,9 @@ namespace System.Data.Hsqldb.Common.UnitTests
             // 
         }
 
-        [Test, OfMember("ToBinary")]
-        
+        [Test, OfMember("ToBinary")]        
         public virtual void byte_ToBinary()
         {
-
-            
-
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter byteValue type Byte.
             byte byteValue = default(byte);
 
 
@@ -251,15 +322,9 @@ namespace System.Data.Hsqldb.Common.UnitTests
             // 
         }
 
-        [Test, OfMember("ToBinary")]
-        
+        [Test, OfMember("ToBinary")]        
         public virtual void INullable_ToBinary()
         {
-
-            
-
-
-            // Create Test Method Parameters
             INullable nullable = null;
 
             TestSubject.ToBinary(nullable);
@@ -269,17 +334,9 @@ namespace System.Data.Hsqldb.Common.UnitTests
             // 
         }
 
-        [Test, OfMember("ToBinary")]
-        
+        [Test, OfMember("ToBinary")]        
         public virtual void decimal_ToBinary()
         {
-
-            
-
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter decimalValue type Decimal.
             decimal decimalValue = default(decimal);
 
 
@@ -290,17 +347,9 @@ namespace System.Data.Hsqldb.Common.UnitTests
             // 
         }
 
-        [Test, OfMember("ToBinary")]
-        
+        [Test, OfMember("ToBinary")]        
         public virtual void double_ToBinary()
         {
-
-            
-
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter doubleValue type Double.
             double doubleValue = default(double);
 
 
@@ -311,17 +360,9 @@ namespace System.Data.Hsqldb.Common.UnitTests
             // 
         }
 
-        [Test, OfMember("ToBinary")]
-        
+        [Test, OfMember("ToBinary")]        
         public virtual void short_ToBinary()
         {
-
-            
-
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter shortValue type Int16.
             short shortValue = default(short);
 
 
@@ -332,19 +373,10 @@ namespace System.Data.Hsqldb.Common.UnitTests
             // 
         }
 
-        [Test, OfMember("ToBinary")]
-        
+        [Test, OfMember("ToBinary")]        
         public virtual void int_ToBinary()
         {
-
-            
-
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter intValue type Int32.
             int intValue = default(int);
-
 
             TestSubject.ToBinary(intValue);
 
@@ -357,15 +389,7 @@ namespace System.Data.Hsqldb.Common.UnitTests
         
         public virtual void long_ToBinary()
         {
-
-            
-
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter longValue type Int64.
             long longValue = default(long);
-
 
             TestSubject.ToBinary(longValue);
 
@@ -411,7 +435,6 @@ namespace System.Data.Hsqldb.Common.UnitTests
         {
             sbyte sbyteValue = default(sbyte);
 
-
             TestSubject.ToBinary(sbyteValue);
 
             // 
@@ -423,7 +446,6 @@ namespace System.Data.Hsqldb.Common.UnitTests
         public virtual void float_ToBinary()
         {
             float floatValue = default(float);
-
 
             TestSubject.ToBinary(floatValue);
 
@@ -445,8 +467,7 @@ namespace System.Data.Hsqldb.Common.UnitTests
             // 
         }
 
-        [Test, OfMember("ToBinary")]
-        
+        [Test, OfMember("ToBinary")]        
         public virtual void ushort_ToBinary()
         {
             ushort ushortValue = default(ushort);
@@ -488,9 +509,11 @@ namespace System.Data.Hsqldb.Common.UnitTests
             byte[] bytes = null;
 
             org.hsqldb.types.Binary actual = TestSubject.ToBinary(bytes);
-
         }
 
+#endregion
+
+        #region ToBoolean
         [Test, OfMember("ToBoolean(bool)")]        
         public virtual void bool_ToBoolean()
         {
@@ -661,7 +684,9 @@ namespace System.Data.Hsqldb.Common.UnitTests
             // Write your assertions here.
             // 
         }
+        #endregion
 
+        #region ToDate
         [Test, OfMember("ToDate(INullable)")]
 
         public virtual void INullable_ToDate()
@@ -748,7 +773,9 @@ namespace System.Data.Hsqldb.Common.UnitTests
             // Write your assertions here.
             // 
         }
+        #endregion
 
+        #region ToDateString
         [Test, OfMember("ToDateString")]        
         public virtual void ToDateString()
         {
@@ -763,7 +790,9 @@ namespace System.Data.Hsqldb.Common.UnitTests
             // Write your assertions here.
             // 
         }
+        #endregion
 
+        #region ToDateTimeString
         [Test, OfMember("ToDateTimeString")]
         
         public virtual void ToDateTimeString()
@@ -783,9 +812,10 @@ namespace System.Data.Hsqldb.Common.UnitTests
             // Write your assertions here.
             // 
         }
+        #endregion
 
-        [Test, OfMember("ToDecimal(bool)")]
-        
+        #region ToDecimal
+        [Test, OfMember("ToDecimal(bool)")]        
         public virtual void bool_ToDecimal()
         {
             bool boolValue = default(bool);
@@ -810,7 +840,6 @@ namespace System.Data.Hsqldb.Common.UnitTests
         }
 
         [Test, OfMember("ToDecimal(INullable)")]
-
         public virtual void INullable_ToDecimal()
         {
             INullable nullable = null;
@@ -918,8 +947,7 @@ namespace System.Data.Hsqldb.Common.UnitTests
             // 
         }
 
-        [Test, OfMember("ToDecimal(string)")]
-        
+        [Test, OfMember("ToDecimal(string)")]        
         public virtual void string_ToDecimal()
         {
             string stringValue = "123123123123.123123123123";
@@ -955,8 +983,7 @@ namespace System.Data.Hsqldb.Common.UnitTests
             // 
         }
 
-        [Test, OfMember("ToDecimal(ulong)")]
-        
+        [Test, OfMember("ToDecimal(ulong)")]        
         public virtual void ulong_ToDecimal()
         {
             ulong ulongValue = default(ulong);
@@ -968,6 +995,7 @@ namespace System.Data.Hsqldb.Common.UnitTests
             // Write your assertions here.
             // 
         }
+        #endregion
 
         //[Test, OfMember("ToDouble")]
         

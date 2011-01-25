@@ -1286,56 +1286,69 @@ namespace System.Data.Hsqldb.Common
 
             switch (parameter.DbType)
             {
-                case DbType.AnsiString:
                 case DbType.AnsiStringFixedLength:
+                case DbType.StringFixedLength:                
+                    {
+                        string stringValue = FromDotNet.ToString(objectValue);
+                        string quotedValue = StringConverter.toQuotedString(stringValue, '\'', true);
+
+                        return (stringValue.Length <= 255)
+                            ? string.Format("CAST({0} AS CHAR({1}))", quotedValue, stringValue.Length)
+                            : (stringValue.Length <= 2000)
+                            ? string.Format("CAST({0} AS VARCHAR({1}))", quotedValue, stringValue.Length)
+                            : string.Format("CAST({0} AS LONGVARCHAR)", quotedValue);
+                    }
+                case DbType.AnsiString:
                 case DbType.String:
-                case DbType.StringFixedLength:
+                    {
+                        string stringValue = FromDotNet.ToString(objectValue);
+                        string quotedValue = StringConverter.toQuotedString(stringValue, '\'', true);
+
+                        return (stringValue.Length <= 2000)
+                            ? string.Format("CAST({0} AS VARCHAR({1}))", quotedValue, stringValue.Length)
+                            : string.Format("CAST({0} AS LONGVARCHAR)", quotedValue);
+                    }
                 case DbType.Xml:
                     {
-                        return StringConverter.toQuotedString(FromDotNet.
-                            ToString(objectValue), '\'', true);
+                        string stringValue = FromDotNet.ToString(objectValue);
+                        string quotedValue = StringConverter.toQuotedString(stringValue, '\'', true);
+
+                        return string.Format("CAST({0} AS LONGVARCHAR)", quotedValue);
                     }
                 case DbType.Binary:
                     {
-                        byte[] bytes = FromDotNet.ToBinary(objectValue)
-                            .getBytes();
+                        byte[] bytes = FromDotNet.ToBinary(objectValue).getBytes();
                         string hex = StringConverter.byteToHex(bytes);
 
-                        StringBuilder sb = new StringBuilder(
-                            hex.Length + "CAST('' AS BINARY)".Length);
-
-                        return sb.Append("CAST('").Append(hex).Append(
-                            "' AS BINARY)").ToString();
+                        return (bytes.Length <= 255)
+                            ? string.Format("CAST('{0}' AS BINARY({1}))", hex, bytes.Length)
+                            : (bytes.Length <= 4000)
+                            ? string.Format("CAST('{0}' AS VARBINARY({1}))", hex, bytes.Length)
+                            : string.Format("CAST('{0}' AS LONGVARBINARY)", hex);
                     }
                 case DbType.Boolean:
                     {
                         return FromDotNet.ToBoolean(objectValue).booleanValue()
-                            ? "TRUE" : "FALSE";
+                            ? "CAST((1=1) AS BOOLEAN)" 
+                            : "CAST((1=0) AS BOOLEAN)";
                     }
                 case DbType.Byte:
                     {
-                        return FromDotNet.ToSmallInt(objectValue).toString();
+                        return string.Format("CAST({0} AS SMALLINT)", FromDotNet.ToSmallInt(objectValue));
                     }
                 case DbType.Currency:
                     {
-                        return HsqlConvert.FromDotNet.ToDecimal(objectValue)
+                        return FromDotNet.ToDecimal(objectValue)
                             .setScale(4, JavaBigDecimal.ROUND_HALF_UP)
                             .toPlainString();
                     }
                 case DbType.Date:
                     {
-                        StringBuilder sb = new StringBuilder(26);
-
-                        return sb.Append("CAST('").Append(FromDotNet.ToDate(
-                            objectValue)).Append("' AS DATE)").ToString();
+                        return string.Format("CAST('{0}' AS DATE)", FromDotNet.ToDate(objectValue));
                     }
                 case DbType.DateTime:
                     {
-                        StringBuilder sb = new StringBuilder(45);
-
-                        return sb.Append("CAST('").Append(
-                            FromDotNet.ToTimestamp(objectValue)).Append(
-                            "' AS TIMESTAMP)").ToString();
+                        return string.Format("CAST('{0}' AS TIMESTAMP)", FromDotNet.ToTimestamp(objectValue));
                     }
                 case DbType.Decimal:
                     {
@@ -1346,26 +1359,25 @@ namespace System.Data.Hsqldb.Common
                     }
                 case DbType.Double:
                     {
-                        double doubleValue = FromDotNet.ToDouble(objectValue)
-                            .doubleValue();
-
+                        double doubleValue = FromDotNet.ToDouble(objectValue).doubleValue();
+                        string stringValue;
 
                         if (doubleValue == java.lang.Double.NEGATIVE_INFINITY)
                         {
-                            return "-1E0/0";
+                            stringValue =  "(-1E0/0)";
                         }
-
-                        if (doubleValue == java.lang.Double.POSITIVE_INFINITY)
+                        else if (doubleValue == java.lang.Double.POSITIVE_INFINITY)
                         {
-                            return "1E0/0";
+                            stringValue =  "(1E0/0)";
                         }
-
-                        if (java.lang.Double.isNaN(doubleValue))
+                        else if (java.lang.Double.isNaN(doubleValue))
                         {
-                            return "0E0/0E0";
+                            stringValue =  "(0E0/0E0)";
                         }
-
-                        string stringValue = doubleValue.ToString();
+                        else
+                        {
+                            stringValue = doubleValue.ToString();
+                        }
 
                         // ensure the engine treats the value as a DOUBLE, not a DECIMAL
                         if (stringValue.IndexOf('E') < 0)
@@ -1373,66 +1385,60 @@ namespace System.Data.Hsqldb.Common
                             stringValue = string.Concat(stringValue, "E0");
                         }
 
-                        return stringValue;
+                        return string.Format("CAST({0} as DOUBLE)", stringValue);
                     }
                 case DbType.Guid:
                     {
-                        // TODO: cast? udf?
-                        string stringValue = FromDotNet.ToBinary(objectValue)
-                            .toString();
+                        byte[] bytes = FromDotNet.ToBinary(objectValue).getBytes();
+                        string hex = StringConverter.byteToHex(bytes);
 
-                        StringBuilder sb = new StringBuilder(
-                            stringValue.Length + 2);
-
-                        return sb.Append('\'').Append(stringValue).Append(
-                            '\'').ToString();
+                        return string.Format("CAST('{0}' AS BINARY({1}))", hex, bytes.Length);
                     }
                 case DbType.Int16:
                     {
-                        return FromDotNet.ToSmallInt(objectValue).toString();
+                        return string.Format("CAST({0} AS SMALLINT)",FromDotNet.ToSmallInt(objectValue));
                     }
                 case DbType.Int32:
                     {
-                        return FromDotNet.ToInteger(objectValue).toString();
+                        return string.Format("CAST({0} AS INTEGER)",FromDotNet.ToInteger(objectValue));
                     }
                 case DbType.Int64:
                     {
-                        return FromDotNet.ToBigInt(objectValue).toString();
+                        return string.Format("CAST({0} AS BIGINT)",FromDotNet.ToBigInt(objectValue));
                     }
                 case DbType.Object:
                     {
                         // TODO: cast? udf?
-                        byte[] bytes = FromDotNet.ToOther(objectValue)
-                            .getBytes();
+                        byte[] bytes = FromDotNet.ToOther(objectValue).getBytes();
                         string hex = StringConverter.byteToHex(bytes);
 
-                        return StringConverter.toQuotedString(hex, '\'', false);
+                        return string.Format("CAST('{0}' AS OTHER)", hex);
                     }
                 case DbType.SByte:
                     {
-                        return FromDotNet.ToTinyInt(objectValue).toString();
+                        return string.Format("CAST({0} AS TINYINT)",FromDotNet.ToTinyInt(objectValue));
                     }
                 case DbType.Single:
                     {
-                        float floatValue = FromDotNet.ToReal(objectValue)
-                            .floatValue();
+                        float floatValue = FromDotNet.ToReal(objectValue).floatValue();
+                        string stringValue;
 
                         if (floatValue == JavaFloat.NEGATIVE_INFINITY)
                         {
-                            return "-1E0/0";
+                            stringValue = "(-1E0/0)";
                         }
-
-                        if (floatValue == JavaFloat.POSITIVE_INFINITY)
+                        else if (floatValue == JavaFloat.POSITIVE_INFINITY)
                         {
-                            return "1E0/0";
+                            stringValue =  "(1E0/0)";
                         }
-
-                        if (JavaFloat.isNaN(floatValue))
+                        else if (JavaFloat.isNaN(floatValue))
                         {
-                            return "0E0/0E0";
+                            stringValue = "(0E0/0E0)";
                         }
-
-                        string stringValue = floatValue.ToString();
+                        else 
+                        {
+                            stringValue = floatValue.ToString();
+                        }
 
                         // ensure the engine treats the value as a REAL,
                         // not a DECIMAL
@@ -1441,35 +1447,44 @@ namespace System.Data.Hsqldb.Common
                             stringValue = string.Concat(stringValue, "E0");
                         }
 
-                        return stringValue;
+                        return string.Format("CAST({0} AS REAL)", stringValue);
                     }
                 case DbType.Time:
                     {
-                        StringBuilder sb = new StringBuilder(24);
-
-                        return sb.Append("CAST('").Append(FromDotNet.ToTime(
-                            objectValue)).Append("' AS TIME)").ToString();
+                        return string.Format("CAST('{0}' AS TIME)", FromDotNet.ToTime(objectValue));
                     }
                 case DbType.UInt16:
                     {
-                        return FromDotNet.ToInteger(objectValue).toString();
+                        int intValue = FromDotNet.ToInteger(objectValue).intValue();
+
+                        return (intValue <= short.MaxValue) 
+                            ? string.Format("CAST({0} AS SMALLINT)",intValue)
+                            : string.Format("CAST({0} AS INTEGER)",intValue);
                     }
                 case DbType.UInt32:
                     {
-                        return FromDotNet.ToBigInt(objectValue).toString();
+                        long longValue = FromDotNet.ToBigInt(objectValue).longValue();
+
+                        return (longValue <= int.MaxValue)
+                            ? string.Format("CAST({0} AS INTEGER)", longValue)
+                            : string.Format("CAST({0} AS BIGINT)", longValue);
                     }
                 case DbType.UInt64:
                     {
-                        return FromDotNet.ToDecimal(objectValue)
-                            .toBigInteger().toString();
+                        java.math.BigInteger value = FromDotNet.ToDecimal(objectValue).toBigInteger();
+                        
+                        return (value.compareTo(HsqlConvert.MAX_INTEGER) <= 0)
+                            ? string.Format("CAST({0} AS INTEGER)", value)
+                            : (value.compareTo(HsqlConvert.MAX_BIGINT) <= 0)
+                            ? string.Format("CAST({0} AS BIGINT)", value)
+                            : value.toString();                        
                     }
                 case DbType.VarNumeric:
                     {
                         // Using toPlainString() to disable scientific
                         // notation so that the engine treats the value
                         // as an SQL NUMERIC, not a DOUBLE.
-                        return FromDotNet.ToDecimal(objectValue)
-                            .toPlainString();
+                        return FromDotNet.ToDecimal(objectValue).toPlainString();
                     }
                 default:
                     {
@@ -1484,22 +1499,28 @@ namespace System.Data.Hsqldb.Common
 
         #region UnsupportedInputDataFormat(object)
         /// <summary>
-        /// Creates a new "numeric value out of range" exception.
+        /// Creates a new "unsupported input data format" exception.
         /// </summary>
-        /// <param name="n">
-        /// The number valued <c>object</c> that is out of range.
+        /// <param name="source">
+        /// The input <c>object</c> whose value format is not supported for
+        /// conversion to an instance of the target data type.
+        /// </param>
+        /// <param name="targetType">
+        /// The provider-specific numeric identifier of the target data type
         /// </param>
         /// <returns><c>HsqlDataSourceException</c></returns>
-        public static HsqlDataSourceException UnsupportedInputDataFormat(object input, int targetType)
+        public static HsqlDataSourceException UnsupportedSourceDataFormat(object source, int targetType)
         {
+            HsqlException ex = Trace.error(
+                Trace.INVALID_CONVERSION,
+                HsqlTypes.getTypeName(targetType));
+
             string message = string.Format(
-                "Conversion to {0} not supported for input data format: [{1}]", 
-                HsqlTypes.getTypeName(targetType), 
-                (input == null ? "Null" : input));
+                "{0} - Unsupported source data format: {1}",
+                ex.getMessage(), 
+                (source == null) ? "null" : Convert.ToString(source));
 
-            HsqlException hex = Trace.error(Trace.INVALID_CONVERSION, "");
-
-            return new HsqlDataSourceException(message, hex.getErrorCode(), hex.getSQLState());
+            return new HsqlDataSourceException(message, ex.getErrorCode(), ex.getSQLState());
         }
         #endregion
 
@@ -1556,12 +1577,12 @@ namespace System.Data.Hsqldb.Common
         #endregion
 
         /// <summary>
-        /// Creates a new "invalid conversion" exception.
+        /// Creates a new "Unknown target SQL data type" invalid conversion exception.
         /// </summary>
-        /// <param name="o">The source object for which the conversion is invalid.</param>
+        /// <param name="o">The source object for which the conversion is unknown.</param>
         /// <param name="targetType">The data type code for which the conversion is invalid.</param>
         /// <returns><c>HsqlDataSourceException</c></returns>
-        public static HsqlDataSourceException UnknownConversion(Object o, int targetType)
+        public static HsqlDataSourceException UnknownConversion(object o, int targetType)
         {
             string format =
                 "Unknown target SQL data type: {0} for source type: {1}";

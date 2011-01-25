@@ -65,8 +65,8 @@ namespace System.Data.Hsqldb.Client
     public class HsqlCommandBuilder : DbCommandBuilder
     {
         #region Constants
-        const string m_DQ = @"""";
-        const string m_DDQ = @"""""";
+        const string DoubleQuotes = "\"";
+        const string EscapedDoubleQuotes = "\"\"";
         const string m_CatalogSeparator = ".";
         const string m_SchemaSeparator = "."; 
         #endregion
@@ -81,8 +81,8 @@ namespace System.Data.Hsqldb.Client
             : base()
         {
             GC.SuppressFinalize(this);
-            base.QuotePrefix = m_DQ;
-            base.QuoteSuffix = m_DQ;
+            base.QuotePrefix = DoubleQuotes;
+            base.QuoteSuffix = DoubleQuotes;
         }
         #endregion
 
@@ -337,8 +337,8 @@ namespace System.Data.Hsqldb.Client
                     "unquotedIdentifier");
             }
 
-            return new StringBuilder().Append(m_DQ).Append(unquotedIdentifier
-                .Replace(m_DQ, m_DDQ)).Append(m_DQ).ToString();
+            return new StringBuilder().Append(DoubleQuotes).Append(unquotedIdentifier
+                .Replace(DoubleQuotes, EscapedDoubleQuotes)).Append(DoubleQuotes).ToString();
         }
         #endregion
 
@@ -389,8 +389,8 @@ namespace System.Data.Hsqldb.Client
                 throw new ArgumentNullException("quotedIdentifier");
             }
 
-            return (s.Length >= 2) && s.StartsWith(m_DQ) && s.EndsWith(m_DQ)
-                ? s.Substring(1, s.Length - 2).Replace(m_DDQ, m_DQ) : s;
+            return (s.Length >= 2) && s.StartsWith(DoubleQuotes) && s.EndsWith(DoubleQuotes)
+                ? s.Substring(1, s.Length - 2).Replace(EscapedDoubleQuotes, DoubleQuotes) : s;
         }
         #endregion 
 
@@ -474,10 +474,10 @@ namespace System.Data.Hsqldb.Client
         /// <value>"</value>
         public override string QuotePrefix
         {
-            get { return m_DQ; }
+            get { return DoubleQuotes; }
             set
             {
-                if (value != m_DQ)
+                if (value != DoubleQuotes)
                 {
                     throw new ArgumentException(string.Format(
                         "QuotePrefix must be double quote [\"], value: {0}",
@@ -497,10 +497,10 @@ namespace System.Data.Hsqldb.Client
         /// <value>"</value>    
         public override string QuoteSuffix
         {
-            get { return m_DQ; }
+            get { return DoubleQuotes; }
             set
             {
-                if (value != m_DQ)
+                if (value != DoubleQuotes)
                 {
                     throw new ArgumentException(string.Format(
                         "QuoteSuffix must be double quote [\"], value: {0}",
