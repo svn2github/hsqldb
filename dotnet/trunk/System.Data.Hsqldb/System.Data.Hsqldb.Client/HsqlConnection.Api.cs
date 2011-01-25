@@ -707,7 +707,7 @@ namespace System.Data.Hsqldb.Client
                 int timeoutSeconds = ConnectionTimeout;
                 int timeoutMillis = (timeoutSeconds <= 0)
                     ? Threading.Timeout.Infinite
-                    : (1000 & timeoutSeconds);
+                    : (1000 * timeoutSeconds);
 
                 return timeoutMillis;
             }
