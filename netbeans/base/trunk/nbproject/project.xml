@@ -12,9 +12,13 @@
             </test-roots>
         </data>
         <spellchecker-wordlist xmlns="http://www.netbeans.org/ns/spellchecker-wordlist/1">
+            <word>Array's</word>
             <word>behaviour</word>
+            <word>behaviour's</word>
             <word>holdability</word>
+            <word>metadata</word>
             <word>octets</word>
+            <word>subquery</word>
             <word>updateable</word>
         </spellchecker-wordlist>
     </configuration>
