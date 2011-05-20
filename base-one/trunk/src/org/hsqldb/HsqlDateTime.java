@@ -261,12 +261,16 @@ public class HsqlDateTime {
     public static String getTimestampString(Timestamp x, Calendar cal) {
 
         synchronized (sdfts) {
-            sdfts.setCalendar(cal == null ? tempCalDefault
-                                          : cal);
+            Calendar c = cal == null ? tempCalDefault
+                                     : cal;
 
-            String n = String.valueOf(x.getNanos());
+            synchronized (c) {
+                sdfts.setCalendar(c);
 
-            return sdfts.format(x) + zeronanos.substring(n.length()) + n;
+                String n = String.valueOf(x.getNanos());
+
+                return sdfts.format(x) + zeronanos.substring(n.length()) + n;
+            }
         }
     }
 
@@ -293,20 +297,28 @@ public class HsqlDateTime {
     public static String getTimeString(java.util.Date x, Calendar cal) {
 
         synchronized (sdft) {
-            sdft.setCalendar(cal == null ? tempCalDefault
-                                         : cal);
+            Calendar c = cal == null ? tempCalDefault
+                                     : cal;
 
-            return sdft.format(x);
+            synchronized (c) {
+                sdft.setCalendar(c);
+
+                return sdft.format(x);
+            }
         }
     }
 
     public static String getDateString(java.util.Date x, Calendar cal) {
 
         synchronized (sdfd) {
-            sdfd.setCalendar(cal == null ? tempCalDefault
-                                         : cal);
+            Calendar c = cal == null ? tempCalDefault
+                                     : cal;
 
-            return sdfd.format(x);
+            synchronized (c) {
+                sdfd.setCalendar(c);
+
+                return sdfd.format(x);
+            }
         }
     }
 
@@ -569,9 +581,9 @@ public class HsqlDateTime {
         }
     };
     private static final String[] javaDateTokens = {
-        "yyyy", "yyyy", "yyyy", "yy", "yy", "G", "G", "G", "G", "MMM",
-        "MMMMM", "E", "w", "dd", "D", "k", "K", "K", "mm", "ss", "aaa", "aaa",
-        "aaa", "aaa"
+        "yyyy", "yyyy", "yyyy", "yy", "yy", "G", "G", "G", "G", "MMM", "MMMMM",
+        "E", "w", "dd", "D", "k", "K", "K", "mm", "ss", "aaa", "aaa", "aaa",
+        "aaa"
     };
 
     /** Indicates end-of-input */

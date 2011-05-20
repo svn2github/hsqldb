@@ -187,11 +187,9 @@ import org.hsqldb.lib.java.JavaSystem;
  * Note that the sys-table switch will not work for Oracle, because Oracle
  * does not categorize their system tables correctly in the JDBC Metadata.
  *
- * New class based on Hypersonic SQL original
- *
  * @author dmarshall@users
  * @author Bob Preston (sqlbob@users dot sourceforge.net)
- * @version 1.8.0
+ * @version 2.0.1
  * @since 1.7.0
  */
 public class DatabaseManagerSwing extends JApplet
@@ -283,8 +281,7 @@ implements ActionListener, WindowListener, KeyListener, MouseListener {
                            + "to your class path."));
     ;
     private static final String ABOUT_TEXT =
-        "$Revision: 3496 $ of DatabaseManagerSwing\n\n"
-        + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
+        "$Revision: 4141 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 2001-2010, The HSQL Development Group.\n"
         + "http://hsqldb.org  (Utilities Guide available at this site).\n\n\n"
         + "You may use and redistribute according to the HSQLDB\n"
@@ -524,6 +521,11 @@ implements ActionListener, WindowListener, KeyListener, MouseListener {
             }
 
             i++;
+
+            if (i == arg.length) {
+                throw new IllegalArgumentException("No value for argument "
+                                                   + lowerArg);
+            }
 
             if (lowerArg.equals("-driver")) {
                 defDriver   = arg[i];
@@ -1582,6 +1584,12 @@ implements ActionListener, WindowListener, KeyListener, MouseListener {
 
         System.err.println("Stopping");
 
+        Thread t = buttonUpdaterThread;
+
+        if (t != null) {
+            t.setContextClassLoader(null);
+        }
+
         buttonUpdaterThread = null;
     }
 
@@ -2133,15 +2141,21 @@ implements ActionListener, WindowListener, KeyListener, MouseListener {
         //
         public String getCommandString() {
 
+            int treeDepth = treePath.getPathCount();
+
             // if we are at TABLE depth, set tablePath and table for use later
-            if (treePath.getPathCount() == DEPTH_TABLE) {
+            if (treeDepth == DEPTH_URL) {
+                return "";
+            }
+
+            if (treeDepth == DEPTH_TABLE) {
                 tablePath = treePath;
                 table = treePath.getPathComponent(DEPTH_TABLE - 1).toString();
             }
 
             // if we are at TABLE depth, set columnPath, column, tablePath and
             // table for use later
-            if (treePath.getPathCount() == DEPTH_COLUMN) {
+            if (treeDepth == DEPTH_COLUMN) {
                 tablePath  = treePath.getParentPath();
                 table = treePath.getPathComponent(DEPTH_TABLE - 1).toString();
                 columnPath = treePath;
@@ -2282,11 +2296,23 @@ implements ActionListener, WindowListener, KeyListener, MouseListener {
         int dot = name.indexOf(".");
 
         if (dot < 0) {
+            int bracket = name.indexOf(" (");
+
+            if (bracket >= 0) {
+                name = name.substring(0, bracket);
+            }
+
             return quoteObjectName(name);
         }
 
         String partOne = name.substring(0, dot);
         String partTwo = name.substring(dot + 1);
+
+        int bracket = partTwo.indexOf("  (");
+
+        if (bracket >= 0) {
+            partTwo = partTwo.substring(0, bracket);
+        }
 
         return quoteObjectName(partOne) + '.' + quoteObjectName(partTwo);
     }
@@ -2296,10 +2322,11 @@ implements ActionListener, WindowListener, KeyListener, MouseListener {
      */
     private String quoteObjectName(String name) {
 
+/*
         if (name.toUpperCase().equals(name) && name.indexOf(' ') < 0) {
             return name;
         }
-
+*/
         return "\"" + name + "\"";
     }
 
@@ -2716,8 +2743,8 @@ implements ActionListener, WindowListener, KeyListener, MouseListener {
                     String schemaPart = (String) inSchema.elementAt(i);
 
                     schemaPart = schemaPart == null ? ""
-                                                    : (schemaPart + '.');
-                    name       = schemaPart + (String) inTable.elementAt(i);
+                                                    : ("\"" + schemaPart + "\".\"");
+                    name       = schemaPart + (String) inTable.elementAt(i) + "\"";
 
                     ResultSet resultSet = select.executeQuery(rowCountSelect
                         + name);

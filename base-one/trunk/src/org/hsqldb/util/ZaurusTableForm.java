@@ -646,8 +646,10 @@ implements TextListener, ItemListener, ActionListener {
             ResultSet colList = dbmeta.getColumns(null, null, tableName, "%");
 
             while (colList.next()) {
-                temp.addElement(colList.getString("COLUMN_NAME"));
-                tempType.addElement(new Short(colList.getShort("DATA_TYPE")));
+                String name = colList.getString("COLUMN_NAME");
+                Short type = new Short(colList.getShort("DATA_TYPE"));
+                temp.addElement(name);
+                tempType.addElement(type);
             }
 
             colList.close();

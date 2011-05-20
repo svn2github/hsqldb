@@ -64,8 +64,8 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.MemoryImageSource;
 
-import org.hsqldb.lib.java.JavaSystem;
 import org.hsqldb.lib.RCData;
+import org.hsqldb.lib.java.JavaSystem;
 
 // sqlbob@users 20020401 - patch 1.7.0 by sqlbob (RMP) - enhancements
 // sqlbob@users 20020401 - patch 537501 by ulrivo - command line arguments
@@ -926,7 +926,9 @@ implements ActionListener, WindowListener, KeyListener {
                         if (r.wasNull()) {
                             h[i - 1] = "(null)";
                         }
-                    } catch (SQLException e) {}
+                    } catch (SQLException e) {
+                        h[i - 1] = "(binary data)";
+                    }
                 }
 
                 gResult.addRow(h);
