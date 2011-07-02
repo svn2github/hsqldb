@@ -1,15 +1,47 @@
+/* Copyright (c) 2001-2011, The HSQL Development Group
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * Neither the name of the HSQL Development Group nor the names of its
+ * contributors may be used to endorse or promote products derived from this
+ * software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG,
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package org.hsqldb;
 
 /**
- *
+ * Contract used between ADO.NET and HSQLDB Engine toward the goal of loose 
+ * coupling.
+ * 
  * @author boucherb@users
  */
 public interface IHsqlProtocol {
+
     /**
-     * Adds the given sql statement to the given direct batch request.
+     * Adds the given SQL statement to the given direct batch request.
      * 
      * 
-     * @param result to which to add the given sql statement.
+     * @param result to which to add the given SQL statement.
      * @param sql to add.
      */
     void AddBatchDirect(Result result, String sql);
@@ -63,7 +95,7 @@ public interface IHsqlProtocol {
 
     /**
      * Creates a new response describing the given exception raised
-     * while executing the given sql statement.
+     * while executing the given SQL statement.
      * 
      * @param ex raised by executing the statement
      * @param sql whose execution raised the given exception.
@@ -72,19 +104,19 @@ public interface IHsqlProtocol {
     Result CreateErrorResponse(Exception ex, String sql);
 
     /**
-     * Creates a new error response with the given message, sql state and
+     * Creates a new error response with the given message, SQL state and
      * error code.
      * 
      * 
      * @param message the error message
-     * @param sqlState the sql state
+     * @param sqlState the SQL state
      * @param errorCode the error code
      * @return the new response
      */
     Result CreateErrorResponse(String message, String sqlState, int errorCode);
 
     /**
-     * Creates a new request suitable for executing direct sql batches.
+     * Creates a new request suitable for executing direct SQL batches.
      * 
      * 
      * @return the new request.
@@ -97,13 +129,13 @@ public interface IHsqlProtocol {
      * 
      * 
      * @param statementId the identifier of the target prepared statement.
-     * @param parameterTypes the sql types of the prepared statement's parameters.
+     * @param parameterTypes the SQL types of the prepared statement's parameters.
      * @return the new request.
      */
     Result CreateExecuteBatchPreparedRequest(int statementId, int[] parameterTypes);
 
     /**
-     * Creates a new request to directly execute the given sql statement.
+     * Creates a new request to directly execute the given SQL statement.
      * 
      * 
      * @param sql to execute.
@@ -120,16 +152,16 @@ public interface IHsqlProtocol {
      * @return the new request
      */
     Result CreateFreeStatementRequest(int statementId);
-    
+
     /**
-     * Creates a new requsest to prepare to commit the current transaction.
+     * Creates a new request to prepare to commit the current transaction.
      *
      * @return the new request.
      */
     Result CreatePrepareCommitRequest();
 
     /**
-     * Creates a new request to prepare the given sql statement.
+     * Creates a new request to prepare the given SQL statement.
      * 
      * 
      * @param sql to prepare.
@@ -165,7 +197,7 @@ public interface IHsqlProtocol {
     Result CreateSetSavepointRequest(String savepointName);
 
     /**
-     * Creates a new request to log in the given user using a tcp connection.
+     * Creates a new request to log in the given user using a TCP connection.
      * 
      * 
      * @param user to log in
@@ -176,8 +208,8 @@ public interface IHsqlProtocol {
     Result CreateTcpClientLoginRequest(String user, String password, String database);
 
     /**
-     * Creates a new response indicating that a tcp connection log in
-     * was successul.
+     * Creates a new response indicating that a TCP connection log in
+     * was successful.
      * 
      * 
      * @param session to which the client has connected.
@@ -199,7 +231,7 @@ public interface IHsqlProtocol {
      * 
      * 
      * @param result for which to retrieve the value
-     * @return truu if the connection is read-only, else false.
+     * @return true if the connection is read-only, else false.
      */
     boolean GetAttributeConnectionReadOnly(Result result);
 
@@ -235,7 +267,7 @@ public interface IHsqlProtocol {
      * Retrieves the type of session attribute to request or respond.
      * 
      * 
-     * @param result for which to retrive the value.
+     * @param result for which to retrieve the value.
      * @return the session attribute type.
      */
     int GetAttributeType(Result result);
@@ -250,11 +282,11 @@ public interface IHsqlProtocol {
     String GetAttributeUser(Result result);
 
     /**
-     * Retrieves the sql command text
+     * Retrieves the SQL command text
      * 
      * 
      * @param result for which to retrieve the value.
-     * @return the sql command text.
+     * @return the SQL command text.
      */
     String GetCommandText(Result result);
 
@@ -286,7 +318,7 @@ public interface IHsqlProtocol {
     int GetEndTranType(Result result);
 
     /**
-     * Retreives the error message.
+     * Retrieves the error message.
      * 
      * 
      * @param result for which to retrieve the value.
@@ -316,13 +348,13 @@ public interface IHsqlProtocol {
      * Retrieves the password.
      * 
      * 
-     * @param result for which to retrieve the valeu.
+     * @param result for which to retrieve the value.
      * @return the password.
      */
     String GetPassword(Result result);
 
     /**
-     * Retreives the savepoint name.
+     * Retrieves the savepoint name.
      * 
      * 
      * @param result for which to retrieve the value.
@@ -340,11 +372,11 @@ public interface IHsqlProtocol {
     int GetSessionId(Result result);
 
     /**
-     * Retrieves the sql state.
+     * Retrieves the SQL state.
      * 
      * 
      * @param result for which to retrieve the value.
-     * @return the sql state.
+     * @return the SQL state.
      */
     String GetSqlState(Result result);
 
@@ -367,11 +399,11 @@ public interface IHsqlProtocol {
     int GetStatementType(Result result);
 
     /**
-     * Retrieves the type of the request or reponse.
+     * Retrieves the type of the request or response.
      * 
      * 
      * @param result for which to get the value.
-     * @return the type of the request or reponse.
+     * @return the type of the request or response.
      */
     int GetType(Result result);
 
@@ -439,7 +471,7 @@ public interface IHsqlProtocol {
     void SetAttributeType(Result result, int attributeType);
 
     /**
-     * Sets the sql command text.
+     * Sets the SQL command text.
      * 
      * 
      * @param result for which to set the value.
@@ -449,7 +481,6 @@ public interface IHsqlProtocol {
 
     /**
      * Sets the database alias.
-     * 
      * 
      * @param result for which to retrieve the value.
      * @param databaseAlias the new value.
@@ -488,7 +519,7 @@ public interface IHsqlProtocol {
      * 
      * 
      * @param result for which to set the value.
-     * @param maxRows the ne value.
+     * @param maxRows the new value.
      */
     void SetMaxRows(Result result, int maxRows);
 
@@ -529,7 +560,7 @@ public interface IHsqlProtocol {
     void SetSessionId(Result result, int sessionId);
 
     /**
-     * Sets the sql state.
+     * Sets the SQL state.
      * 
      * 
      * @param result for which to set the value.
@@ -590,5 +621,4 @@ public interface IHsqlProtocol {
      * @param user the new value.
      */
     void SetUser(Result result, String user);
-    
 }

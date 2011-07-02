@@ -1,36 +1,70 @@
+/* Copyright (c) 2001-2011, The HSQL Development Group
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * Neither the name of the HSQL Development Group nor the names of its
+ * contributors may be used to endorse or promote products derived from this
+ * software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG,
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package org.hsqldb;
 
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.store.ValuePool;
 
 /**
- *
+ * Default {@link IHsqlProtocol} implementation.
+ * 
  * @author boucherb@users
  */
-public class HsqlProtocol implements IHsqlProtocol {
+public final class HsqlProtocol implements IHsqlProtocol {
 
-    private static final HsqlProtocol m_instance;
-    
-
-    static {
-        m_instance = new HsqlProtocol();
-    }
+    private static final HsqlProtocol m_instance = new HsqlProtocol();
 
     private HsqlProtocol() {
+        if (m_instance != null) {
+            throw new RuntimeException("Singleton pattern violation");
+        }
+    }
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        throw new CloneNotSupportedException("Singleton pattern violation");
     }
 
     /**
-     * An HsqlProtocolInstance
-     * @return
+     * Retrieves the one and only instance of this class.
+     * 
+     * @return An IHsqlProtocol Instance
      */
     public static IHsqlProtocol GetInstance() {
         return m_instance;
     }
 
     /**
-     * Adds the given sql statement to the given direct batch request.
+     * Adds the given SQL statement to the given direct batch request.
      *
-     * @param result to which to add the given sql statement.
+     * @param result to which to add the given SQL statement.
      * @param sql to add.
      */
     public void AddBatchDirect(Result result, String sql) {
@@ -75,7 +109,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     }
 
     /**
-     *  Creates a new request for use in retrieving session attributes.
+     * Creates a new request for use in retrieving session attributes.
      *
      * @return the new request
      */
@@ -86,12 +120,12 @@ public class HsqlProtocol implements IHsqlProtocol {
                 request.metaData.colLabels =
                 request.metaData.tableNames =
                 new String[]{
-                    "", "", "", "", "", "", ""
-                };
+            "", "", "", "", "", "", ""
+        };
         request.metaData.colTypes = new int[]{
-                    Types.VARCHAR, Types.VARCHAR, Types.INTEGER, Types.INTEGER,
-                    Types.BOOLEAN, Types.BOOLEAN, Types.BOOLEAN
-                };
+            Types.VARCHAR, Types.VARCHAR, Types.INTEGER, Types.INTEGER,
+            Types.BOOLEAN, Types.BOOLEAN, Types.BOOLEAN
+        };
 
         request.add(new Object[7]);
 
@@ -110,7 +144,8 @@ public class HsqlProtocol implements IHsqlProtocol {
 
     /**
      * Creates a new response describing the given exception raised
-     * while executing the given sql statement.
+     * while executing the given SQL statement.
+     * 
      * @param ex raised by executing the statement
      * @param sql whose execution raised the given exception.
      * @return the new response
@@ -120,11 +155,11 @@ public class HsqlProtocol implements IHsqlProtocol {
     }
 
     /**
-     * Creates a new error response with the given message, sql state and
+     * Creates a new error response with the given message, SQL state and
      * error code.
      *
      * @param message the error message
-     * @param sqlState the sql state
+     * @param sqlState the SQL state
      * @param errorCode the error code
      * @return the new response
      */
@@ -133,7 +168,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     }
 
     /**
-     * Creates a new request suitable for executing direct sql batches.
+     * Creates a new request suitable for executing direct SQL batches.
      *
      * @return the new request.
      */
@@ -149,7 +184,7 @@ public class HsqlProtocol implements IHsqlProtocol {
      * statement with the given statement identifier.
      *
      * @param statementId the identifier of the target prepared statement.
-     * @param parameterTypes the sql types of the prepared statement's parameters.
+     * @param parameterTypes the SQL types of the prepared statement's parameters.
      * @return the new request.
      */
     public Result CreateExecuteBatchPreparedRequest(int statementId, int[] parameterTypes) {
@@ -160,7 +195,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     }
 
     /**
-     * Creates a new request to directly execute the given sql statement.
+     * Creates a new request to directly execute the given SQL statement.
      *
      * @param sql to execute.
      * @return the new request.
@@ -181,7 +216,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     }
 
     /**
-     * Creates a new requsest to prepare to commit the current transaction.
+     * Creates a new request to prepare to commit the current transaction.
      *
      * @return the new request.
      */
@@ -196,7 +231,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     }
 
     /**
-     * Creates a new request to prepare the given sql statement.
+     * Creates a new request to prepare the given SQL statement.
      *
      * @param sql to prepare.
      * @return the new request.
@@ -240,7 +275,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     }
 
     /**
-     * Creates a new request to log in the given user using a tcp connection.
+     * Creates a new request to log in the given user using a TCP connection.
      *
      * @param user to log in
      * @param password of the user
@@ -261,8 +296,8 @@ public class HsqlProtocol implements IHsqlProtocol {
     }
 
     /**
-     * Creates a new response indicating that a tcp connection log in
-     * was successul.
+     * Creates a new response indicating that a TCP connection log in
+     * was successful.
      *
      * @param session to which the client has connected.
      * @return the new response.
@@ -302,7 +337,7 @@ public class HsqlProtocol implements IHsqlProtocol {
      * Retrieves the connectionReadOnly session attribute.
      *
      * @param result for which to retrieve the value
-     * @return truu if the connection is read-only, else false.
+     * @return true if the connection is read-only, else false.
      */
     public boolean GetAttributeConnectionReadOnly(Result result) {
         return ((Boolean) result.rRoot.data[SessionInterface.INFO_CONNECTION_READONLY]).booleanValue();
@@ -364,7 +399,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     /**
      * Retrieves the type of session attribute to request or respond.
      *
-     * @param result for which to retrive the value.
+     * @param result for which to retrieve the value.
      * @return the session attribute type.
      */
     public int GetAttributeType(Result result) {
@@ -392,17 +427,17 @@ public class HsqlProtocol implements IHsqlProtocol {
     }
 
     /**
-     * Retrieves the sql command text
+     * Retrieves the SQL command text
      *
      * @param result for which to retrieve the value.
-     * @return the sql command text.
+     * @return the SQL command text.
      */
     public String GetCommandText(Result result) {
         return result.mainString;
     }
 
     /**
-     * Sets the sql command text.
+     * Sets the SQL command text.
      *
      * @param result for which to set the value.
      * @param commandText the new value.
@@ -472,7 +507,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     }
 
     /**
-     * Retreives the error message.
+     * Retrieves the error message.
      *
      * @param result for which to retrieve the value.
      * @return the error message.
@@ -514,7 +549,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     /**
      * Retrieves the password.
      *
-     * @param result for which to retrieve the valeu.
+     * @param result for which to retrieve the value.
      * @return the password.
      */
     public String GetPassword(Result result) {
@@ -552,10 +587,10 @@ public class HsqlProtocol implements IHsqlProtocol {
     }
 
     /**
-     * Retrieves the type of the request or reponse.
+     * Retrieves the type of the request or response.
      *
      * @param result for which to get the value.
-     * @return the type of the request or reponse.
+     * @return the type of the request or response.
      */
     public int GetType(Result result) {
         return result.mode;
@@ -572,7 +607,7 @@ public class HsqlProtocol implements IHsqlProtocol {
     }
 
     /**
-     * Retreives the savepoint name.
+     * Retrieves the savepoint name.
      *
      * @param result for which to retrieve the value.
      * @return the savepoint name.
@@ -612,17 +647,17 @@ public class HsqlProtocol implements IHsqlProtocol {
     }
 
     /**
-     * Retrieves the sql state.
+     * Retrieves the SQL state.
      *
      * @param result for which to retrieve the value.
-     * @return the sql state.
+     * @return the SQL state.
      */
     public String GetSqlState(Result result) {
         return result.subString;
     }
 
     /**
-     * Sets the sql state.
+     * Sets the SQL state.
      *
      * @param result for which to set the value.
      * @param sqlState the new value.
