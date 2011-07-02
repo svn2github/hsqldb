@@ -1,7 +1,6 @@
 package org.hsqldb.jdbc;
 
 import org.hsqldb.Result;
-import org.hsqldb.lib.IntKeyHashMap;
 
 /**
  * Utility for accessing extended statement information.
