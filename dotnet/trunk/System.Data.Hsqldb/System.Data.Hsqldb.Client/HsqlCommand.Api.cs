@@ -209,7 +209,8 @@ namespace System.Data.Hsqldb.Client
         /// <para>
         /// Indeed, it seems to highlight that the ADO.NET 1.0 API was
         /// not thought out sufficiently beyond the immediate scope of 
-        /// attempting to shift away from a connected data API toward a
+        /// deliving the default providers (Sql Server, OleDb and Odbc),
+        /// while attempting to shift away from a connected data API toward a
         /// disconnected data API and serves as a reminder that, even
         /// in ADO.NET 2.0, the updated design still represents a
         /// somewhat leaky abstraction, for instance via the evidently only
@@ -349,9 +350,9 @@ namespace System.Data.Hsqldb.Client
         /// The result of execution as an <see cref="HsqlDataReader"/>.
         /// </returns>
         /// <exception cref="InvalidOperationException">
-        /// When the <see cref="Connection"/> is not set.
+        /// When the <see cref="HsqlConnection"/> is not set.
         /// -or- 
-        /// when the <see cref="Connection"/> is not <see cref="HsqlConnection.Open()"/>.
+        /// when the <see cref="HsqlConnection"/> is not <see cref="HsqlConnection.Open()"/>.
         /// </exception>
         /// <exception cref="HsqlDataSourceException">
         /// If a database access error occurs; the <see cref="CommandText"/>
@@ -378,9 +379,9 @@ namespace System.Data.Hsqldb.Client
         /// </summary>
         /// <returns>An <see cref="HsqlDataReader"/>.</returns>
         /// <exception cref="InvalidOperationException">
-        /// When the <see cref="Connection"/> is not set.
+        /// When the <see cref="HsqlConnection"/> is not set.
         /// -or- 
-        /// when the <see cref="Connection"/> is not <see cref="HsqlConnection.Open()"/>.
+        /// when the <see cref="HsqlConnection"/> is not <see cref="HsqlConnection.Open()"/>.
         /// </exception>
         /// <exception cref="HsqlDataSourceException">
         /// If a database access error occurs; the <see cref="CommandText"/>
@@ -499,7 +500,7 @@ namespace System.Data.Hsqldb.Client
         /// </para>
         /// <para>
         /// When this flag is set, this command is simply
-        /// <see cref="Prepare()"/>d rather than actually executed.
+        /// <see cref="Prepare()"/>ed rather than actually executed.
         /// As such, while it is subsequently possible to invoke 
         /// <see cref="HsqlDataReader.GetSchemaTable()"/> to describe
         /// the expected column metadata of the result of execution, the
@@ -573,12 +574,12 @@ namespace System.Data.Hsqldb.Client
         /// Specifies a number of behavioral constraints upon the execution.
         /// </param>
         /// <returns>
-        /// The result of execution as a <see cref="HsqlDataReader"/>.
+        /// The result of execution as an <see cref="HsqlDataReader"/>.
         /// </returns>
         /// <exception cref="InvalidOperationException">
-        /// When the <see cref="Connection"/> is not set.
+        /// When the <see cref="HsqlConnection"/> is not set.
         /// -or- 
-        /// when the <see cref="Connection"/> is not <see cref="HsqlConnection.Open()"/>.
+        /// when the <see cref="HsqlConnection"/> is not <see cref="HsqlConnection.Open()"/>.
         /// </exception>
         /// <exception cref="HsqlDataSourceException">
         /// If a database access error occurs; the <see cref="CommandText"/>
@@ -1181,7 +1182,7 @@ namespace System.Data.Hsqldb.Client
         /// <summary>
         /// Specifies how command results are applied to
         /// a <see cref="DataRow"/> when used by the
-        /// Update method of a <see cref="DbDataAdapter"/>.
+        /// Update method of an <see cref="DbDataAdapter"/>.
         /// </summary>
         /// <value>
         /// One of the <see cref="UpdateRowSource"></see> values.
@@ -1323,9 +1324,9 @@ namespace System.Data.Hsqldb.Client
         /// </summary>
         /// <remarks>
         /// <para>
-        /// Note that the 1.8.0 engine protocol API does not yet natively 
+        /// Note that the 1.8.x engine protocol API does not yet natively 
         /// support heterogeneous prepared statement batching.  Moreover, 
-        /// because the HSQLDB 1.8.0 ADO.NET data provider does not yet 
+        /// because the HSQLDB 1.8.x ADO.NET data provider does not yet 
         /// attempt to emulate support for this, changing the command
         /// text while a command is in the prepared state must necessarily
         /// invalidate that state. Similarly, invoking <see cref="Prepare()"/>

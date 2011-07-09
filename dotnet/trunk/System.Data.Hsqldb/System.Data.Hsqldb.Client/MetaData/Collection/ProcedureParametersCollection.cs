@@ -60,7 +60,8 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region Constants
 
         private const string sql =
-@"SELECT distinct
+@"-- System.Data.Hsqldb.Client.MetaData.Collection.ProcedureParametersCollection        
+SELECT distinct
          spc.procedure_cat AS SPECIFIC_CATALOG
         ,spc.procedure_schem AS SPECIFIC_SCHEMA
         ,spc.specific_name AS SPECIFIC_NAME

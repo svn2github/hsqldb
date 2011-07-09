@@ -436,7 +436,9 @@ namespace System.Data.Hsqldb.Client
         /// </param>
         public override void CopyTo(Array array, int index)
         {
-            m_parameters.CopyTo((HsqlParameter[])array, index);
+			foreach(HsqlParameter value in m_parameters) {
+				array.SetValue(value, index++);
+			}
         }
 
         #endregion
@@ -915,7 +917,7 @@ namespace System.Data.Hsqldb.Client
 
         void ICollection<HsqlParameter>.CopyTo(HsqlParameter[] array, int arrayIndex)
         {
-            this.CopyTo(array, arrayIndex);
+            m_parameters.CopyTo(array,arrayIndex);
         }
 
         int ICollection<HsqlParameter>.Count

@@ -126,7 +126,7 @@ namespace System.Data.Hsqldb.Common.UnitTests
             catch (ArgumentException ae)
             {
                 Assert.AreEqual("isolationLevel", ae.ParamName);
-                Assert.AreEqual("Unsupported Level: Chaos\r\nParameter name: isolationLevel", ae.Message); 
+                Assert.AreEqual("Unsupported Level: Chaos" + Environment.NewLine + "Parameter name: isolationLevel", ae.Message); 
             }
 
             try
@@ -138,7 +138,7 @@ namespace System.Data.Hsqldb.Common.UnitTests
             catch (ArgumentException ae)
             {
                 Assert.AreEqual("isolationLevel", ae.ParamName);
-                Assert.AreEqual("Unsupported Level: Snapshot\r\nParameter name: isolationLevel", ae.Message);  
+                Assert.AreEqual("Unsupported Level: Snapshot" + Environment.NewLine + "Parameter name: isolationLevel", ae.Message);  
             }
         }
 

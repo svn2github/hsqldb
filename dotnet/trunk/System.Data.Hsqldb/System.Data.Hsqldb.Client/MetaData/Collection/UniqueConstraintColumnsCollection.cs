@@ -58,39 +58,40 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region Constants
 
         private const string sql =
-@"SELECT tc.constraint_catalog
-        ,tc.constraint_schema
-        ,tc.constraint_name
-        ,io.table_cat AS table_catalog
-        ,io.table_schem AS table_schema
-        ,io.table_name AS table_name
-        ,io.column_name as column_name
-        ,io.ordinal_position as ordinal_position
-        ,sc.data_type as key_type
-        ,io.index_name
-    FROM information_schema.system_table_constraints tc,
-         information_schema.system_indexinfo io
-    JOIN information_schema.system_columns sc
-     ON (    (sc.table_name = io.table_name)
-         AND (sc.column_name = io.column_name)
-         AND (sc.table_schem = io.table_schem)
-         AND (    (    (sc.table_cat IS NULL)
-                   AND (io.table_cat IS NULL)
-                  )
-               OR (sc.table_cat = io.table_cat)
+@"-- System.Data.Hsqldb.Client.MetaData.Collection.UniqueConstraintColumnsCollection       
+SELECT tc.constraint_catalog
+      ,tc.constraint_schema
+      ,tc.constraint_name
+      ,io.table_cat AS table_catalog
+      ,io.table_schem AS table_schema
+      ,io.table_name AS table_name
+      ,io.column_name as column_name
+      ,io.ordinal_position as ordinal_position
+      ,sc.data_type as key_type
+      ,io.index_name
+  FROM information_schema.system_table_constraints tc,
+       information_schema.system_indexinfo io
+  JOIN information_schema.system_columns sc
+   ON (    (sc.table_name = io.table_name)
+       AND (sc.column_name = io.column_name)
+       AND (sc.table_schem = io.table_schem)
+       AND (    (    (sc.table_cat IS NULL)
+                 AND (io.table_cat IS NULL)
+                )
+             OR (sc.table_cat = io.table_cat)
+           )
+      )       
+ WHERE (tc.constraint_type = 'UNIQUE')
+   AND (    (    (io.table_cat IS NULL)
+             AND (tc.table_catalog IS NULL)
              )
-        )       
-   WHERE (tc.constraint_type = 'UNIQUE')
-     AND (    (    (io.table_cat IS NULL)
-               AND (tc.table_catalog IS NULL)
-               )
-          OR (io.table_cat = tc.table_catalog)
-         )
-     AND (io.table_schem = tc.table_schema)
-     AND (io.table_name = tc.table_name)
-     AND (io.index_name LIKE 'SYS\_IDX\_' 
-          || REPLACE(tc.constraint_name, '_', '\_') 
-          || '\_%' ESCAPE '\')";
+        OR (io.table_cat = tc.table_catalog)
+       )
+   AND (io.table_schem = tc.table_schema)
+    ND (io.table_name = tc.table_name)
+   AND (io.index_name LIKE 'SYS\_IDX\_' 
+        || REPLACE(tc.constraint_name, '_', '\_') 
+        || '\_%' ESCAPE '\')";
 
         #endregion
 

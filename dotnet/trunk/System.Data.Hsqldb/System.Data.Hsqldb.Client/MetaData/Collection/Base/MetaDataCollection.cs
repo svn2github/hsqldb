@@ -687,11 +687,11 @@ SELECT SCHEMA_NAME
         /// <c>true</c> if the given code denotes an SQL temporal data type;
         /// otherwise, <c>false</c>.
         /// </returns>
-        public static bool IsTemporalProviderType(int type)
+        public static bool IsTemporalProviderType (int type)
         {
-            return (type == (int)HsqlProviderType.Date)
-                   || (type == HsqlTypes.TIME)
-                   || (type == HsqlTypes.TIMESTAMP);
+        	return (type == (int)HsqlProviderType.Date)
+                   || (type == (int)HsqlProviderType.Time)
+                   || (type == (int)HsqlProviderType.TimeStamp);
         }
         #endregion
 

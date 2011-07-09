@@ -118,16 +118,16 @@ namespace System.Data.Hsqldb.Client.Internal
 
         #region Constructor
         /// <summary>
-        /// Constructs a new <c>HsqlTcpClientSession</c> instance
+        /// Constructs a new <c>HsqlTcpClient</c> instance
         /// with the given host, port, etc.
         /// </summary>
-        /// <param name="host">The host.</param>
-        /// <param name="port">The port.</param>
-        /// <param name="path">The path. (presently unused)</param>
-        /// <param name="database">The database.</param>
-        /// <param name="tls">The Transport Layer Security setting</param>
-        /// <param name="user">The user.</param>
-        /// <param name="password">The password.</param>
+        /// <param name="host">The server host name or IP address.</param>
+        /// <param name="port">The server listen port.</param>
+        /// <param name="path">The database remote open path. (presently unused/unsupported)</param>
+        /// <param name="database">The server alias for one of its mounted databases</param>
+        /// <param name="tls">The Transport Layer Security flag</param>
+        /// <param name="user">The initial database user name.</param>
+        /// <param name="password">The initial database user password.</param>
         /// <exception cref="HsqlException">
         /// </exception>
         internal HsqlTcpClient(

@@ -578,20 +578,23 @@ namespace System.Data.Hsqldb.Client
         }
         #endregion
 
-        #region DbProviderFactory
-        /// <summary>
+
+#if MONO        
+#else
+		#region DbProviderFactory
+		/// <summary>
         /// Gets the db provider factory.
         /// </summary>
-        /// <value>The db provider factory.</value>
-        protected override DbProviderFactory DbProviderFactory
-        {
-            get { return HsqlProviderFactory.Instance; }
+        /// <value>The db provider factory.</value>        
+		protected override DbProviderFactory DbProviderFactory
+		{
+			get { return HsqlProviderFactory.Instance; }
         } 
-        #endregion
-
+        #endregion	       
+#endif
         #region Database
-
-        /// <summary>
+        
+		/// <summary>
         /// Retrieves the database qualifier used by this connection.
         /// </summary>
         /// <remarks>

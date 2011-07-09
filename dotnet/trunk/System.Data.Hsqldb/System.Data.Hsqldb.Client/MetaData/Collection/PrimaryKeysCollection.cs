@@ -54,15 +54,16 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     {
         #region Constants
         private const string sql =
-@"SELECT tc.constraint_catalog
+@"-- System.Data.Hsqldb.Client.MetaData.Collection.PrimaryKeysCollection
+SELECT tc.constraint_catalog
       ,tc.constraint_schema
       ,tc.constraint_name
       ,tc.constraint_type
       ,tc.table_catalog
       ,tc.table_schema
       ,tc.table_name
-      ,is_deferrable
-      ,initially_deferred
+      ,tc.is_deferrable
+      ,tc.initially_deferred
  FROM  information_schema.system_table_constraints tc
 WHERE  tc.constraint_type = 'PRIMARY KEY'";
         #endregion

@@ -61,7 +61,7 @@ namespace System.Data.Hsqldb.Client
     {
         #region Fields
 
-        private static readonly int[] m_NoUpdateCounts = new int[0];
+        private static readonly int[] s_NoUpdateCounts = new int[0];
 
         internal org.hsqldb.Result m_result;
         internal CommandBehavior m_commandBehavior;
@@ -143,7 +143,7 @@ namespace System.Data.Hsqldb.Client
                 result.clear();
             }
 
-            m_recordsAffectedCounts = m_NoUpdateCounts;
+            m_recordsAffectedCounts = s_NoUpdateCounts;
             m_recordsAffectedIndex = 0;
         }
         #endregion

@@ -61,27 +61,28 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region Constants
 
         private const string sql =
-@"SELECT NULL AS UID
-        ,sa.authorization_name AS USER_NAME
-        ,NULL AS CREATEDATE
-        ,NULL AS UPDATEDATE
-        ,sa.AUTHORIZATION_TYPE
-        ,CASE WHEN (su.admin IS NULL) THEN
-              CASE WHEN (sa.authorization_name = 'DBA')
-                   THEN TRUE
-                   WHEN (0 < (SELECT COUNT(*)
-                                FROM information_schema.system_role_authorization_descriptors srad
-                               WHERE (srad.grantee = sa.authorization_name)
-                                 AND (srad.role_name = 'DBA')))
-                   THEN TRUE
-                   ELSE NULL
-              END
-              ELSE su.admin
-         END AS IS_ADMIN
-    FROM information_schema.system_authorizations sa LEFT OUTER JOIN
-         information_schema.system_users su
-      ON (su.user = sa.authorization_name)
-   WHERE 1=1";
+@"-- System.Data.Hsqldb.Client.MetaData.Collection.UsersCollection
+SELECT NULL AS UID
+      ,sa.authorization_name AS USER_NAME
+      ,NULL AS CREATEDATE
+      ,NULL AS UPDATEDATE
+      ,sa.AUTHORIZATION_TYPE
+      ,CASE WHEN (su.admin IS NULL) THEN
+            CASE WHEN (sa.authorization_name = 'DBA')
+                 THEN TRUE
+                 WHEN (0 < (SELECT COUNT(*)
+                              FROM information_schema.system_role_authorization_descriptors srad
+                             WHERE (srad.grantee = sa.authorization_name)
+                               AND (srad.role_name = 'DBA')))
+                 THEN TRUE
+                 ELSE NULL
+            END
+            ELSE su.admin
+       END AS IS_ADMIN
+  FROM information_schema.system_authorizations sa LEFT OUTER JOIN
+       information_schema.system_users su
+    ON (su.user = sa.authorization_name)
+ WHERE 1=1";
 
         #endregion
 

@@ -58,12 +58,13 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region Constants
 
         private const string sql =
-@"SELECT  TABLE_CAT
-         ,TABLE_SCHEM
-         ,TABLE_NAME
-         ,TABLE_TYPE
-    FROM INFORMATION_SCHEMA.SYSTEM_TABLES
-   WHERE TABLE_TYPE NOT IN ('VIEW', 'SYSTEM VIEW')";
+@"-- System.Data.Hsqldb.Client.MetaData.Collection.TablesCollection        
+SELECT TABLE_CAT
+      ,TABLE_SCHEM
+      ,TABLE_NAME
+      ,TABLE_TYPE
+  FROM INFORMATION_SCHEMA.SYSTEM_TABLES
+ WHERE TABLE_TYPE NOT IN ('VIEW', 'SYSTEM VIEW')";
 
         #endregion
 

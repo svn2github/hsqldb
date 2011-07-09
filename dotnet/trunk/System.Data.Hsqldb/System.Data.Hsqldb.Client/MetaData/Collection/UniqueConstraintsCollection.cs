@@ -60,27 +60,28 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region Constants
 
         private const string sql =
-@"SELECT DISTINCT
-         tc.constraint_catalog
-        ,tc.constraint_schema
-        ,tc.constraint_name
-        ,tc.table_catalog
-        ,tc.table_schema
-        ,tc.table_name
-        ,io.index_name
-    FROM information_schema.system_indexinfo io,
-         information_schema.system_table_constraints tc
-   WHERE (tc.constraint_type = 'UNIQUE')
-     AND (    (    (io.table_cat IS NULL)
-               AND (tc.table_catalog IS NULL)
-               )
-          OR (io.table_cat = tc.table_catalog)
-         )
-     AND (io.table_schem = tc.table_schema)
-     AND (io.table_name = tc.table_name)
-     AND (io.index_name LIKE 'SYS\_IDX\_' 
-          || REPLACE(tc.constraint_name, '_', '\_') 
-          || '\_%' ESCAPE '\')";
+@"-- System.Data.Hsqldb.Client.MetaData.Collection.UniqueConstraintColumns
+SELECT DISTINCT
+       tc.constraint_catalog
+      ,tc.constraint_schema
+      ,tc.constraint_name
+      ,tc.table_catalog
+      ,tc.table_schema
+      ,tc.table_name
+      ,io.index_name
+  FROM information_schema.system_indexinfo io,
+       information_schema.system_table_constraints tc
+ WHERE (tc.constraint_type = 'UNIQUE')
+   AND (    (    (io.table_cat IS NULL)
+             AND (tc.table_catalog IS NULL)
+             )
+        OR (io.table_cat = tc.table_catalog)
+       )
+   AND (io.table_schem = tc.table_schema)
+   AND (io.table_name = tc.table_name)
+   AND (io.index_name LIKE 'SYS\_IDX\_' 
+        || REPLACE(tc.constraint_name, '_', '\_') 
+        || '\_%' ESCAPE '\')";
 
         #endregion
 

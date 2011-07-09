@@ -57,7 +57,23 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// </summary>
     public class ViewsCollection : Base.MetaDataCollection
     {
-        #region ViewsCollection(HsqlConnection
+        #region Constants
+
+        private const string sql =
+@"-- System.Data.Hsqldb.Client.MetaData.Collection.ViewCollection
+SELECT VIEW_CATALOG
+      ,VIEW_SCHEMA
+      ,VIEW_NAME
+      ,TABLE_CATALOG
+      ,TABLE_SCHEMA
+      ,TABLE_NAME
+      ,COLUMN_NAME
+  FROM INFORMATION_SCHEMA.SYSTEM_VIEW_COLUMN_USAGE
+ WHERE 1=1";
+
+        #endregion
+    
+        #region ViewsCollection()
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ViewsCollection"/> class.

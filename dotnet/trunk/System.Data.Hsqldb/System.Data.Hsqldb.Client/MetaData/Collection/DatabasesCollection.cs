@@ -63,7 +63,9 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region Constants
         private const string sql =
 @"-- System.Data.Hsqldb.Client.MetaData.Collection.DatabasesCollection
-select value, null, null
+select value as database_name
+     , (cast null as smallint) as dbid
+     , (cast null as timestamp) as create_date
  from information_schema.system_sessioninfo
 where key = 'DATABASE'";
         #endregion

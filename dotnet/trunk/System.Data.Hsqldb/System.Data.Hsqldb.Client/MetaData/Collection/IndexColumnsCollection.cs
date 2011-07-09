@@ -59,7 +59,17 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
 
         private const string sql =
 @"-- System.Data.Hsqldb.Client.MetaData.Collection.IndexColumnsCollection
-SELECT *
+SELECT c.constraint_catalog
+     , c.constraint_schema
+     , c.constraint_name
+     , c.constraint_type
+     , c.table_cat as table_catalog
+     , c.table_schem as table_schema
+     , c.table_name
+     , c.index_name
+     , c.column_name
+     , c.ordinal_position
+     , c.data_type
   FROM (SELECT DISTINCT tc.constraint_catalog
                        ,tc.constraint_schema
                        ,tc.constraint_name

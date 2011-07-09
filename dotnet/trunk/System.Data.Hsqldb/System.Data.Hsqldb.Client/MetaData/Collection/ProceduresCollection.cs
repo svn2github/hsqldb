@@ -59,22 +59,23 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region Constants
 
         private const string sql =
-@"SELECT DISTINCT
-         p.procedure_cat AS specific_catalog
-        ,p.procedure_schem as specific_schema
-        ,p.specific_name
-        ,p.procedure_cat AS routine_catalog
-        ,p.procedure_schem AS routine_schema
-        ,p.procedure_name as routine_name
-        ,CASE p.procedure_type
+@"-- System.Data.Hsqldb.Client.MetaData.Collection.ProceduresCollection       
+SELECT DISTINCT
+       p.procedure_cat AS specific_catalog
+      ,p.procedure_schem as specific_schema
+      ,p.specific_name
+      ,p.procedure_cat AS routine_catalog
+      ,p.procedure_schem AS routine_schema
+      ,p.procedure_name as routine_name
+      ,CASE p.procedure_type
              WHEN 1 THEN 'PROCEDURE'
              WHEN 2 THEN 'FUNCTION'
              ELSE 'UNKNOWN'
-         END AS routine_type
-        ,NULL AS created
-        ,NULL AS last_altered
-    FROM information_schema.system_procedures p
-   WHERE origin = 'ALIAS'";
+       END AS routine_type
+      ,NULL AS created
+      ,NULL AS last_altered
+  FROM information_schema.system_procedures p
+ WHERE origin = 'ALIAS'";
 
         #endregion
 

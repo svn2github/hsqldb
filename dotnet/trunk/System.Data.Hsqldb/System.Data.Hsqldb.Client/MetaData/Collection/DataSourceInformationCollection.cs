@@ -331,7 +331,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
             #region HsqlIdentifierCase
 
             /// <summary>
-            /// The HSQLDB IDentifier case.
+            /// The HSQLDB Identifier case.
             /// </summary>
             /// <value><see cref="IdentifierCase.Insensitive"/></value>
             public const IdentifierCase HsqlIdentifierCase

@@ -1,5 +1,6 @@
 using System;
 using NUnit.Framework;
+using System.Data.Common;
 using System.Data.Hsqldb.TestCoverage;
 using System.Data.Hsqldb.Common.Enumeration;
 using TestCategory = NUnit.Framework.CategoryAttribute;
@@ -120,7 +121,7 @@ namespace System.Data.Hsqldb.Client.UnitTests
                 int actual = testSubject.CommandTimeout;
 
 
-                Assert.Fail("TODO");
+                Assert.AreEqual(30, actual);
             }
         }
 
@@ -130,27 +131,44 @@ namespace System.Data.Hsqldb.Client.UnitTests
             using (HsqlConnection connection = NewConnection())
             using (HsqlCommand testSubject = connection.CreateCommand())
             {
-                CommandType expected = System.Data.CommandType.Text;
                 CommandType actual = testSubject.CommandType;
 
-                Assert.AreEqual(expected, actual);
-
-                Assert.Fail("TODO");
+                Assert.AreEqual(System.Data.CommandType.Text, actual);
+				
+				testSubject.CommandType = System.Data.CommandType.StoredProcedure;
+				
+				Assert.AreEqual(System.Data.CommandType.StoredProcedure, actual);
+				
+				testSubject.CommandType = System.Data.CommandType.TableDirect;							
+				
+				Assert.AreEqual(System.Data.CommandType.TableDirect, actual);
+				
+				Common.HsqlWarningEventArgs warning = null;
+				
+				testSubject.Warning += delegate(object sender, Common.HsqlWarningEventArgs args) {
+					warning = args;
+				};
+				
+				testSubject.CommandType = (CommandType) 100;
+				
+				Assert.IsNotNull(warning);
+				
+				Assert.AreEqual(System.Data.CommandType.Text, actual);
             }
         }
 
         [Test, OfMember("CreateParameter")]
-        public void CreateParameter()
+        public void CreateParameter ()
         {
-            using (HsqlConnection connection = NewConnection())
-            using (HsqlCommand testSubject = connection.CreateCommand())
+        	using (HsqlConnection connection = NewConnection ())
+        	using (HsqlCommand testSubject = connection.CreateCommand ())
             {
-                HsqlParameter parameter = testSubject.CreateParameter();
-
-                Assert.Fail("TODO");
-            }
-        }
-
+                HsqlParameter parameter = testSubject.CreateParameter ();
+        		IDbParmeter idbparameter = (testSubject as IDbCommand).CreateParameter ();
+                DbParameter dbparameter = (testSubject as DbCommand).CreateParameter ();
+        	}
+		}
+		
         [Test, OfMember("DeriveParameters")]
         public void DeriveParameters()
         {
@@ -193,13 +211,13 @@ namespace System.Data.Hsqldb.Client.UnitTests
             using (HsqlCommand testSubject = connection.CreateCommand())
             {
                 testSubject.CommandText = ";";
-                testSubject.ExecuteNonQuery();
-
-                //Assert.Fail("TODO");
-            }
-        }
-
-        [Test, OfMember("ExecuteReader")]
+                int expected = 0;
+				int actual = testSubject.ExecuteNonQuery();
+				Assert.AreEqual(expected,actual);					
+			}
+				
+		}
+		[Test, OfMember("ExecuteReader")]
         public void ExecuteReader()
         {
             using (HsqlConnection connection = NewConnection())
@@ -257,7 +275,7 @@ namespace System.Data.Hsqldb.Client.UnitTests
                 object expected = "mem:test";
                 object actual = testSubject.ExecuteScalar();
 
-                Assert.Fail("TODO");
+                Assert.AreEqual(expected, actual);
             }
         }
 
@@ -274,9 +292,6 @@ namespace System.Data.Hsqldb.Client.UnitTests
                 bool actual = testSubject.IsPrepared;
 
                 Assert.AreEqual(expected, actual);
-
-                // 
-                Assert.Fail("TODO");
             }
         }
 

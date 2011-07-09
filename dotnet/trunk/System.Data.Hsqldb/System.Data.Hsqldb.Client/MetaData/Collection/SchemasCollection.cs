@@ -48,15 +48,16 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     public class SchemasCollection : Base.MetaDataCollection
     {
         private const string sql =
-@"select catalog_name 
-        ,schema_name 
-        ,schema_owner
-        ,default_character_set_catalog
-        ,default_character_set_schema
-        ,default_character_set_name
-        ,sql_path 
-   from information_schema.system_schemata
-  where 1=1";
+@"-- System.Data.Hsqldb.Client.MetaData.Collection.SchemasCollection      
+select catalog_name 
+       ,schema_name 
+       ,schema_owner
+       ,default_character_set_catalog
+       ,default_character_set_schema
+       ,default_character_set_name
+       ,sql_path 
+  from information_schema.system_schemata
+ where 1=1";
 
         /// <summary>
         /// Constructs a new <c>SchemasCollection</c> instance with the given connection.

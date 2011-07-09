@@ -57,6 +57,22 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     /// </summary>
     public class ViewColumnsCollection : Base.MetaDataCollection
     {
+        #region Constants
+
+        private const string sql =
+@"-- System.Data.Hsqldb.Client.MetaData.Collection.ViewColumnsCollection
+SELECT VIEW_CATALOG
+      ,VIEW_SCHEMA
+      ,VIEW_NAME
+      ,TABLE_CATALOG
+      ,TABLE_SCHEMA
+      ,TABLE_NAME
+      ,COLUMN_NAME
+  FROM INFORMATION_SCHEMA.SYSTEM_VIEW_COLUMN_USAGE
+ WHERE 1=1";
+
+        #endregion    
+        
         #region ViewColumnsCollection(HsqlConnection)
 
         /// <summary>
@@ -117,8 +133,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
                 return;
             }
 
-            StringBuilder query = ToQueryPrefix(
-                "INFORMATION_SCHEMA.SYSTEM_VIEW_COLUMN_USAGE");
+            StringBuilder query = new StringBuilder(sql);
 
             query
                 //.Append(And("VIEW_CATALOG", "=", catalogName))

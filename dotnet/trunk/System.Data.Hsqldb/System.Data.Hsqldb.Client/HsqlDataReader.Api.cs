@@ -110,21 +110,22 @@ namespace System.Data.Hsqldb.Client
         /// A <c>DataTable</c> that describes the column metadata
         /// of the current result.
         /// </returns>
-        public override DataTable GetSchemaTable()
+        public override DataTable GetSchemaTable ()
         {
-            DataTable schemaTable;
-            WeakReference stRef = m_schemaTableReference;
+            //lock(m_schemaTableReference) {
+	        	DataTable schemaTable = m_schemaTableReference.Target as DataTable;
+	
+	            if (schemaTable == null)
+	            {
+	        		CheckClosed ();
+	
+	                schemaTable = HsqlResultSetMetaData.CreateSchemaTable (this);
+	
+	                m_schemaTableReference.Target = schemaTable;
+	            }
 
-            if (!stRef.IsAlive || null == (schemaTable = (DataTable) stRef.Target))
-            {
-                CheckClosed();
-
-                schemaTable = HsqlResultSetMetaData.CreateSchemaTable(this);
-
-                stRef.Target = schemaTable;
-            }
-
-            return schemaTable;
+            	return schemaTable;
+            //}
         }
         #endregion
 
@@ -293,7 +294,7 @@ namespace System.Data.Hsqldb.Client
 
             if (value == null)
             {
-                throw new NullReferenceException();
+                throw new NullReferenceException("ordinal [" + ordinal + "] is null (cannot be converted to bool)");
             }
 
             switch (m_metaData.colTypes[ordinal])
@@ -332,16 +333,16 @@ namespace System.Data.Hsqldb.Client
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column.</returns>
-        public override byte GetByte(int ordinal)
+        public override byte GetByte (int ordinal)
         {
-            CheckClosed();
-            CheckAvailable();
+        	CheckClosed ();
+        	CheckAvailable ();
 
             object value = m_currentRecord.data[ordinal];
 
             if (value == null)
             {
-                throw new NullReferenceException();
+        		throw new NullReferenceException("ordinal [" + ordinal + "] is null (cannot be converted to byte)");
             }
 
             checked
@@ -375,28 +376,28 @@ namespace System.Data.Hsqldb.Client
         /// <returns>
         /// The actual number of bytes read.
         /// </returns>
-        public override long GetBytes(
+        public override long GetBytes (
             int ordinal,
             long dataOffset,
             byte[] buffer,
             int bufferOffset,
             int length)
         {
-            if (0 > dataOffset || dataOffset > int.MaxValue)
+        	if (0 > dataOffset || dataOffset > int.MaxValue)
             {
-                throw new ArgumentException(
+        		throw new ArgumentException (
                     "dataOffset value out of range: " + dataOffset,
                     "dataOffset");
-            }
+        	}
 
-            CheckClosed();
-            CheckAvailable();
+            CheckClosed ();
+        	CheckAvailable ();
 
             object value = m_currentRecord.data[ordinal];
 
             if (value == null)
             {
-                throw new NullReferenceException();
+        		throw new NullReferenceException("ordinal [" + ordinal + "] is null (cannot be converted to byte[])");
             }
 
             byte[] bytes = HsqlConvert.FromJava.ToBinary(value);
@@ -430,16 +431,16 @@ namespace System.Data.Hsqldb.Client
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column.</returns>
-        public override char GetChar(int ordinal)
+        public override char GetChar (int ordinal)
         {
-            CheckClosed();
-            CheckAvailable();
+        	CheckClosed ();
+        	CheckAvailable ();
 
             object value = m_currentRecord.data[ordinal];
 
             if (value == null)
             {
-                throw new NullReferenceException();
+        		throw new NullReferenceException("ordinal [" + ordinal + "] is null (cannot be converted to char)");
             }
 
             org.hsqldb.types.JavaObject wrapper
@@ -581,49 +582,49 @@ namespace System.Data.Hsqldb.Client
         /// When the value of the specified column cannot be represented
         /// as a character sequence.
         /// </exception>
-        public override long GetChars(
+        public override long GetChars (
             int ordinal,
             long dataOffset,
             char[] buffer,
             int bufferOffset,
             int length)
         {
-            if (0 > dataOffset || dataOffset > int.MaxValue)
+        	if (0 > dataOffset || dataOffset > int.MaxValue)
             {
-                throw new ArgumentException(
+        		throw new ArgumentException (
                     "Range violation: " + dataOffset,
                     "dataOffset");
-            }
+        	}
             else if (buffer == null)
             {
-                throw new ArgumentNullException("buffer");
-            }
+        		throw new ArgumentNullException ("buffer");
+        	}
             else if (0 > bufferOffset)
             {
-                throw new ArgumentException(
+        		throw new ArgumentException (
                     "Range violation: " + bufferOffset,
                     "bufferOffset");
-            }
+        	}
             else if (0 > length)
             {
-                throw new ArgumentException(
+        		throw new ArgumentException (
                     "Range violation: " + length,
                     "length");
-            }
+        	}
             else if (buffer.Length - bufferOffset < length)
             {
-                throw new ArgumentException(
+        		throw new ArgumentException (
                     "buffer.Length - bufferOffset < length");
-            }
+        	}
 
-            CheckClosed();
-            CheckAvailable();
+            CheckClosed ();
+        	CheckAvailable ();
 
             object value = m_currentRecord.data[ordinal];
 
             if (value == null)
             {
-                throw new NullReferenceException("Column value");
+        		throw new NullReferenceException("ordinal [" + ordinal + "] is null (cannot be converted to char[])");
             }
 
             string str = value as string;
@@ -708,16 +709,16 @@ namespace System.Data.Hsqldb.Client
         /// When the value of the specified column cannot be represented
         /// as a a <see cref="DateTime"/> object.
         /// </exception>
-        public override DateTime GetDateTime(int ordinal)
+        public override DateTime GetDateTime (int ordinal)
         {
-            CheckClosed();
-            CheckAvailable();
+        	CheckClosed ();
+        	CheckAvailable ();
 
             object value = m_currentRecord.data[ordinal];
 
             if (value == null)
             {
-                throw new NullReferenceException();
+        		throw new NullReferenceException("ordinal [" + ordinal + "] is null (cannot be converted to timestamp)");
             }
 
             return HsqlConvert.FromJava.ToTimestamp(value);
@@ -744,16 +745,16 @@ namespace System.Data.Hsqldb.Client
         /// When the value of the specified column cannot be represented
         /// as a <see cref="Decimal"/> object.
         /// </exception>
-        public override decimal GetDecimal(int ordinal)
+        public override decimal GetDecimal (int ordinal)
         {
-            CheckClosed();
-            CheckAvailable();
+        	CheckClosed ();
+        	CheckAvailable ();
 
             object value = m_currentRecord.data[ordinal];
 
             if (value == null)
             {
-                throw new NullReferenceException();
+        		throw new NullReferenceException("ordinal [" + ordinal + "] is null (cannot be converted to decimal)");
             }
 
             return HsqlConvert.FromJava.ToDecimal(value);
@@ -780,16 +781,16 @@ namespace System.Data.Hsqldb.Client
         /// When the value of the specified column cannot be represented
         /// as a double-precision floating point number.
         /// </exception>
-        public override double GetDouble(int ordinal)
+        public override double GetDouble (int ordinal)
         {
-            CheckClosed();
-            CheckAvailable();
+        	CheckClosed ();
+        	CheckAvailable ();
 
             object value = m_currentRecord.data[ordinal];
 
             if (value == null)
             {
-                throw new NullReferenceException();
+        		throw new NullReferenceException("ordinal [" + ordinal + "] is null (cannot be converted to double)");
             }
 
             java.lang.Double doubleValue = value as java.lang.Double;
@@ -845,16 +846,16 @@ namespace System.Data.Hsqldb.Client
         /// When the value of the specified column cannot be represented
         /// as a single-precision floating point number.
         /// </exception>
-        public override float GetFloat(int ordinal)
+        public override float GetFloat (int ordinal)
         {
-            CheckClosed();
-            CheckAvailable();
+        	CheckClosed ();
+        	CheckAvailable ();
 
             object value = m_currentRecord.data[ordinal];
 
             if (value == null)
             {
-                throw new NullReferenceException();
+        		throw new NullReferenceException("ordinal [" + ordinal + "] is null (cannot be converted to float)");
             }
 
             return HsqlConvert.FromJava.ToReal(value);
@@ -881,16 +882,16 @@ namespace System.Data.Hsqldb.Client
         /// When the value of the specified column cannot be represented
         /// as a globally-unique identifier (<c>GUID</c>).
         /// </exception>
-        public override Guid GetGuid(int ordinal)
+        public override Guid GetGuid (int ordinal)
         {
-            CheckClosed();
-            CheckAvailable();
+        	CheckClosed ();
+        	CheckAvailable ();
 
             object value = m_currentRecord.data[ordinal];
 
             if (value == null)
             {
-                throw new NullReferenceException();
+        		throw new NullReferenceException("ordinal [" + ordinal + "] is null (cannot be converted to guid)");
             }
 
             // TODO:  simplify and consider migrating to HsqlConvert.FromJava
@@ -1108,16 +1109,16 @@ namespace System.Data.Hsqldb.Client
         /// an arithmetic overflow to occur while casting the value to a 16-bit
         /// signed integer.
         /// </exception>
-        public override short GetInt16(int ordinal)
+        public override short GetInt16 (int ordinal)
         {
-            CheckClosed();
-            CheckAvailable();
+        	CheckClosed ();
+        	CheckAvailable ();
 
             object value = m_currentRecord.data[ordinal];
 
             if (value == null)
             {
-                throw new NullReferenceException();
+        		throw new NullReferenceException("ordinal [" + ordinal + "] is null (cannot be converted to short)");
             }
 
             switch (m_metaData.colTypes[ordinal])
@@ -1189,16 +1190,16 @@ namespace System.Data.Hsqldb.Client
         /// an arithmetic overflow to occur while casting the value to a 32-bit
         /// signed integer.
         /// </exception>
-        public override int GetInt32(int ordinal)
+        public override int GetInt32 (int ordinal)
         {
-            CheckClosed();
-            CheckAvailable();
+        	CheckClosed ();
+        	CheckAvailable ();
 
             object value = m_currentRecord.data[ordinal];
 
             if (value == null)
             {
-                throw new NullReferenceException();
+        		throw new NullReferenceException("ordinal [" + ordinal + "] is null (cannot be converted to int)");
             }
 
             switch (m_metaData.colTypes[ordinal])
@@ -1261,16 +1262,16 @@ namespace System.Data.Hsqldb.Client
         /// an arithmetic overflow to occur while casting the value to a 64-bit
         /// signed integer.
         /// </exception>
-        public override long GetInt64(int ordinal)
+        public override long GetInt64 (int ordinal)
         {
-            CheckClosed();
-            CheckAvailable();
+        	CheckClosed ();
+        	CheckAvailable ();
 
             object value = m_currentRecord.data[ordinal];
 
             if (value == null)
             {
-                throw new NullReferenceException();
+        		throw new NullReferenceException("ordinal [" + ordinal + "] is null (cannot be converted to long)");
             }
 
             switch (m_metaData.colTypes[ordinal])
@@ -1869,7 +1870,7 @@ namespace System.Data.Hsqldb.Client
 
             if (value == null)
             {
-                throw new NullReferenceException();
+                throw new NullReferenceException("ordinal [" + ordinal + "] is null (cannot be converted to data reader)");
             }
 
             if (value is org.hsqldb.types.JavaObject)

@@ -56,7 +56,8 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region Constants
 
         private const string sql =
-@"SELECT tc.constraint_catalog
+@"-- System.Data.Hsqldb.Client.MetaData.Collection.TAbleCheckConstraintsCollection        
+SELECT tc.constraint_catalog
       ,tc.constraint_schema
       ,tc.constraint_name
       ,tc.constraint_type

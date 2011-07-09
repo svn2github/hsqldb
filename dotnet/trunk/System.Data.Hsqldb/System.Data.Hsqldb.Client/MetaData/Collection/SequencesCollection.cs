@@ -55,7 +55,8 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region Constants
 
         private const string sql =
-@"SELECT SEQUENCE_CATALOG
+@"-- System.Data.Hsqldb.Client.MetaData.Collection.SchemasCollection       
+SELECT SEQUENCE_CATALOG
       ,SEQUENCE_SCHEMA
       ,SEQUENCE_NAME
       ,DTD_IDENTIFIER

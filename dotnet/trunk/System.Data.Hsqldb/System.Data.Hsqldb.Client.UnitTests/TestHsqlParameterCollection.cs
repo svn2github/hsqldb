@@ -1,7 +1,8 @@
 #region Using
 using System;
 using System.Data.Hsqldb.TestCoverage;
-using NUnit.Framework; 
+using NUnit.Framework;
+using System.Collections.Generic;
 #endregion
 
 namespace System.Data.Hsqldb.Client.UnitTests
@@ -94,8 +95,14 @@ namespace System.Data.Hsqldb.Client.UnitTests
             object[] array = new object[testSubject.Count];
 
             testSubject.CopyTo(array, 0);
+			
+			HsqlParameter[] paramArray = new HsqlParameter[testSubject.Count];
 
-            Assert.Fail("TODO"); 
+			
+			ICollection<HsqlParameter> parameters = testSubject as ICollection<HsqlParameter>;
+			
+			parameters.CopyTo(paramArray,0);
+
         }
         
         [Test, OfMember("GetEnumerator")]

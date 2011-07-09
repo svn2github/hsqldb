@@ -57,18 +57,18 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         #region Constants
         private const string sql =
 @"-- System.Data.Hsqldb.Client.MetaData.Collection.ForeignKeyColumnsCollection
- SELECT fktable_cat as constraint_catalog
+ SELECT fktable_cat    as constraint_catalog
         ,fktable_schem as constraint_schema
-        ,fk_name as constraint_name
-        ,fktable_cat as table_catalog
+        ,fk_name       as constraint_name
+        ,fktable_cat   as table_catalog
         ,fktable_schem as table_schema
-        ,fktable_name as table_name
+        ,fktable_name  as table_name
         ,fkcolumn_name as column_name
-        ,pktable_cat as unique_table_catalog
+        ,pktable_cat   as unique_table_catalog
         ,pktable_schem as unique_table_schema
-        ,pktable_name as unique_table_name
+        ,pktable_name  as unique_table_name
         ,pkcolumn_name as unique_column_name
-        ,key_seq as ordinal_position
+        ,key_seq       as ordinal_position
    FROM information_schema.system_crossreference
   WHERE 1=1";
         #endregion

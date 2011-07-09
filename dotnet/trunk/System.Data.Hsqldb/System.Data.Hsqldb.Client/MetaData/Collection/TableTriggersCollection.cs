@@ -56,7 +56,8 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     {
         #region Private Fields
         private const string sql =
-@"SELECT tt.trigger_cat as trigger_catalog
+@"-- System.Data.Hsqldb.Client.MetaData.Collection. TableTriggersCollection       
+SELECT tt.trigger_cat as trigger_catalog
       ,tt.trigger_schem trigger_schema
       ,tt.trigger_name
       ,tt.table_cat as table_catalog

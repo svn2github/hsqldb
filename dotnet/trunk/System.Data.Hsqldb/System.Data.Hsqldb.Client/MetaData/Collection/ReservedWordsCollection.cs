@@ -147,7 +147,6 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
                 row[MDCN.ReservedWord] = ReservedWords[i];
 
                 rows.Add(row);
-
             }
         }
 

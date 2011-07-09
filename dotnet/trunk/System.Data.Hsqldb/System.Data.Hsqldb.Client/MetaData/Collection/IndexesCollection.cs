@@ -61,7 +61,16 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
 
         private const string sql =
 @"-- System.Data.Hsqldb.Client.MetaData.Collection.IndexesCollection
-SELECT *
+SELECT c.constraint_catalog
+	 , c.constraint_schema
+	 , c.constraint_name
+	 , c.constraint_type
+	 , c.table_catalog
+	 , c.ttable_schema
+	 , c.table_name
+	 , c.index_name
+	 , c.""UNIQUE""
+	 , c.primary_key
   FROM (SELECT DISTINCT tc.constraint_catalog
                        ,tc.constraint_schema
                        ,tc.constraint_name
