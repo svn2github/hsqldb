@@ -7,7 +7,7 @@
 <!-- the Compile on Save feature is turned off for the project. -->
 <!-- You can turn off the Compile on Save (or Deploy on Save) setting -->
 <!-- in the project's Project Properties dialog box.-->
-<project name="hsqldb-base-trunk" default="default" basedir=".">
+<project basedir="." default="default" name="hsqldb-base-trunk">
     <description>Builds, tests, and runs the project hsqldb-base-trunk.</description>
     <import file="nbproject/build-impl.xml"/>
     <!--
@@ -71,4 +71,7 @@
     nbproject/build-impl.xml file. 
 
     -->
+    <target name="show-props">
+        <echoproperties/>
+    </target>
 </project>

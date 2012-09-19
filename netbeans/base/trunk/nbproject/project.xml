@@ -15,13 +15,19 @@
             <word>Array's</word>
             <word>behaviour</word>
             <word>behaviour's</word>
+            <word>clob</word>
             <word>holdability</word>
             <word>initially</word>
+            <word>longvarchar</word>
             <word>metadata</word>
             <word>octets</word>
             <word>Overriden</word>
+            <word>smallint</word>
             <word>subquery</word>
+            <word>tinyint</word>
             <word>updateable</word>
+            <word>varbinary</word>
+            <word>varchar</word>
         </spellchecker-wordlist>
     </configuration>
 </project>
