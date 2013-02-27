@@ -98,7 +98,11 @@ examples:
       <echo message="ant.java.hasjsse=${ant.java.hasjsse}" />
    </target>
 
-   <target name="javaversion6">
+   <target name="javaversion7">
+      <available classname="java.sql.PseudoColumnUsage" property="ant.java.iscjava17"/>
+   </target>
+
+   <target name="javaversion6" depends="javaversion7" unless="ant.java.iscjava17">
       <available classname="java.net.IDN" property="ant.java.iscjava16"/>
    </target>
 
@@ -256,6 +260,7 @@ examples:
         <arg file="${src}/org/hsqldb/jdbc/jdbcBlob.java"/>
         <arg file="${src}/org/hsqldb/jdbc/jdbcDatabaseMetaData.java"/>
         <arg file="${src}/org/hsqldb/jdbc/jdbcDataSource.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcDriver.java"/>
         <arg file="${src}/org/hsqldb/jdbc/jdbcCallableStatement.java"/>
         <arg file="${src}/org/hsqldb/jdbc/jdbcClob.java"/>
         <arg file="${src}/org/hsqldb/jdbc/jdbcConnection.java"/>
@@ -282,7 +287,42 @@ examples:
       </java>
     </target>
 
-    <target name="store" depends="switchtojdk16"
+    <target name="switchtojdk17" depends="switchtojdk16"
+            description="self explanatory" if="ant.java.iscjava17">
+      <java classname="org.hsqldb.util.CodeSwitcher" classpath="classes" >
+        <arg file="${src}/org/hsqldb/lib/java/JavaSystem.java"/>
+        <arg file="${src}/org/hsqldb/lib/HsqlTimer.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcBlob.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcDatabaseMetaData.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcDataSource.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcDriver.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcCallableStatement.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcClob.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcConnection.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcParameterMetaData.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcResultSet.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcResultSetMetaData.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcStatement.java"/>
+        <arg file="${src}/org/hsqldb/persist/LockFile.java"/>
+        <arg file="${src}/org/hsqldb/persist/Logger.java"/>
+        <arg file="${src}/org/hsqldb/persist/ScaledRAFile.java"/>
+        <arg file="${src}/org/hsqldb/rowio/RowInputTextLog.java"/>
+        <arg file="${src}/org/hsqldb/util/DatabaseManager.java"/>
+        <arg file="${src}/org/hsqldb/util/ConnectionDialogCommon.java"/>
+        <arg file="${src}/org/hsqldb/lib/SimpleLog.java"/>
+        <arg file="${src}/org/hsqldb/rowio/RowInputTextLog.java"/>
+        <arg file="${src}/org/hsqldb/lib/SimpleLog.java"/>
+        <arg file="${src}/org/hsqldb/rowio/RowInputTextLog.java"/>
+        <arg file="${src}/org/hsqldb/HsqlDateTime.java"/>
+        <arg value="+JAVA2"/>
+        <arg value="+JAVA2FULL"/>
+        <arg value="+JAVA4"/>
+        <arg value="+JAVA6"/>
+      </java>
+    </target>
+	
+    <target name="store" depends="switchtojdk17"
             description="compiles the /store folder">
       <javac srcdir="${src}"
              destdir="classes"
