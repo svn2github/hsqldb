@@ -251,6 +251,7 @@ examples:
     <target name="switchtojdk16" depends="switchtojdk14"
             description="self explanatory" if="ant.java.iscjava16">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath="classes" >
+        <arg file="${src}/org/hsqldb/jdbcDriver.java"/>
         <arg file="${src}/org/hsqldb/lib/java/JavaSystem.java"/>
         <arg file="${src}/org/hsqldb/lib/HsqlTimer.java"/>
         <arg file="${src}/org/hsqldb/jdbc/jdbcBlob.java"/>
