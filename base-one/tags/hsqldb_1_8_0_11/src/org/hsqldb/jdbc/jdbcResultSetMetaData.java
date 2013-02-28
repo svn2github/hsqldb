@@ -1144,6 +1144,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
                                     String.valueOf(column));
         }
     }
+
 //#ifdef JAVA6
 /*
     public <T> T unwrap(Class<T> iface) throws SQLException
@@ -1156,5 +1157,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 */
+
 //#endif JAVA6
 }

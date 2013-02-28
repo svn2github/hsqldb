@@ -2403,6 +2403,15 @@ implements PreparedStatement {
     {
         throw new UnsupportedOperationException("Not supported yet.");
     }
+
+    public void closeOnCompletion() throws SQLException {
+        checkClosed();
+    }
+
+    public boolean isCloseOnCompletion() throws SQLException {
+        checkClosed();
+        return false;
+    }
 */
 
 //#endif JAVA6

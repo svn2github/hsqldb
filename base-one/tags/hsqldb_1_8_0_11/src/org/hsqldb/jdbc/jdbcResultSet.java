@@ -5325,7 +5325,16 @@ public class jdbcResultSet implements ResultSet {
     {
         throw new UnsupportedOperationException("Not supported yet.");
     }
-*/
 
+    public <T>T getObject(int columnIndex, Class<T> type) throws SQLException {
+        return (T) getObject(columnIndex);
+    }
+
+    public <T>T getObject(String columnLabel,
+                          Class<T> type) throws SQLException {
+        return getObject(findColumn(columnLabel), type);
+    }
+    
+*/
 //#endif JAVA6
 }

@@ -321,4 +321,16 @@ public class jdbcDriver implements Driver {
             DriverManager.registerDriver(new jdbcDriver());
         } catch (Exception e) {}
     }
+
+//#ifdef JAVA6
+/*
+    public java.util.logging
+            .Logger getParentLogger() throws java.sql
+                .SQLFeatureNotSupportedException {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+*/
+
+//#endif
+
 }

@@ -3376,7 +3376,26 @@ implements CallableStatement {
     {
         throw new UnsupportedOperationException("Not supported yet.");
     }
-*/
 
+    public <T>T getObject(int parameterIndex,
+                          Class<T> type) throws SQLException {
+        return (T) this.getObject(parameterIndex);
+    }
+
+    public <T>T getObject(String parameterName,
+                          Class<T> type) throws SQLException {
+        return getObject(this.findParameterIndex(parameterName), type);
+    }
+
+    public void closeOnCompletion() throws SQLException {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+    
+    public boolean isCloseOnCompletion() throws SQLException {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+    
+*/
 //#endif JAVA6
+
 }

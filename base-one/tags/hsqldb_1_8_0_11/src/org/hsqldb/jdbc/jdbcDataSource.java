@@ -322,6 +322,11 @@ public class jdbcDataSource implements Serializable {
     {
         throw new UnsupportedOperationException("Not supported yet.");
     }
+    
+    public java.util.logging.Logger getParentLogger()
+    throws java.sql.SQLFeatureNotSupportedException {
+        throw (java.sql.SQLFeatureNotSupportedException) Util.notSupported();
+    }
 */
 
 //#endif JAVA6

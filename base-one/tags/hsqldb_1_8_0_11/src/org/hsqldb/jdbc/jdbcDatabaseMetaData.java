@@ -5694,7 +5694,17 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
     {
         throw new UnsupportedOperationException("Not supported yet.");
     }
-*/
 
+    public ResultSet getPseudoColumns(
+            String catalog, String schemaPattern, String tableNamePattern,
+            String columnNamePattern) throws SQLException {
+        throw Util.notSupported();
+    }
+
+    public boolean generatedKeyAlwaysReturned() throws SQLException {
+        return true;
+    }
+
+*/
 //#endif JAVA6
 }

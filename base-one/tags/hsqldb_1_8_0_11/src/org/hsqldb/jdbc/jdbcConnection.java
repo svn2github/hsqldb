@@ -2794,7 +2794,38 @@ public class jdbcConnection implements Connection {
     {
         throw new UnsupportedOperationException("Not supported yet.");
     }
+
+    public int getNetworkTimeout() throws SQLException {
+        return 0;
+    }
+
+    public void setNetworkTimeout(java.util.concurrent.Executor executor,
+                                  int milliseconds) throws SQLException {
+
+        checkClosed();
+
+        throw Util.notSupported();
+    }
+
+    public void setSchema(String schema) throws SQLException {
+        checkClosed();
+
+        throw Util.notSupported();
+    }
+
+    public String getSchema() throws SQLException {
+        checkClosed();
+
+        throw Util.notSupported();
+    }
+    public void abort(
+            java.util.concurrent.Executor executor) throws SQLException {
+        checkClosed();
+
+        throw Util.notSupported();
+    }
 */
 
 //#endif JAVA6
+
 }
