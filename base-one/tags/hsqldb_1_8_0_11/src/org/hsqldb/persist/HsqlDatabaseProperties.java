@@ -429,6 +429,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
             setProperty(hsqldb_log_size, 10);
             setProperty(sql_enforce_strict_size, true);
             setProperty(hsqldb_nio_data_file, false);
+            setProperty(hsqldb_lock_file, true);
         }
 
         // OOo end

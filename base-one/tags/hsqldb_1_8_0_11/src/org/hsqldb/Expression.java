@@ -807,6 +807,14 @@ public class Expression {
 
             case COUNT :
                 buf.append(' ').append(Token.T_COUNT).append('(');
+
+                if ("(*)".equals(left)) {
+                    buf.append('*');
+                } else {
+                    buf.append(left);
+                }
+
+                buf.append(')');
                 break;
 
             case SUM :
@@ -858,9 +866,13 @@ public class Expression {
                 buf.append(' ').append(Token.T_VAR_SAMP).append('(');
                 buf.append(left).append(')');
                 break;
+
+            default :
+                throw Trace.error(Trace.EXPRESSION_NOT_SUPPORTED);
         }
 
-        throw Trace.error(Trace.EXPRESSION_NOT_SUPPORTED);
+        // changes used in OpenOffice 3.4 have been incorporated
+        return buf.toString();
     }
 
     private String describe(Session session, int blanks) {
@@ -1521,6 +1533,12 @@ public class Expression {
 
         if (exprType == COLUMN) {
             return columnName;
+        }
+
+        if (isAggregate(exprType)) {
+            try {
+                return getDDL();
+            } catch (Exception e) {}
         }
 
         return "";
